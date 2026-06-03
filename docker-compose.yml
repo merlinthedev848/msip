@@ -34,6 +34,7 @@ services:
     container_name: pbx_gateway
     volumes:
       - ./gateway/krakend.json:/etc/krakend/krakend.json:ro
+    command: run -d -c /etc/krakend/krakend.json
     ports:
       - "8080:8080"
     depends_on:
