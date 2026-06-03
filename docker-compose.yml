@@ -20,7 +20,7 @@ services:
       dockerfile: Dockerfile
     container_name: pbx_backend
     environment:
-      - DB_DSN=postgres://${DB_USER:-pbxuser}:${DB_PASS:-pbxpass}@postgres:5432/${DB_NAME:-pbx}?sslmode=disable
+      - DATABASE_URL=postgres://${DB_USER:-pbxuser}:${DB_PASS:-pbxpass}@postgres:5432/${DB_NAME:-pbx}?sslmode=disable
     volumes:
       - pbx_recordings:/var/lib/pbx/recordings
     depends_on:
@@ -98,7 +98,13 @@ services:
     ports:
       - "9060:9060/udp"
       - "9060:9060/tcp"
-    command: ./heplify-server -homerapp homer-app:9080 -dbdriver postgres -dbuser homer -dbpass homer -dbaddr homer-db:5432 -dbname homer_data -dbdatatable homer_data
+    environment:
+      - HEPLIFYSERVER_DBDRIVER=postgres
+      - HEPLIFYSERVER_DBADDR=homer-db:5432
+      - HEPLIFYSERVER_DBUSER=homer
+      - HEPLIFYSERVER_DBPASS=homer
+      - HEPLIFYSERVER_DBSHEMA=homer7
+      - HEPLIFYSERVER_DBDATATABLE=homer_data
     depends_on:
       - homer-db
     networks:
