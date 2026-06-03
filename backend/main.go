@@ -8,7 +8,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -54,10 +53,11 @@ func main() {
 	InitDB()
 
 	r := gin.Default()
-	config := cors.DefaultConfig()
-	config.AllowAllOrigins = true
-	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
-	r.Use(cors.New(config))
+	// CORS is handled exclusively by the KrakenD API Gateway
+	// config := cors.DefaultConfig()
+	// config.AllowAllOrigins = true
+	// config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
+	// r.Use(cors.New(config))
 
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "healthy"})
