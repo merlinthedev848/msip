@@ -1,11 +1,23 @@
 <script lang="ts">
-  import { globalHistory } from "svelte-routing/src/history";
+  import { onMount } from 'svelte';
   
   let currentPath = window.location.pathname;
   
-  // Listen to router changes to highlight the active menu item
-  globalHistory.listen(({ location }) => {
-    currentPath = location.pathname;
+  onMount(() => {
+    const updatePath = () => { currentPath = window.location.pathname; };
+    window.addEventListener('popstate', updatePath);
+    
+    // Listen for clicks on sidebar links to update active state locally
+    const handleNav = (e) => {
+      const a = e.target.closest('a');
+      if (a && a.href) setTimeout(updatePath, 10);
+    };
+    document.addEventListener('click', handleNav);
+
+    return () => {
+      window.removeEventListener('popstate', updatePath);
+      document.removeEventListener('click', handleNav);
+    };
   });
 
   const menuSections = [
