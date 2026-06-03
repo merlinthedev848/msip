@@ -40,12 +40,15 @@
             <Route path="/extensions" component={Extensions} />
             <Route path="/inbound-routes" component={Routing} />
             
-            <!-- Fallback Catch All for Unimplemented Routes -->
-            <Route path="/outbound-routes">
-              <div class="p-8 text-center text-gray-500">Outbound Routes module coming soon.</div>
-            </Route>
-            <Route path="/trunks">
-              <div class="p-8 text-center text-gray-500">SIP Trunks module coming soon.</div>
+            <!-- Catch-All for Unimplemented Routes -->
+            <Route path="*">
+              <div class="p-12 text-center flex flex-col items-center justify-center h-full">
+                <div class="w-16 h-16 bg-gray-800 rounded-2xl flex items-center justify-center mb-4">
+                  <svg class="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                </div>
+                <h2 class="text-xl font-semibold text-white mb-2">Module Not Yet Built</h2>
+                <p class="text-gray-400 max-w-md">This section of the PBX is currently a placeholder. We can build this out in the next phase of development!</p>
+              </div>
             </Route>
           </div>
         </div>
