@@ -28,8 +28,6 @@
   import Domains from './views/Domains.svelte';
   import Provisioning from './views/Provisioning.svelte';
   
-  import Softphone from './components/Softphone.svelte';
-
   import Login from './views/Login.svelte';
 
   let currentPath = window.location.pathname;
@@ -131,7 +129,6 @@
         </div>
       </div>
       
-      <Softphone />
     </main>
   {/if}
 </div>

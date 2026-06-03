@@ -92,7 +92,7 @@
         <h1 class="text-xl font-black text-white tracking-tight">MSIP PBX</h1>
       </div>
     </div>
-    <p class="text-[10px] text-gray-500 font-mono tracking-widest uppercase">Lightweight Engine</p>
+
   </div>
   
   <nav class="space-y-4 flex-1 pb-10">

@@ -1,45 +1,15 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
 
-  let activeCalls = 12;
-  let activeExtensions = 45;
-  let cpuUsage = 14;
-  let ramUsage = 180;
+  let activeCalls = 0;
+  let activeExtensions = 0;
+  let cpuUsage = 0;
+  let ramUsage = 0;
   
   // Historical data for sparklines
-  let callHistory = Array(20).fill(12).map(() => 10 + Math.random() * 10);
-  let cpuHistory = Array(20).fill(14).map(() => 10 + Math.random() * 8);
-  let ramHistory = Array(20).fill(180).map(() => 170 + Math.random() * 20);
-
-  let interval: ReturnType<typeof setInterval>;
-  let isApiConnected = true;
-
-  onMount(() => {
-    interval = setInterval(async () => {
-      try {
-        const res = await fetch("http://localhost:8081/health");
-        if (!res.ok) throw new Error("Offline");
-        isApiConnected = true;
-        activeCalls = Math.max(0, activeCalls + Math.floor(Math.random() * 5) - 2);
-      } catch (e) {
-        isApiConnected = false;
-        // High-fidelity fallback simulation
-        activeCalls = Math.max(0, Math.min(50, activeCalls + Math.floor(Math.random() * 7) - 3));
-        cpuUsage = Math.max(2, Math.min(100, cpuUsage + Math.floor(Math.random() * 9) - 4));
-        ramUsage = Math.max(150, Math.min(500, ramUsage + Math.floor(Math.random() * 15) - 7));
-        activeExtensions = Math.max(40, Math.min(50, activeExtensions + Math.floor(Math.random() * 3) - 1));
-      }
-      
-      // Update sparkline arrays
-      callHistory = [...callHistory.slice(1), activeCalls];
-      cpuHistory = [...cpuHistory.slice(1), cpuUsage];
-      ramHistory = [...ramHistory.slice(1), ramUsage];
-    }, 1500);
-  });
-
-  onDestroy(() => {
-    if (interval) clearInterval(interval);
-  });
+  let callHistory = Array(20).fill(0);
+  let cpuHistory = Array(20).fill(0);
+  let ramHistory = Array(20).fill(0);
 
   // SVG Path generators
   $: callPoints = callHistory.map((val, i) => `${i * 5.26},${30 - (val / 60 * 30)}`).join(' ');
@@ -51,12 +21,7 @@
   $: ramPoints = ramHistory.map((val, i) => `${i * 5.26},${30 - (val / 500 * 30)}`).join(' ');
   $: ramPath = `M 0,30 L ${ramPoints} L 100,30 Z`;
 
-  const liveCallList = [
-    { id: '1', caller: 'Ext 1001', name: 'Alice Smith', callee: '+1 (555) 987-6543', duration: '04:12', state: 'Talking', codec: 'G.711u', avatar: 'bg-rose-500' },
-    { id: '2', caller: '+44 20 7946', name: 'External Caller', callee: 'IVR Main Menu', duration: '00:45', state: 'Menu', codec: 'Opus', avatar: 'bg-blue-500' },
-    { id: '3', caller: 'Ext 1045', name: 'Support Queue', callee: 'Ext 1002', duration: '12:04', state: 'Talking', codec: 'G.722', avatar: 'bg-amber-500' },
-    { id: '4', caller: '+1 (800) 555', name: 'Toll Free', callee: 'Queue: Sales', duration: '02:10', state: 'Waiting', codec: 'G.711a', avatar: 'bg-emerald-500' },
-  ];
+  let liveCallList = [];
 </script>
 
 <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">
@@ -65,12 +30,7 @@
     <div>
       <h1 class="text-4xl font-black tracking-tighter text-white mb-2 flex items-center">
         System Overview
-        <div class="ml-4 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold tracking-widest uppercase flex items-center">
-          <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse mr-2"></div> 
-          {isApiConnected ? 'Connected' : 'Simulated'}
-        </div>
       </h1>
-      <p class="text-gray-400 text-sm font-medium">High-altitude telemetry and edge routing status.</p>
     </div>
     
     <div class="flex items-center space-x-3 bg-gray-900/50 p-1.5 rounded-xl border border-gray-800/50 backdrop-blur-xl">

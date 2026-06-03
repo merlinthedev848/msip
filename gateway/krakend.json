@@ -29,6 +29,11 @@
       "endpoint": "/api/v1/health",
       "method": "GET",
       "output_encoding": "json",
+      "input_headers": [
+        "Authorization",
+        "Content-Type",
+        "Accept"
+      ],
       "backend": [
         {
           "url_pattern": "/health",
@@ -44,6 +49,11 @@
     {
       "endpoint": "/api/v1/extensions",
       "method": "GET",
+      "input_headers": [
+        "Authorization",
+        "Content-Type",
+        "Accept"
+      ],
       "backend": [
         {
           "url_pattern": "/api/extensions",
@@ -54,6 +64,11 @@
     {
       "endpoint": "/api/v1/extensions",
       "method": "POST",
+      "input_headers": [
+        "Authorization",
+        "Content-Type",
+        "Accept"
+      ],
       "backend": [
         {
           "url_pattern": "/api/extensions",
@@ -65,6 +80,11 @@
     {
       "endpoint": "/api/v1/trunks",
       "method": "GET",
+      "input_headers": [
+        "Authorization",
+        "Content-Type",
+        "Accept"
+      ],
       "backend": [
         {
           "url_pattern": "/api/trunks",
@@ -75,6 +95,11 @@
     {
       "endpoint": "/api/v1/trunks",
       "method": "POST",
+      "input_headers": [
+        "Authorization",
+        "Content-Type",
+        "Accept"
+      ],
       "backend": [
         {
           "url_pattern": "/api/trunks",
@@ -86,6 +111,11 @@
     {
       "endpoint": "/api/v1/cdr",
       "method": "GET",
+      "input_headers": [
+        "Authorization",
+        "Content-Type",
+        "Accept"
+      ],
       "backend": [
         {
           "url_pattern": "/api/cdr",
@@ -96,6 +126,11 @@
     {
       "endpoint": "/api/v1/ivrs",
       "method": "GET",
+      "input_headers": [
+        "Authorization",
+        "Content-Type",
+        "Accept"
+      ],
       "backend": [
         {
           "url_pattern": "/api/ivrs",
@@ -106,6 +141,11 @@
     {
       "endpoint": "/api/v1/ivrs",
       "method": "POST",
+      "input_headers": [
+        "Authorization",
+        "Content-Type",
+        "Accept"
+      ],
       "backend": [
         {
           "url_pattern": "/api/ivrs",
@@ -117,6 +157,11 @@
     {
       "endpoint": "/api/v1/auth/login",
       "method": "POST",
+      "input_headers": [
+        "Authorization",
+        "Content-Type",
+        "Accept"
+      ],
       "backend": [
         {
           "url_pattern": "/api/auth/login",
@@ -128,6 +173,11 @@
     {
       "endpoint": "/api/v1/users",
       "method": "GET",
+      "input_headers": [
+        "Authorization",
+        "Content-Type",
+        "Accept"
+      ],
       "backend": [
         {
           "url_pattern": "/api/users",
@@ -138,6 +188,11 @@
     {
       "endpoint": "/api/v1/users",
       "method": "POST",
+      "input_headers": [
+        "Authorization",
+        "Content-Type",
+        "Accept"
+      ],
       "backend": [
         {
           "url_pattern": "/api/users",
@@ -149,6 +204,11 @@
     {
       "endpoint": "/api/v1/provisioning/{code}",
       "method": "GET",
+      "input_headers": [
+        "Authorization",
+        "Content-Type",
+        "Accept"
+      ],
       "backend": [
         {
           "url_pattern": "/api/provisioning/{code}",
