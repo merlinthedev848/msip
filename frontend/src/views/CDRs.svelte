@@ -82,6 +82,19 @@
                   {/if}
                 </td>
               </tr>
+              {#if cdr.Transcription}
+              <tr class="bg-indigo-900/10 border-b border-gray-800/50">
+                <td colspan="5" class="p-4 pl-8">
+                  <div class="flex items-start space-x-3">
+                    <svg class="w-5 h-5 text-indigo-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                    <div>
+                      <p class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-1">AI Dictation / Transcription</p>
+                      <p class="text-sm text-gray-300 italic">"{cdr.Transcription}"</p>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              {/if}
             {/each}
           {/if}
         </tbody>

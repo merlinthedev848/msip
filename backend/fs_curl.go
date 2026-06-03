@@ -107,6 +107,21 @@ func handleDialplan(c *gin.Context) {
 	}
 
 	xml += `
+      <!-- AI Dictation / Transcription Service -->
+      <extension name="ai_dictation">
+        <condition field="destination_number" expression="^\*88$">
+          <action application="answer"/>
+          <!-- Play a 1-second beep (800Hz) to signal start of recording -->
+          <action application="playback" data="tone_stream://%(1000,0,800)"/>
+          <action application="set" data="playback_terminators=#"/>
+          <!-- Record the audio (max 60 seconds) to the shared volume -->
+          <action application="record" data="/usr/local/freeswitch/recordings/${uuid}_dictation.wav 60"/>
+          <!-- Play a double beep to signal completion -->
+          <action application="playback" data="tone_stream://%(200,50,800);%(200,0,800)"/>
+          <action application="hangup"/>
+        </condition>
+      </extension>
+
       <!-- Local Extension Routing with Voicemail -->
       <extension name="local_extension">
         <condition field="destination_number" expression="^(\d{2,5})$">

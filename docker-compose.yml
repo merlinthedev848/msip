@@ -21,6 +21,8 @@ services:
     container_name: pbx_backend
     environment:
       - DB_DSN=postgres://${DB_USER:-pbxuser}:${DB_PASS:-pbxpass}@postgres:5432/${DB_NAME:-pbx}?sslmode=disable
+    volumes:
+      - pbx_recordings:/var/lib/pbx/recordings
     depends_on:
       - postgres
     networks:
@@ -59,6 +61,7 @@ services:
     container_name: pbx_freeswitch
     volumes:
       - ./telephony-core/freeswitch.xml:/usr/local/freeswitch/conf/freeswitch.xml:ro
+      - pbx_recordings:/usr/local/freeswitch/recordings
     ports:
       - "5066:5066"
       - "7443:7443"
@@ -142,6 +145,7 @@ services:
 volumes:
   pgdata:
   homer_pgdata:
+  pbx_recordings:
 
 networks:
   internal:

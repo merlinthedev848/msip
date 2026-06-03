@@ -61,6 +61,7 @@ type CDR struct {
 	Billsec        int    `gorm:"default:0"` // Answered duration
 	HangupCause    string `gorm:"size:100"`
 	UUID           string `gorm:"size:100;uniqueIndex"` // Call UUID
+	Transcription  string `gorm:"type:text"` // Stores AI text dictation/transcription
 }
 
 // IVRMenu defines an Auto Attendant menu
