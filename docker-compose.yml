@@ -98,7 +98,7 @@ services:
     ports:
       - "9060:9060/udp"
       - "9060:9060/tcp"
-    command: -homerapp homer-app:9080 -dbdriver postgres -dbuser homer -dbpass homer -dbaddr homer-db:5432 -dbname homer_data -dbdatatable homer_data
+    command: ./heplify-server -homerapp homer-app:9080 -dbdriver postgres -dbuser homer -dbpass homer -dbaddr homer-db:5432 -dbname homer_data -dbdatatable homer_data
     depends_on:
       - homer-db
     networks:
