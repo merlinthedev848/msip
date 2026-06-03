@@ -1,0 +1,15 @@
+<configuration name="xml_curl.conf" description="cURL XML Gateway">
+  <bindings>
+    <binding name="go_backend">
+      <param name="gateway-url" value="http://pbx_backend:8081/fs" bindings="directory|dialplan"/>
+      <!-- <param name="gateway-credentials" value="user:password"/> -->
+      <!-- <param name="auth-scheme" value="basic"/> -->
+      <param name="disable-100-continue" value="true"/>
+      <!-- Enable debugging for this demo so we can see the requests in FS console -->
+      <param name="enable-post-var" value="section"/>
+      <param name="enable-post-var" value="user"/>
+      <param name="enable-post-var" value="domain"/>
+      <param name="enable-post-var" value="Caller-Destination-Number"/>
+    </binding>
+  </bindings>
+</configuration>

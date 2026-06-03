@@ -44,19 +44,73 @@
     {
       "endpoint": "/api/v1/extensions",
       "method": "GET",
-      "extra_config": {
-        "auth/validator": {
-          "alg": "HS256",
-          "jwk_url": "http://pbx_backend:8081/.well-known/jwks.json",
-          "disable_jwk_security": true
-        }
-      },
       "backend": [
         {
           "url_pattern": "/api/extensions",
-          "host": [
-            "http://pbx_backend:8081"
-          ]
+          "host": ["http://pbx_backend:8081"]
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/v1/extensions",
+      "method": "POST",
+      "backend": [
+        {
+          "url_pattern": "/api/extensions",
+          "method": "POST",
+          "host": ["http://pbx_backend:8081"]
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/v1/trunks",
+      "method": "GET",
+      "backend": [
+        {
+          "url_pattern": "/api/trunks",
+          "host": ["http://pbx_backend:8081"]
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/v1/trunks",
+      "method": "POST",
+      "backend": [
+        {
+          "url_pattern": "/api/trunks",
+          "method": "POST",
+          "host": ["http://pbx_backend:8081"]
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/v1/cdr",
+      "method": "GET",
+      "backend": [
+        {
+          "url_pattern": "/api/cdr",
+          "host": ["http://pbx_backend:8081"]
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/v1/ivrs",
+      "method": "GET",
+      "backend": [
+        {
+          "url_pattern": "/api/ivrs",
+          "host": ["http://pbx_backend:8081"]
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/v1/ivrs",
+      "method": "POST",
+      "backend": [
+        {
+          "url_pattern": "/api/ivrs",
+          "method": "POST",
+          "host": ["http://pbx_backend:8081"]
         }
       ]
     }

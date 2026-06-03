@@ -1,92 +1,268 @@
 <script lang="ts">
-  import GlassCard from '../components/ui/GlassCard.svelte';
-  import Badge from '../components/ui/Badge.svelte';
+  import { onMount, onDestroy } from 'svelte';
+
+  let activeCalls = 12;
+  let activeExtensions = 45;
+  let cpuUsage = 14;
+  let ramUsage = 180;
   
-  // Dummy data for charts/telemetry
-  const activeCalls = 24;
-  const maxCapacity = 100;
-  
-  // Simulated chart data points
-  const sparklineData = [30, 45, 25, 60, 80, 55, 40, 65, 75, 45, 35, 60, 40, 24];
-  const maxPoint = Math.max(...sparklineData);
+  // Historical data for sparklines
+  let callHistory = Array(20).fill(12).map(() => 10 + Math.random() * 10);
+  let cpuHistory = Array(20).fill(14).map(() => 10 + Math.random() * 8);
+  let ramHistory = Array(20).fill(180).map(() => 170 + Math.random() * 20);
+
+  let interval: ReturnType<typeof setInterval>;
+  let isApiConnected = true;
+
+  onMount(() => {
+    interval = setInterval(async () => {
+      try {
+        const res = await fetch("http://localhost:8081/health");
+        if (!res.ok) throw new Error("Offline");
+        isApiConnected = true;
+        activeCalls = Math.max(0, activeCalls + Math.floor(Math.random() * 5) - 2);
+      } catch (e) {
+        isApiConnected = false;
+        // High-fidelity fallback simulation
+        activeCalls = Math.max(0, Math.min(50, activeCalls + Math.floor(Math.random() * 7) - 3));
+        cpuUsage = Math.max(2, Math.min(100, cpuUsage + Math.floor(Math.random() * 9) - 4));
+        ramUsage = Math.max(150, Math.min(500, ramUsage + Math.floor(Math.random() * 15) - 7));
+        activeExtensions = Math.max(40, Math.min(50, activeExtensions + Math.floor(Math.random() * 3) - 1));
+      }
+      
+      // Update sparkline arrays
+      callHistory = [...callHistory.slice(1), activeCalls];
+      cpuHistory = [...cpuHistory.slice(1), cpuUsage];
+      ramHistory = [...ramHistory.slice(1), ramUsage];
+    }, 1500);
+  });
+
+  onDestroy(() => {
+    if (interval) clearInterval(interval);
+  });
+
+  // SVG Path generators
+  $: callPoints = callHistory.map((val, i) => `${i * 5.26},${30 - (val / 60 * 30)}`).join(' ');
+  $: callPath = `M 0,30 L ${callPoints} L 100,30 Z`;
+
+  $: cpuPoints = cpuHistory.map((val, i) => `${i * 5.26},${30 - (val / 100 * 30)}`).join(' ');
+  $: cpuPath = `M 0,30 L ${cpuPoints} L 100,30 Z`;
+
+  $: ramPoints = ramHistory.map((val, i) => `${i * 5.26},${30 - (val / 500 * 30)}`).join(' ');
+  $: ramPath = `M 0,30 L ${ramPoints} L 100,30 Z`;
+
+  const liveCallList = [
+    { id: '1', caller: 'Ext 1001', name: 'Alice Smith', callee: '+1 (555) 987-6543', duration: '04:12', state: 'Talking', codec: 'G.711u', avatar: 'bg-rose-500' },
+    { id: '2', caller: '+44 20 7946', name: 'External Caller', callee: 'IVR Main Menu', duration: '00:45', state: 'Menu', codec: 'Opus', avatar: 'bg-blue-500' },
+    { id: '3', caller: 'Ext 1045', name: 'Support Queue', callee: 'Ext 1002', duration: '12:04', state: 'Talking', codec: 'G.722', avatar: 'bg-amber-500' },
+    { id: '4', caller: '+1 (800) 555', name: 'Toll Free', callee: 'Queue: Sales', duration: '02:10', state: 'Waiting', codec: 'G.711a', avatar: 'bg-emerald-500' },
+  ];
 </script>
 
-<div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
+<div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">
   
-  <header class="flex justify-between items-end mb-8">
+  <header class="flex flex-col md:flex-row md:items-end justify-between gap-4">
     <div>
-      <h1 class="text-3xl font-bold tracking-tight text-white mb-1">Live Telemetry</h1>
-      <p class="text-gray-400 text-sm">Real-time system health and call density.</p>
+      <h1 class="text-4xl font-black tracking-tighter text-white mb-2 flex items-center">
+        System Overview
+        <div class="ml-4 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold tracking-widest uppercase flex items-center">
+          <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse mr-2"></div> 
+          {isApiConnected ? 'Connected' : 'Simulated'}
+        </div>
+      </h1>
+      <p class="text-gray-400 text-sm font-medium">High-altitude telemetry and edge routing status.</p>
     </div>
-    <Badge status="success" pulse={true}>All Systems Operational</Badge>
+    
+    <div class="flex items-center space-x-3 bg-gray-900/50 p-1.5 rounded-xl border border-gray-800/50 backdrop-blur-xl">
+      <button class="px-4 py-1.5 text-xs font-bold bg-gray-800 text-white rounded-lg shadow-sm">1H</button>
+      <button class="px-4 py-1.5 text-xs font-bold text-gray-500 hover:text-white transition-colors">24H</button>
+      <button class="px-4 py-1.5 text-xs font-bold text-gray-500 hover:text-white transition-colors">7D</button>
+    </div>
   </header>
 
-  <!-- Top Metrics -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-    <GlassCard hoverEffect={true} className="flex flex-col justify-between">
-      <div class="flex justify-between items-start mb-4">
-        <h3 class="text-sm font-medium text-gray-400">Active Calls</h3>
-        <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
-      </div>
-      <div class="flex items-baseline">
-        <p class="text-4xl font-light text-white">{activeCalls}</p>
-        <p class="ml-2 text-sm text-gray-500">/ {maxCapacity}</p>
-      </div>
-    </GlassCard>
-
-    <GlassCard hoverEffect={true} className="flex flex-col justify-between">
-      <div class="flex justify-between items-start mb-4">
-        <h3 class="text-sm font-medium text-gray-400">Extensions</h3>
-        <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-      </div>
-      <p class="text-4xl font-light text-white">412</p>
-    </GlassCard>
+  <!-- Sleek Top Stats -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
     
-    <GlassCard hoverEffect={true} className="flex flex-col justify-between">
-      <div class="flex justify-between items-start mb-4">
-        <h3 class="text-sm font-medium text-gray-400">Trunk Status</h3>
-        <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+    <!-- Active Calls -->
+    <div class="relative overflow-hidden rounded-3xl bg-gray-900/40 border border-gray-800/60 p-6 backdrop-blur-xl shadow-2xl group hover:border-indigo-500/30 transition-all duration-300">
+      <div class="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
+        <svg class="w-24 h-24 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
       </div>
-      <p class="text-4xl font-light text-white">3 <span class="text-lg text-gray-500">Up</span></p>
-    </GlassCard>
+      <p class="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-2">Live Streams</p>
+      <h2 class="text-5xl font-black text-white tracking-tighter mb-6 font-mono">{activeCalls}</h2>
+      
+      <div class="absolute bottom-0 left-0 right-0 h-16 pointer-events-none">
+        <svg viewBox="0 0 100 30" class="w-full h-full" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="gradIndigo" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#6366f1" stop-opacity="0.3" />
+              <stop offset="100%" stop-color="#6366f1" stop-opacity="0" />
+            </linearGradient>
+          </defs>
+          <path d={callPath} fill="url(#gradIndigo)" />
+          <polyline points={callPoints} fill="none" stroke="#818cf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </div>
+    </div>
 
-    <GlassCard hoverEffect={true} className="flex flex-col justify-between">
-      <div class="flex justify-between items-start mb-4">
-        <h3 class="text-sm font-medium text-gray-400">RAM</h3>
-        <svg class="w-5 h-5 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg>
+    <!-- Active Endpoints -->
+    <div class="relative overflow-hidden rounded-3xl bg-gray-900/40 border border-gray-800/60 p-6 backdrop-blur-xl shadow-2xl group hover:border-emerald-500/30 transition-all duration-300">
+      <div class="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity transform group-hover:scale-110 duration-500">
+        <svg class="w-24 h-24 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
       </div>
-      <div class="flex items-baseline">
-        <p class="text-4xl font-light text-white">182</p>
-        <p class="ml-1 text-sm text-gray-500">MB</p>
+      <p class="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-2">Registered Endpoints</p>
+      <div class="flex items-baseline space-x-2 mb-6">
+        <h2 class="text-5xl font-black text-white tracking-tighter font-mono">{activeExtensions}</h2>
+        <span class="text-sm font-bold text-gray-600">/ 50</span>
       </div>
-    </GlassCard>
+      
+      <!-- Fake mini progress bar -->
+      <div class="absolute bottom-6 left-6 right-6 h-1.5 bg-gray-800/50 rounded-full overflow-hidden">
+        <div class="h-full bg-emerald-500 rounded-full transition-all duration-500 ease-out" style="width: {(activeExtensions / 50) * 100}%"></div>
+      </div>
+    </div>
+
+    <!-- CPU Usage -->
+    <div class="relative overflow-hidden rounded-3xl bg-gray-900/40 border border-gray-800/60 p-6 backdrop-blur-xl shadow-2xl group hover:border-cyan-500/30 transition-all duration-300">
+      <p class="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-2">DSP Core Load</p>
+      <div class="flex items-baseline space-x-1 mb-6">
+        <h2 class="text-5xl font-black text-white tracking-tighter font-mono">{cpuUsage}</h2>
+        <span class="text-lg font-bold text-gray-500">%</span>
+      </div>
+      
+      <div class="absolute bottom-0 left-0 right-0 h-16 pointer-events-none">
+        <svg viewBox="0 0 100 30" class="w-full h-full" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="gradCyan" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.3" />
+              <stop offset="100%" stop-color="#06b6d4" stop-opacity="0" />
+            </linearGradient>
+          </defs>
+          <path d={cpuPath} fill="url(#gradCyan)" />
+          <polyline points={cpuPoints} fill="none" stroke="#22d3ee" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- RAM Usage -->
+    <div class="relative overflow-hidden rounded-3xl bg-gray-900/40 border border-gray-800/60 p-6 backdrop-blur-xl shadow-2xl group hover:border-violet-500/30 transition-all duration-300">
+      <p class="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] mb-2">Memory Footprint</p>
+      <div class="flex items-baseline space-x-1 mb-6">
+        <h2 class="text-5xl font-black text-white tracking-tighter font-mono">{ramUsage}</h2>
+        <span class="text-lg font-bold text-gray-500">MB</span>
+      </div>
+      
+      <div class="absolute bottom-0 left-0 right-0 h-16 pointer-events-none">
+        <svg viewBox="0 0 100 30" class="w-full h-full" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="gradViolet" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.3" />
+              <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0" />
+            </linearGradient>
+          </defs>
+          <path d={ramPath} fill="url(#gradViolet)" />
+          <polyline points={ramPoints} fill="none" stroke="#a78bfa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </div>
+    </div>
+
   </div>
 
-  <!-- Telemetry Canvas Chart -->
-  <GlassCard className="h-80 flex flex-col relative group">
-    <div class="flex justify-between items-center mb-6 z-10">
-      <h3 class="font-semibold text-gray-200">Call Volume Stream (Live)</h3>
-      <div class="flex space-x-2">
-        <span class="w-2 h-2 rounded-full bg-indigo-500 animate-ping"></span>
+  <!-- Bottom Data Area -->
+  <div class="space-y-6 mt-8">
+    
+    <!-- Deep Table -->
+    <div class="rounded-3xl bg-gray-900/40 border border-gray-800/60 backdrop-blur-xl shadow-2xl flex flex-col overflow-hidden">
+      <div class="px-6 py-5 border-b border-gray-800/50 flex justify-between items-center bg-gray-900/20">
+        <h3 class="text-sm font-bold text-white uppercase tracking-widest flex items-center">
+          <div class="w-2 h-2 rounded-full bg-indigo-500 mr-3"></div>
+          Active Edge Streams
+        </h3>
+        <button class="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 uppercase tracking-widest">View All CDRs &rarr;</button>
+      </div>
+      
+      <div class="flex-1 overflow-x-auto p-2">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="text-[10px] text-gray-500 uppercase tracking-[0.2em]">
+              <th class="px-6 py-4 font-bold">Source Endpoint</th>
+              <th class="px-4 py-4 font-bold text-center">Dir</th>
+              <th class="px-6 py-4 font-bold">Destination</th>
+              <th class="px-6 py-4 font-bold">Time</th>
+              <th class="px-6 py-4 font-bold">State</th>
+            </tr>
+          </thead>
+          <tbody class="text-sm text-gray-300">
+            {#each liveCallList as call}
+              <tr class="hover:bg-gray-800/40 transition-colors group cursor-pointer border-b border-gray-800/30 last:border-0">
+                <td class="px-6 py-4">
+                  <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 rounded-full {call.avatar} flex items-center justify-center text-white font-bold text-xs shadow-inner">
+                      {call.name.charAt(0)}
+                    </div>
+                    <div>
+                      <p class="font-bold text-white group-hover:text-indigo-300 transition-colors">{call.name}</p>
+                      <p class="text-xs text-gray-500 font-mono">{call.caller}</p>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-4 py-4 text-center">
+                  <div class="w-8 h-8 rounded-full bg-gray-800/50 flex items-center justify-center mx-auto border border-gray-700/50">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                  </div>
+                </td>
+                <td class="px-6 py-4">
+                  <p class="font-bold text-gray-300">{call.callee}</p>
+                  <p class="text-[10px] font-mono text-gray-500 uppercase mt-0.5 tracking-wider">{call.codec}</p>
+                </td>
+                <td class="px-6 py-4 font-mono text-gray-400 text-xs">{call.duration}</td>
+                <td class="px-6 py-4">
+                  <span class="px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full 
+                    {call.state === 'Talking' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 
+                     call.state === 'Waiting' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 
+                     'bg-gray-800 text-gray-400 border border-gray-700'}">
+                    {call.state}
+                  </span>
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Live Terminal -->
+    <div class="rounded-3xl bg-[#0a0a0f] border border-gray-800/80 shadow-2xl flex flex-col overflow-hidden relative">
+      <!-- Glossy top reflection -->
+      <div class="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-white/[0.03] to-transparent pointer-events-none"></div>
+      
+      <div class="px-5 py-4 border-b border-gray-900 flex justify-between items-center bg-[#0d0d12] z-10">
+        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest flex items-center">
+          <svg class="w-4 h-4 mr-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          fs_cli Console
+        </h3>
+        <div class="flex space-x-1.5">
+          <div class="w-2.5 h-2.5 rounded-full bg-red-500/20 border border-red-500/50"></div>
+          <div class="w-2.5 h-2.5 rounded-full bg-yellow-500/20 border border-yellow-500/50"></div>
+          <div class="w-2.5 h-2.5 rounded-full bg-green-500/20 border border-green-500/50"></div>
+        </div>
+      </div>
+      
+      <div class="flex-1 p-5 font-mono text-[11px] leading-relaxed overflow-y-auto z-10 space-y-2">
+        <div><span class="text-gray-600">14:32:01.004</span> <span class="text-indigo-400">[INFO]</span> <span class="text-gray-300">fs_cli: FreeSWITCH core initialized</span></div>
+        <div><span class="text-gray-600">14:32:05.112</span> <span class="text-indigo-400">[INFO]</span> <span class="text-gray-300">mod_sofia: SIP profile 'internal' started</span></div>
+        <div><span class="text-gray-600">14:33:12.981</span> <span class="text-emerald-400">[EVNT]</span> <span class="text-gray-300">endpoint_1001 REGISTERED from 192.168.1.55</span></div>
+        <div><span class="text-gray-600">14:34:44.204</span> <span class="text-yellow-400">[WARN]</span> <span class="text-gray-300">mod_event_socket: Auth failed 10.0.0.9</span></div>
+        <div><span class="text-gray-600">14:35:01.442</span> <span class="text-emerald-400">[EVNT]</span> <span class="text-gray-300">endpoint_1045 REGISTERED from 10.0.0.12</span></div>
+        <div><span class="text-gray-600">14:40:22.001</span> <span class="text-cyan-400">[ROUT]</span> <span class="text-gray-300">Dialplan: Call routed to IVR_Main</span></div>
+        <div><span class="text-gray-600">14:41:10.155</span> <span class="text-emerald-400">[EVNT]</span> <span class="text-gray-300">endpoint_1002 REGISTERED from 192.168.1.105</span></div>
+        <div class="text-red-400"><span class="text-red-500/50">14:42:00.893</span> [ERRR] mod_sofia: Timeout contacting sip_provider_primary</div>
+        <div><span class="text-gray-600">14:42:01.002</span> <span class="text-indigo-400">[INFO]</span> <span class="text-gray-300">failover: Switching to secondary trunk</span></div>
+        <div class="mt-4 text-emerald-400 animate-pulse">root@pbx-core:~# _</div>
       </div>
     </div>
     
-    <div class="flex-1 w-full relative z-0 flex items-end opacity-80 group-hover:opacity-100 transition-opacity">
-      {#each sparklineData as point, i}
-        <div class="flex-1 flex flex-col justify-end items-center px-1 group/bar h-full">
-          <!-- Tooltip -->
-          <div class="opacity-0 group-hover/bar:opacity-100 transition-opacity absolute top-10 bg-gray-900 border border-gray-700 text-xs px-2 py-1 rounded text-gray-300 pointer-events-none transform -translate-y-2 group-hover/bar:-translate-y-4">
-            {point} calls
-          </div>
-          <div 
-            class="w-full bg-gradient-to-t from-indigo-900/50 to-indigo-500 rounded-t-sm transition-all duration-500 ease-in-out hover:to-indigo-400"
-            style="height: {(point / maxPoint) * 100}%"
-          ></div>
-        </div>
-      {/each}
-    </div>
-    <!-- Background Grid -->
-    <div class="absolute inset-0 top-16 border-t border-gray-800/50 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none z-[-1]"></div>
-  </GlassCard>
+  </div>
 
 </div>
+

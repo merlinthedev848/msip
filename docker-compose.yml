@@ -59,8 +59,12 @@ services:
     container_name: pbx_freeswitch
     volumes:
       - ./telephony-core/freeswitch.xml:/usr/local/freeswitch/conf/freeswitch.xml:ro
+    ports:
+      - "5066:5066"
+      - "7443:7443"
     networks:
       - internal
+      - external
     restart: unless-stopped
 
   frontend:
@@ -74,8 +78,70 @@ services:
       - external
     restart: unless-stopped
 
+  homer-db:
+    image: postgres:15-alpine
+    container_name: pbx_homer_db
+    environment:
+      - POSTGRES_USER=homer
+      - POSTGRES_PASSWORD=homer
+      - POSTGRES_DB=homer_data
+    networks:
+      - internal
+    restart: unless-stopped
+
+  heplify-server:
+    image: sipcapture/heplify-server:latest
+    container_name: pbx_heplify_server
+    ports:
+      - "9060:9060/udp"
+      - "9060:9060/tcp"
+    command: -homerapp homer-app:9080 -dbdriver postgres -dbuser homer -dbpass homer -dbaddr homer-db:5432 -dbname homer_data -dbdatatable homer_data
+    depends_on:
+      - homer-db
+    networks:
+      - internal
+    restart: unless-stopped
+
+  homer-app:
+    image: sipcapture/homer-app:latest
+    container_name: pbx_homer_app
+    environment:
+      - DB_HOST=homer-db
+      - DB_USER=homer
+      - DB_PASS=homer
+      - DB_NAME=homer_data
+    ports:
+      - "9080:80"
+    depends_on:
+      - homer-db
+    networks:
+      - internal
+      - external
+    restart: unless-stopped
+
+  coturn:
+    image: coturn/coturn:latest
+    container_name: pbx_coturn
+    command: >
+      --log-file=stdout
+      --listening-port=3478
+      --listening-ip=0.0.0.0
+      --external-ip=$${EXTERNAL_IP:-127.0.0.1}
+      --min-port=49152
+      --max-port=65535
+      --user=pbxuser:pbxpass
+      --realm=pbx.local
+      --verbose
+    ports:
+      - "3478:3478/udp"
+      - "3478:3478/tcp"
+    networks:
+      - external
+    restart: unless-stopped
+
 volumes:
   pgdata:
+  homer_pgdata:
 
 networks:
   internal:

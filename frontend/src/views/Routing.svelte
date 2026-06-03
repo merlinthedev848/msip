@@ -3,7 +3,7 @@
   import Button from '../components/ui/Button.svelte';
 </script>
 
-<div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
+<div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">
   
   <header class="flex justify-between items-end mb-8">
     <div>
@@ -80,3 +80,4 @@
   </div>
 
 </div>
+

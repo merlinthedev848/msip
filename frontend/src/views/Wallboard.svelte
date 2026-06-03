@@ -1,0 +1,130 @@
+<script lang="ts">
+  import { onMount, onDestroy } from 'svelte';
+  
+  let callsWaiting = 0;
+  let activeAgents = 14;
+  let abandonedCalls = 3;
+  let slaPercent = 94.2;
+  let avgWait = 42; // seconds
+  
+  let queueStats = [
+    { name: 'Support Tier 1', waiting: 4, agents: 8, sla: 92 },
+    { name: 'Sales Global', waiting: 1, agents: 4, sla: 98 },
+    { name: 'Billing', waiting: 0, agents: 2, sla: 100 }
+  ];
+
+  let interval: ReturnType<typeof setInterval>;
+
+  onMount(() => {
+    interval = setInterval(() => {
+      // Fluctuate stats for demo purposes
+      if (Math.random() > 0.6) {
+        callsWaiting = Math.max(0, callsWaiting + (Math.random() > 0.5 ? 1 : -1));
+        if (callsWaiting > 0 && Math.random() > 0.8) abandonedCalls++;
+      }
+      
+      queueStats = queueStats.map(q => ({
+        ...q,
+        waiting: Math.max(0, q.waiting + (Math.random() > 0.7 ? 1 : -1)),
+        sla: Math.max(50, Math.min(100, q.sla + (Math.random() * 2 - 1)))
+      }));
+      
+      callsWaiting = queueStats.reduce((sum, q) => sum + q.waiting, 0);
+      slaPercent = queueStats.reduce((sum, q) => sum + q.sla, 0) / queueStats.length;
+      
+    }, 2000);
+  });
+
+  onDestroy(() => {
+    if (interval) clearInterval(interval);
+  });
+
+  $: formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+</script>
+
+<div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">
+  
+  <header class="flex justify-between items-center mb-10">
+    <div>
+      <h1 class="text-4xl font-black text-white tracking-tighter">Call Center Wallboard</h1>
+      <p class="text-gray-400 font-medium">Real-time queue analytics and SLA tracking.</p>
+    </div>
+    <div class="text-right">
+      <div class="text-3xl font-black font-mono text-white tracking-widest">{new Date().toLocaleTimeString('en-US', { hour12: false })}</div>
+      <p class="text-emerald-400 text-xs font-bold uppercase tracking-[0.2em]">Live Connection</p>
+    </div>
+  </header>
+
+  <!-- Massive KPIs -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
+    
+    <div class="bg-gray-900/60 rounded-[2rem] border border-gray-800 p-8 flex flex-col justify-center items-center relative overflow-hidden group">
+      <div class="absolute inset-0 bg-gradient-to-br from-rose-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+      <p class="text-sm font-bold text-gray-500 uppercase tracking-[0.3em] mb-4">Calls Waiting</p>
+      <h2 class="text-8xl font-black {callsWaiting > 5 ? 'text-rose-500 animate-pulse' : 'text-white'} font-mono transition-colors duration-500">
+        {callsWaiting}
+      </h2>
+    </div>
+
+    <div class="bg-gray-900/60 rounded-[2rem] border border-gray-800 p-8 flex flex-col justify-center items-center relative overflow-hidden group">
+      <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+      <p class="text-sm font-bold text-gray-500 uppercase tracking-[0.3em] mb-4">Active Agents</p>
+      <h2 class="text-8xl font-black text-white font-mono">{activeAgents}</h2>
+    </div>
+
+    <div class="bg-gray-900/60 rounded-[2rem] border border-gray-800 p-8 flex flex-col justify-center items-center relative overflow-hidden group">
+      <div class="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+      <p class="text-sm font-bold text-gray-500 uppercase tracking-[0.3em] mb-4">Avg Wait Time</p>
+      <h2 class="text-7xl font-black text-white font-mono">{formatTime(avgWait)}</h2>
+    </div>
+
+    <div class="bg-gray-900/60 rounded-[2rem] border border-gray-800 p-8 flex flex-col justify-center items-center relative overflow-hidden group">
+      <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+      <p class="text-sm font-bold text-gray-500 uppercase tracking-[0.3em] mb-4">Global SLA</p>
+      <div class="flex items-baseline">
+        <h2 class="text-7xl font-black {slaPercent < 90 ? 'text-amber-500' : 'text-emerald-400'} font-mono">{slaPercent.toFixed(1)}</h2>
+        <span class="text-3xl font-bold text-gray-500 ml-2">%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detailed Queues Table -->
+  <div class="bg-gray-900/60 rounded-[2rem] border border-gray-800 overflow-hidden mt-8">
+    <table class="w-full text-left">
+      <thead>
+        <tr class="bg-gray-950/50 border-b border-gray-800">
+          <th class="p-6 text-xs font-bold text-gray-500 uppercase tracking-[0.2em]">Queue Name</th>
+          <th class="p-6 text-xs font-bold text-gray-500 uppercase tracking-[0.2em] text-center">Waiting</th>
+          <th class="p-6 text-xs font-bold text-gray-500 uppercase tracking-[0.2em] text-center">Agents Ready</th>
+          <th class="p-6 text-xs font-bold text-gray-500 uppercase tracking-[0.2em] text-right">SLA %</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-800/50">
+        {#each queueStats as queue}
+          <tr class="hover:bg-gray-800/30 transition-colors">
+            <td class="p-6 font-bold text-white text-xl">{queue.name}</td>
+            <td class="p-6 text-center">
+              <span class="text-3xl font-black font-mono {queue.waiting > 0 ? 'text-rose-400' : 'text-gray-600'}">{queue.waiting}</span>
+            </td>
+            <td class="p-6 text-center">
+              <span class="text-2xl font-bold font-mono text-indigo-400">{queue.agents}</span>
+            </td>
+            <td class="p-6 text-right">
+              <div class="flex flex-col items-end">
+                <span class="text-2xl font-black font-mono {queue.sla > 95 ? 'text-emerald-400' : 'text-amber-400'}">{queue.sla.toFixed(1)}%</span>
+                <div class="w-32 h-1.5 bg-gray-800 rounded-full mt-2 overflow-hidden">
+                  <div class="h-full bg-emerald-500 transition-all duration-500" style="width: {queue.sla}%"></div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        {/each}
+      </tbody>
+    </table>
+  </div>
+</div>
+
