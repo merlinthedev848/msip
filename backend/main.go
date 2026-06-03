@@ -11,6 +11,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -294,6 +295,7 @@ func main() {
 			}
 			c.JSON(http.StatusCreated, user)
 		})
+		} // closes v1 group
 	}
 
 	port := os.Getenv("PORT")
