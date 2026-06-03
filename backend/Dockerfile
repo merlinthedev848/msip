@@ -2,12 +2,7 @@ FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 COPY . .
-RUN go mod tidy
-RUN go mod download
-
-COPY . .
-RUN go mod tidy
-RUN go build -o pbx-backend main.go
+RUN go build -mod=vendor -o pbx-backend main.go
 
 FROM alpine:latest
 WORKDIR /app
