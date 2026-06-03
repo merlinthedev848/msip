@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<document type="freeswitch/xml">
+  <section name="configuration" description="Various Configuration">
+    <configuration name="switch.conf" description="Core Configuration">
+      <settings>
+        <param name="rtp-start-port" value="16384"/>
+        <param name="rtp-end-port" value="32768"/>
+        <!-- Enable media bypass / pass-through for low CPU usage -->
+        <param name="inbound-bypass-media" value="true"/>
+      </settings>
+    </configuration>
+  </section>
+  <section name="dialplan" description="Regex/XML Dialplan">
+    <context name="default">
+      <extension name="echo_test">
+        <condition field="destination_number" expression="^9999$">
+          <action application="answer"/>
+          <action application="echo"/>
+        </condition>
+      </extension>
+    </context>
+  </section>
+</document>

@@ -1,0 +1,64 @@
+{
+  "$schema": "https://www.krakend.io/schema/v3.json",
+  "version": 3,
+  "name": "PBX API Gateway",
+  "port": 8080,
+  "timeout": "3000ms",
+  "cache_ttl": "300s",
+  "output_encoding": "json",
+  "extra_config": {
+    "telemetry/logging": {
+      "level": "INFO",
+      "prefix": "[KRAKEND]",
+      "syslog": false,
+      "stdout": true
+    },
+    "security/cors": {
+      "allow_origins": ["*"],
+      "allow_methods": ["GET", "POST", "PUT", "DELETE"],
+      "allow_headers": ["Origin", "Authorization", "Content-Type"]
+    },
+    "qos/ratelimit/router": {
+      "max_rate": 60,
+      "client_max_rate": 60,
+      "strategy": "ip"
+    }
+  },
+  "endpoints": [
+    {
+      "endpoint": "/api/v1/health",
+      "method": "GET",
+      "output_encoding": "json",
+      "backend": [
+        {
+          "url_pattern": "/health",
+          "encoding": "json",
+          "sd": "static",
+          "method": "GET",
+          "host": [
+            "http://pbx_backend:8081"
+          ]
+        }
+      ]
+    },
+    {
+      "endpoint": "/api/v1/extensions",
+      "method": "GET",
+      "extra_config": {
+        "auth/validator": {
+          "alg": "HS256",
+          "jwk_url": "http://pbx_backend:8081/.well-known/jwks.json",
+          "disable_jwk_security": true
+        }
+      },
+      "backend": [
+        {
+          "url_pattern": "/api/extensions",
+          "host": [
+            "http://pbx_backend:8081"
+          ]
+        }
+      ]
+    }
+  ]
+}

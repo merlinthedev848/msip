@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: pbx_db
+    environment:
+      POSTGRES_USER: ${DB_USER:-pbxuser}
+      POSTGRES_PASSWORD: ${DB_PASS:-pbxpass}
+      POSTGRES_DB: ${DB_NAME:-pbx}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - internal
+    restart: unless-stopped
+
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pbx_backend
+    environment:
+      - DB_DSN=postgres://${DB_USER:-pbxuser}:${DB_PASS:-pbxpass}@postgres:5432/${DB_NAME:-pbx}?sslmode=disable
+    depends_on:
+      - postgres
+    networks:
+      - internal
+    restart: unless-stopped
+
+  gateway:
+    image: devopsfaith/krakend:watch
+    container_name: pbx_gateway
+    volumes:
+      - ./gateway/krakend.json:/etc/krakend/krakend.json:ro
+    ports:
+      - "8080:8080"
+    depends_on:
+      - backend
+    networks:
+      - internal
+      - external
+    restart: unless-stopped
+
+  kamailio:
+    image: kamailio/kamailio:latest
+    container_name: pbx_kamailio
+    volumes:
+      - ./edge-proxy/kamailio.cfg:/etc/kamailio/kamailio.cfg:ro
+    ports:
+      - "5060:5060/udp"
+      - "5060:5060/tcp"
+    networks:
+      - external
+      - internal
+    restart: unless-stopped
+
+  freeswitch:
+    image: bettervoice/freeswitch-container:latest
+    container_name: pbx_freeswitch
+    volumes:
+      - ./telephony-core/freeswitch.xml:/usr/local/freeswitch/conf/freeswitch.xml:ro
+    networks:
+      - internal
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: pbx_frontend
+    ports:
+      - "80:80"
+    networks:
+      - external
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+
+networks:
+  internal:
+    internal: true
+  external:
