@@ -1,10 +1,19 @@
 <script lang="ts">
-  let rooms = [
-    { id: '8001', name: 'Boardroom A', users: 4, max: 10, duration: '45m 12s', host: 'Alice Smith', active: true },
-    { id: '8002', name: 'Sales Sync', users: 12, max: 50, duration: '12m 04s', host: 'Bob Jones', active: true },
-    { id: '8003', name: 'Dev Standup', users: 0, max: 25, duration: '0m', host: 'Charlie Day', active: false },
-    { id: '8004', name: 'Client Pitch: Stark Ind.', users: 3, max: 5, duration: '1h 05m', host: 'Diana Prince', active: true }
-  ];
+  import { onMount } from 'svelte';
+  let rooms = [];
+  onMount(async () => {
+    try {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/video-rooms`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        rooms = (data.video_rooms || []).map(r => ({
+          id: r.RoomCode, name: r.Name, users: 0, max: r.MaxUsers, duration: '0m', host: 'System', active: r.IsActive
+        }));
+      }
+    } catch (e) {}
+  });
 </script>
 
 <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">

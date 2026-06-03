@@ -98,3 +98,93 @@ type IVRChoice struct {
 	Action      string    `gorm:"size:50;not null"` // e.g. "menu-exec-app"
 	Destination string    `gorm:"size:255;not null"` // e.g. "transfer 1001 XML default"
 }
+
+// Voicemail stores recorded messages
+type Voicemail struct {
+	Base
+	TenantID  uuid.UUID `gorm:"type:uuid;not null"`
+	Extension string    `gorm:"size:50;not null"`
+	CallerID  string    `gorm:"size:100"`
+	Duration  int       `gorm:"default:0"`
+	FilePath  string    `gorm:"size:255;not null"`
+	IsRead    bool      `gorm:"default:false"`
+}
+
+// VideoRoom defines a WebRTC video conferencing room
+type VideoRoom struct {
+	Base
+	TenantID uuid.UUID `gorm:"type:uuid;not null"`
+	Name     string    `gorm:"size:100;not null"`
+	RoomCode string    `gorm:"size:50;uniqueIndex;not null"`
+	MaxUsers int       `gorm:"default:10"`
+	IsActive bool      `gorm:"default:true"`
+}
+
+// IPCamera defines an endpoint for surveillance video streams
+type IPCamera struct {
+	Base
+	TenantID uuid.UUID `gorm:"type:uuid;not null"`
+	Name     string    `gorm:"size:100;not null"`
+	RTSPUrl  string    `gorm:"size:255;not null"`
+	Location string    `gorm:"size:100"`
+}
+
+// TeamChat defines a messaging channel
+type TeamChat struct {
+	Base
+	TenantID uuid.UUID `gorm:"type:uuid;not null"`
+	Name     string    `gorm:"size:100;not null"`
+	Type     string    `gorm:"size:50;not null"` // "public", "private"
+}
+
+// SMSMessage stores inbound/outbound text messages
+type SMSMessage struct {
+	Base
+	TenantID  uuid.UUID `gorm:"type:uuid;not null"`
+	Direction string    `gorm:"size:20;not null"` // "inbound", "outbound"
+	Sender    string    `gorm:"size:50;not null"`
+	Receiver  string    `gorm:"size:50;not null"`
+	Body      string    `gorm:"type:text;not null"`
+}
+
+// APICredential stores external API access tokens
+type APICredential struct {
+	Base
+	TenantID uuid.UUID `gorm:"type:uuid;not null"`
+	Name     string    `gorm:"size:100;not null"`
+	TokenKey string    `gorm:"size:100;uniqueIndex;not null"`
+}
+
+// Webhook defines an HTTP callback for system events
+type Webhook struct {
+	Base
+	TenantID uuid.UUID `gorm:"type:uuid;not null"`
+	Event    string    `gorm:"size:100;not null"`
+	TargetUrl string   `gorm:"size:255;not null"`
+}
+
+// ThrottleRule limits API or SIP requests
+type ThrottleRule struct {
+	Base
+	TenantID uuid.UUID `gorm:"type:uuid;not null"`
+	Name     string    `gorm:"size:100;not null"`
+	Rate     int       `gorm:"default:60"`
+}
+
+// FirewallRule manages iptables / network ACLs
+type FirewallRule struct {
+	Base
+	TenantID   uuid.UUID `gorm:"type:uuid;not null"`
+	IPAddress  string    `gorm:"size:50;not null"`
+	Action     string    `gorm:"size:20;not null"` // "allow", "block"
+	Notes      string    `gorm:"size:255"`
+}
+
+// FraudRule manages destination prefix blocking
+type FraudRule struct {
+	Base
+	TenantID    uuid.UUID `gorm:"type:uuid;not null"`
+	Prefix      string    `gorm:"size:50;not null"`
+	MaxCost     float64   `gorm:"default:0"`
+	BlockAction string    `gorm:"size:50;not null"`
+}

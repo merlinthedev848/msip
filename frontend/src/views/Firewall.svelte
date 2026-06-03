@@ -1,17 +1,21 @@
 <script lang="ts">
-  let blockedIps = [
-    { ip: '185.15.22.1', country: 'RU', reason: 'SIP REGISTER Flood', time: '10 mins ago', hits: 1420 },
-    { ip: '45.33.12.99', country: 'CN', reason: 'SIP INVITE Scan', time: '1 hr ago', hits: 55 },
-    { ip: '104.28.1.1', country: 'BR', reason: 'SSH Brute Force', time: '3 hrs ago', hits: 403 },
-    { ip: '91.200.12.5', country: 'US', reason: 'SIP OPTIONS Flood', time: '12 hrs ago', hits: 890 }
-  ];
+  import { onMount } from 'svelte';
+  let blockedIps = [];
+  let rules = [];
 
-  let rules = [
-    { id: 1, name: 'Allow SIP from Trunk Providers', action: 'ALLOW', proto: 'UDP/TCP', port: '5060', src: '10.0.0.0/8', order: 1 },
-    { id: 2, name: 'Block Known Scanners', action: 'DROP', proto: 'ALL', port: 'ALL', src: 'ipset:voip_bl', order: 2 },
-    { id: 3, name: 'Allow WebRTC / WSS', action: 'ALLOW', proto: 'TCP', port: '7443', src: '0.0.0.0/0', order: 3 },
-    { id: 4, name: 'Default Deny SIP', action: 'DROP', proto: 'UDP/TCP', port: '5060', src: '0.0.0.0/0', order: 100 }
-  ];
+  onMount(async () => {
+    try {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/firewall-rules`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        rules = (data.firewall_rules || []).map((r, i) => ({
+          id: r.ID, name: r.Notes || 'Firewall Rule', action: r.Action.toUpperCase(), proto: 'ALL', port: 'ALL', src: r.IPAddress, order: i + 1
+        }));
+      }
+    } catch (e) {}
+  });
 </script>
 
 <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">

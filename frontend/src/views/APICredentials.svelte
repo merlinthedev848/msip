@@ -1,10 +1,20 @@
 <script lang="ts">
-  let tokens = [
-    { id: 'tok_live_8f9x...', name: 'Billing Integration', scopes: ['read:cdrs', 'read:accounts'], created: '2025-11-01', lastUsed: '2 mins ago', status: 'Active' },
-    { id: 'tok_live_2b4p...', name: 'Mobile App Push', scopes: ['write:messages', 'read:extensions'], created: '2026-01-15', lastUsed: 'Just now', status: 'Active' },
-    { id: 'tok_test_9c1m...', name: 'Staging Environment', scopes: ['*'], created: '2026-05-20', lastUsed: 'Never', status: 'Active' },
-    { id: 'tok_live_old_...', name: 'Legacy CRM Sync', scopes: ['read:calls'], created: '2023-08-10', lastUsed: '6 months ago', status: 'Revoked' }
-  ];
+  import { onMount } from 'svelte';
+  let tokens = [];
+
+  onMount(async () => {
+    try {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/api-credentials`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        tokens = (data.api_credentials || []).map(t => ({
+          id: t.TokenKey, name: t.Name, scopes: ['*'], created: t.CreatedAt, lastUsed: 'Never', status: 'Active'
+        }));
+      }
+    } catch (e) {}
+  });
 </script>
 
 <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">

@@ -1,12 +1,19 @@
 <script lang="ts">
-  let cameras = [
-    { id: 'CAM-01', name: 'Front Entrance', sipCode: '*901', status: 'Online', recording: true, motion: false },
-    { id: 'CAM-02', name: 'Lobby Desk', sipCode: '*902', status: 'Online', recording: true, motion: true },
-    { id: 'CAM-03', name: 'Server Room', sipCode: '*903', status: 'Online', recording: false, motion: false },
-    { id: 'CAM-04', name: 'Loading Dock', sipCode: '*904', status: 'Offline', recording: false, motion: false },
-    { id: 'CAM-05', name: 'Break Room', sipCode: '*905', status: 'Online', recording: true, motion: false },
-    { id: 'CAM-06', name: 'Parking Lot A', sipCode: '*906', status: 'Online', recording: true, motion: true }
-  ];
+  import { onMount } from 'svelte';
+  let cameras = [];
+  onMount(async () => {
+    try {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/cameras`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        cameras = (data.cameras || []).map(c => ({
+          id: c.ID.substring(0,8), name: c.Name, sipCode: '*9XX', status: 'Online', recording: false, motion: false
+        }));
+      }
+    } catch (e) {}
+  });
 </script>
 
 <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">

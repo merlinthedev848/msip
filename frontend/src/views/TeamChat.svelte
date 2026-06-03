@@ -1,18 +1,22 @@
 <script lang="ts">
-  let channels = [
-    { id: 1, name: 'general', unread: 0, active: true },
-    { id: 2, name: 'sales-team', unread: 3, active: false },
-    { id: 3, name: 'devops-alerts', unread: 12, active: false },
-    { id: 4, name: 'support-tier1', unread: 0, active: false }
-  ];
+  import { onMount } from 'svelte';
+  let channels = [];
+  let messages = [];
 
-  let messages = [
-    { user: 'System', time: '09:00 AM', text: 'Channel #general created.', isSys: true },
-    { user: 'Alice Smith', time: '10:15 AM', text: 'Good morning everyone! SIP trunks are looking stable today.', isSys: false, color: 'text-rose-400' },
-    { user: 'Bob Jones', time: '10:17 AM', text: 'Morning! I just provisioned the new Yealink phones for the exec suite.', isSys: false, color: 'text-blue-400' },
-    { user: 'Charlie Day', time: '10:25 AM', text: 'Can someone check the firewall rules? Im getting a timeout on port 5060 from the guest wifi.', isSys: false, color: 'text-amber-400' },
-    { user: 'Alice Smith', time: '10:28 AM', text: 'Checking now. Looks like fail2ban caught your IP. Give me a sec to whitelist it.', isSys: false, color: 'text-rose-400' }
-  ];
+  onMount(async () => {
+    try {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/chats`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        channels = (data.chats || []).map(c => ({
+          id: c.ID, name: c.Name, unread: 0, active: false
+        }));
+        if (channels.length > 0) channels[0].active = true;
+      }
+    } catch (e) {}
+  });
 </script>
 
 <div class="h-[calc(100vh-120px)] flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">

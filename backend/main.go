@@ -295,6 +295,193 @@ func main() {
 			}
 			c.JSON(http.StatusCreated, user)
 		})
+		// Tenants (Domains)
+		v1.GET("/domains", func(c *gin.Context) {
+			var records []Tenant
+			DB.Find(&records)
+			c.JSON(http.StatusOK, gin.H{"domains": records})
+		})
+		v1.POST("/domains", func(c *gin.Context) {
+			var record Tenant
+			if err := c.ShouldBindJSON(&record); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+			if err := DB.Create(&record).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusCreated, record)
+		})
+
+		// InboundRoutes
+		v1.GET("/inbound-routes", func(c *gin.Context) {
+			var records []InboundRoute
+			DB.Find(&records)
+			c.JSON(http.StatusOK, gin.H{"inbound_routes": records})
+		})
+		v1.POST("/inbound-routes", func(c *gin.Context) {
+			var record InboundRoute
+			if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
+			var tenant Tenant; DB.First(&tenant); record.TenantID = tenant.ID
+			if err := DB.Create(&record).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+			c.JSON(http.StatusCreated, record)
+		})
+
+		// OutboundRoutes
+		v1.GET("/outbound-routes", func(c *gin.Context) {
+			var records []OutboundRoute
+			DB.Find(&records)
+			c.JSON(http.StatusOK, gin.H{"outbound_routes": records})
+		})
+		v1.POST("/outbound-routes", func(c *gin.Context) {
+			var record OutboundRoute
+			if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
+			var tenant Tenant; DB.First(&tenant); record.TenantID = tenant.ID
+			if err := DB.Create(&record).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+			c.JSON(http.StatusCreated, record)
+		})
+
+		// Voicemails
+		v1.GET("/voicemails", func(c *gin.Context) {
+			var records []Voicemail
+			DB.Find(&records)
+			c.JSON(http.StatusOK, gin.H{"voicemails": records})
+		})
+		v1.POST("/voicemails", func(c *gin.Context) {
+			var record Voicemail
+			if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
+			var tenant Tenant; DB.First(&tenant); record.TenantID = tenant.ID
+			if err := DB.Create(&record).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+			c.JSON(http.StatusCreated, record)
+		})
+
+		// VideoRooms
+		v1.GET("/video-rooms", func(c *gin.Context) {
+			var records []VideoRoom
+			DB.Find(&records)
+			c.JSON(http.StatusOK, gin.H{"video_rooms": records})
+		})
+		v1.POST("/video-rooms", func(c *gin.Context) {
+			var record VideoRoom
+			if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
+			var tenant Tenant; DB.First(&tenant); record.TenantID = tenant.ID
+			if err := DB.Create(&record).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+			c.JSON(http.StatusCreated, record)
+		})
+
+		// IPCameras
+		v1.GET("/cameras", func(c *gin.Context) {
+			var records []IPCamera
+			DB.Find(&records)
+			c.JSON(http.StatusOK, gin.H{"cameras": records})
+		})
+		v1.POST("/cameras", func(c *gin.Context) {
+			var record IPCamera
+			if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
+			var tenant Tenant; DB.First(&tenant); record.TenantID = tenant.ID
+			if err := DB.Create(&record).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+			c.JSON(http.StatusCreated, record)
+		})
+
+		// TeamChats
+		v1.GET("/chats", func(c *gin.Context) {
+			var records []TeamChat
+			DB.Find(&records)
+			c.JSON(http.StatusOK, gin.H{"chats": records})
+		})
+		v1.POST("/chats", func(c *gin.Context) {
+			var record TeamChat
+			if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
+			var tenant Tenant; DB.First(&tenant); record.TenantID = tenant.ID
+			if err := DB.Create(&record).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+			c.JSON(http.StatusCreated, record)
+		})
+
+		// SMSMessages
+		v1.GET("/sms", func(c *gin.Context) {
+			var records []SMSMessage
+			DB.Find(&records)
+			c.JSON(http.StatusOK, gin.H{"sms": records})
+		})
+		v1.POST("/sms", func(c *gin.Context) {
+			var record SMSMessage
+			if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
+			var tenant Tenant; DB.First(&tenant); record.TenantID = tenant.ID
+			if err := DB.Create(&record).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+			c.JSON(http.StatusCreated, record)
+		})
+
+		// APICredentials
+		v1.GET("/credentials", func(c *gin.Context) {
+			var records []APICredential
+			DB.Find(&records)
+			c.JSON(http.StatusOK, gin.H{"credentials": records})
+		})
+		v1.POST("/credentials", func(c *gin.Context) {
+			var record APICredential
+			if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
+			var tenant Tenant; DB.First(&tenant); record.TenantID = tenant.ID
+			if err := DB.Create(&record).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+			c.JSON(http.StatusCreated, record)
+		})
+
+		// Webhooks
+		v1.GET("/webhooks", func(c *gin.Context) {
+			var records []Webhook
+			DB.Find(&records)
+			c.JSON(http.StatusOK, gin.H{"webhooks": records})
+		})
+		v1.POST("/webhooks", func(c *gin.Context) {
+			var record Webhook
+			if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
+			var tenant Tenant; DB.First(&tenant); record.TenantID = tenant.ID
+			if err := DB.Create(&record).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+			c.JSON(http.StatusCreated, record)
+		})
+
+		// ThrottleRules
+		v1.GET("/throttling", func(c *gin.Context) {
+			var records []ThrottleRule
+			DB.Find(&records)
+			c.JSON(http.StatusOK, gin.H{"throttling": records})
+		})
+		v1.POST("/throttling", func(c *gin.Context) {
+			var record ThrottleRule
+			if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
+			var tenant Tenant; DB.First(&tenant); record.TenantID = tenant.ID
+			if err := DB.Create(&record).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+			c.JSON(http.StatusCreated, record)
+		})
+
+		// FirewallRules
+		v1.GET("/firewall", func(c *gin.Context) {
+			var records []FirewallRule
+			DB.Find(&records)
+			c.JSON(http.StatusOK, gin.H{"firewall": records})
+		})
+		v1.POST("/firewall", func(c *gin.Context) {
+			var record FirewallRule
+			if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
+			var tenant Tenant; DB.First(&tenant); record.TenantID = tenant.ID
+			if err := DB.Create(&record).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+			c.JSON(http.StatusCreated, record)
+		})
+
+		// FraudRules
+		v1.GET("/fraud", func(c *gin.Context) {
+			var records []FraudRule
+			DB.Find(&records)
+			c.JSON(http.StatusOK, gin.H{"fraud": records})
+		})
+		v1.POST("/fraud", func(c *gin.Context) {
+			var record FraudRule
+			if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
+			var tenant Tenant; DB.First(&tenant); record.TenantID = tenant.ID
+			if err := DB.Create(&record).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+			c.JSON(http.StatusCreated, record)
+		})
+
 		} // closes v1 group
 	}
 

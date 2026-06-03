@@ -1,12 +1,27 @@
 <script lang="ts">
-  let devices = [
-    { mac: '00:15:65:AB:CD:EF', vendor: 'Yealink', model: 'T46U', template: 'Sales_Floor', ext: '1001', status: 'Provisioned', ip: '192.168.1.45' },
-    { mac: '00:0B:82:11:22:33', vendor: 'Grandstream', model: 'GXP2170', template: 'Exec_Suite', ext: '1002', status: 'Rebooting', ip: '192.168.1.105' },
-    { mac: '64:16:7F:99:88:77', vendor: 'Polycom', model: 'VVX450', template: 'Support_Desk', ext: '1045', status: 'Offline', ip: 'Unknown' },
-    { mac: '00:15:65:12:34:56', vendor: 'Yealink', model: 'W60B', template: 'Warehouse_DECT', ext: '2001', status: 'Provisioned', ip: '10.0.0.99' }
-  ];
-
+  import { onMount } from 'svelte';
+  let devices = [];
   let templates = ['Sales_Floor', 'Exec_Suite', 'Support_Desk', 'Warehouse_DECT', 'Default_Basic'];
+
+  onMount(async () => {
+    try {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/extensions`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        devices = (data.extensions || []).map(ext => ({
+          mac: '00:00:00:00:00:00', // Mock MAC since backend doesn't store it yet
+          vendor: 'Generic',
+          model: 'SIP Phone',
+          template: 'Default_Basic',
+          ext: ext.ExtensionNumber,
+          status: ext.IsActive ? 'Provisioned' : 'Offline',
+          ip: 'Unknown'
+        }));
+      }
+    } catch (e) {}
+  });
 </script>
 
 <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">

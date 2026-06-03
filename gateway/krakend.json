@@ -1,220 +1,708 @@
 {
-  "$schema": "https://www.krakend.io/schema/v3.json",
-  "version": 3,
-  "name": "PBX API Gateway",
-  "port": 8080,
-  "timeout": "3000ms",
-  "cache_ttl": "300s",
-  "output_encoding": "json",
-  "extra_config": {
-    "telemetry/logging": {
-      "level": "INFO",
-      "prefix": "[KRAKEND]",
-      "syslog": false,
-      "stdout": true
-    },
-    "security/cors": {
-      "allow_origins": ["*"],
-      "allow_methods": ["GET", "POST", "PUT", "DELETE"],
-      "allow_headers": ["Origin", "Authorization", "Content-Type"]
-    },
-    "qos/ratelimit/router": {
-      "max_rate": 60,
-      "client_max_rate": 60,
-      "strategy": "ip"
-    }
-  },
-  "endpoints": [
-    {
-      "endpoint": "/api/v1/health",
-      "method": "GET",
-      "output_encoding": "json",
-      "input_headers": [
-        "Authorization",
-        "Content-Type",
-        "Accept"
-      ],
-      "backend": [
-        {
-          "url_pattern": "/health",
-          "encoding": "json",
-          "sd": "static",
-          "method": "GET",
-          "host": [
-            "http://pbx_backend:8081"
-          ]
-        }
-      ]
-    },
-    {
-      "endpoint": "/api/v1/extensions",
-      "method": "GET",
-      "input_headers": [
-        "Authorization",
-        "Content-Type",
-        "Accept"
-      ],
-      "backend": [
-        {
-          "url_pattern": "/api/extensions",
-          "host": ["http://pbx_backend:8081"]
-        }
-      ]
-    },
-    {
-      "endpoint": "/api/v1/extensions",
-      "method": "POST",
-      "input_headers": [
-        "Authorization",
-        "Content-Type",
-        "Accept"
-      ],
-      "backend": [
-        {
-          "url_pattern": "/api/extensions",
-          "method": "POST",
-          "host": ["http://pbx_backend:8081"]
-        }
-      ]
-    },
-    {
-      "endpoint": "/api/v1/trunks",
-      "method": "GET",
-      "input_headers": [
-        "Authorization",
-        "Content-Type",
-        "Accept"
-      ],
-      "backend": [
-        {
-          "url_pattern": "/api/trunks",
-          "host": ["http://pbx_backend:8081"]
-        }
-      ]
-    },
-    {
-      "endpoint": "/api/v1/trunks",
-      "method": "POST",
-      "input_headers": [
-        "Authorization",
-        "Content-Type",
-        "Accept"
-      ],
-      "backend": [
-        {
-          "url_pattern": "/api/trunks",
-          "method": "POST",
-          "host": ["http://pbx_backend:8081"]
-        }
-      ]
-    },
-    {
-      "endpoint": "/api/v1/cdr",
-      "method": "GET",
-      "input_headers": [
-        "Authorization",
-        "Content-Type",
-        "Accept"
-      ],
-      "backend": [
-        {
-          "url_pattern": "/api/cdr",
-          "host": ["http://pbx_backend:8081"]
-        }
-      ]
-    },
-    {
-      "endpoint": "/api/v1/ivrs",
-      "method": "GET",
-      "input_headers": [
-        "Authorization",
-        "Content-Type",
-        "Accept"
-      ],
-      "backend": [
-        {
-          "url_pattern": "/api/ivrs",
-          "host": ["http://pbx_backend:8081"]
-        }
-      ]
-    },
-    {
-      "endpoint": "/api/v1/ivrs",
-      "method": "POST",
-      "input_headers": [
-        "Authorization",
-        "Content-Type",
-        "Accept"
-      ],
-      "backend": [
-        {
-          "url_pattern": "/api/ivrs",
-          "method": "POST",
-          "host": ["http://pbx_backend:8081"]
-        }
-      ]
-    },
-    {
-      "endpoint": "/api/v1/auth/login",
-      "method": "POST",
-      "input_headers": [
-        "Authorization",
-        "Content-Type",
-        "Accept"
-      ],
-      "backend": [
-        {
-          "url_pattern": "/api/auth/login",
-          "method": "POST",
-          "host": ["http://pbx_backend:8081"]
-        }
-      ]
-    },
-    {
-      "endpoint": "/api/v1/users",
-      "method": "GET",
-      "input_headers": [
-        "Authorization",
-        "Content-Type",
-        "Accept"
-      ],
-      "backend": [
-        {
-          "url_pattern": "/api/users",
-          "host": ["http://pbx_backend:8081"]
-        }
-      ]
-    },
-    {
-      "endpoint": "/api/v1/users",
-      "method": "POST",
-      "input_headers": [
-        "Authorization",
-        "Content-Type",
-        "Accept"
-      ],
-      "backend": [
-        {
-          "url_pattern": "/api/users",
-          "method": "POST",
-          "host": ["http://pbx_backend:8081"]
-        }
-      ]
-    },
-    {
-      "endpoint": "/api/v1/provisioning/{code}",
-      "method": "GET",
-      "input_headers": [
-        "Authorization",
-        "Content-Type",
-        "Accept"
-      ],
-      "backend": [
-        {
-          "url_pattern": "/api/provisioning/{code}",
-          "host": ["http://pbx_backend:8081"]
-        }
-      ]
-    }
-  ]
+    "$schema":  "https://www.krakend.io/schema/v3.json",
+    "version":  3,
+    "name":  "PBX API Gateway",
+    "port":  8080,
+    "timeout":  "3000ms",
+    "cache_ttl":  "300s",
+    "output_encoding":  "json",
+    "extra_config":  {
+                         "telemetry/logging":  {
+                                                   "level":  "INFO",
+                                                   "prefix":  "[KRAKEND]",
+                                                   "syslog":  false,
+                                                   "stdout":  true
+                                               },
+                         "security/cors":  {
+                                               "allow_origins":  [
+                                                                     "*"
+                                                                 ],
+                                               "allow_methods":  [
+                                                                     "GET",
+                                                                     "POST",
+                                                                     "PUT",
+                                                                     "DELETE"
+                                                                 ],
+                                               "allow_headers":  [
+                                                                     "Origin",
+                                                                     "Authorization",
+                                                                     "Content-Type"
+                                                                 ]
+                                           },
+                         "qos/ratelimit/router":  {
+                                                      "max_rate":  60,
+                                                      "client_max_rate":  60,
+                                                      "strategy":  "ip"
+                                                  }
+                     },
+    "endpoints":  [
+                      {
+                          "endpoint":  "/api/v1/health",
+                          "method":  "GET",
+                          "output_encoding":  "json",
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "backend":  [
+                                          {
+                                              "url_pattern":  "/health",
+                                              "encoding":  "json",
+                                              "sd":  "static",
+                                              "method":  "GET",
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ]
+                                          }
+                                      ]
+                      },
+                      {
+                          "endpoint":  "/api/v1/extensions",
+                          "method":  "GET",
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "backend":  [
+                                          {
+                                              "url_pattern":  "/api/extensions",
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ]
+                                          }
+                                      ]
+                      },
+                      {
+                          "endpoint":  "/api/v1/extensions",
+                          "method":  "POST",
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "backend":  [
+                                          {
+                                              "url_pattern":  "/api/extensions",
+                                              "method":  "POST",
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ]
+                                          }
+                                      ]
+                      },
+                      {
+                          "endpoint":  "/api/v1/trunks",
+                          "method":  "GET",
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "backend":  [
+                                          {
+                                              "url_pattern":  "/api/trunks",
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ]
+                                          }
+                                      ]
+                      },
+                      {
+                          "endpoint":  "/api/v1/trunks",
+                          "method":  "POST",
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "backend":  [
+                                          {
+                                              "url_pattern":  "/api/trunks",
+                                              "method":  "POST",
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ]
+                                          }
+                                      ]
+                      },
+                      {
+                          "endpoint":  "/api/v1/cdr",
+                          "method":  "GET",
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "backend":  [
+                                          {
+                                              "url_pattern":  "/api/cdr",
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ]
+                                          }
+                                      ]
+                      },
+                      {
+                          "endpoint":  "/api/v1/ivrs",
+                          "method":  "GET",
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "backend":  [
+                                          {
+                                              "url_pattern":  "/api/ivrs",
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ]
+                                          }
+                                      ]
+                      },
+                      {
+                          "endpoint":  "/api/v1/ivrs",
+                          "method":  "POST",
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "backend":  [
+                                          {
+                                              "url_pattern":  "/api/ivrs",
+                                              "method":  "POST",
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ]
+                                          }
+                                      ]
+                      },
+                      {
+                          "endpoint":  "/api/v1/auth/login",
+                          "method":  "POST",
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "backend":  [
+                                          {
+                                              "url_pattern":  "/api/auth/login",
+                                              "method":  "POST",
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ]
+                                          }
+                                      ]
+                      },
+                      {
+                          "endpoint":  "/api/v1/users",
+                          "method":  "GET",
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "backend":  [
+                                          {
+                                              "url_pattern":  "/api/users",
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ]
+                                          }
+                                      ]
+                      },
+                      {
+                          "endpoint":  "/api/v1/users",
+                          "method":  "POST",
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "backend":  [
+                                          {
+                                              "url_pattern":  "/api/users",
+                                              "method":  "POST",
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ]
+                                          }
+                                      ]
+                      },
+                      {
+                          "endpoint":  "/api/v1/provisioning/{code}",
+                          "method":  "GET",
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "backend":  [
+                                          {
+                                              "url_pattern":  "/api/provisioning/{code}",
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ]
+                                          }
+                                      ]
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/domains",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "url_pattern":  "/api/domains"
+                                          }
+                                      ],
+                          "method":  "GET"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/domains",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "POST",
+                                              "url_pattern":  "/api/domains"
+                                          }
+                                      ],
+                          "method":  "POST"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/inbound-routes",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "url_pattern":  "/api/inbound-routes"
+                                          }
+                                      ],
+                          "method":  "GET"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/inbound-routes",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "POST",
+                                              "url_pattern":  "/api/inbound-routes"
+                                          }
+                                      ],
+                          "method":  "POST"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/outbound-routes",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "url_pattern":  "/api/outbound-routes"
+                                          }
+                                      ],
+                          "method":  "GET"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/outbound-routes",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "POST",
+                                              "url_pattern":  "/api/outbound-routes"
+                                          }
+                                      ],
+                          "method":  "POST"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/voicemails",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "url_pattern":  "/api/voicemails"
+                                          }
+                                      ],
+                          "method":  "GET"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/voicemails",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "POST",
+                                              "url_pattern":  "/api/voicemails"
+                                          }
+                                      ],
+                          "method":  "POST"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/video-rooms",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "url_pattern":  "/api/video-rooms"
+                                          }
+                                      ],
+                          "method":  "GET"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/video-rooms",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "POST",
+                                              "url_pattern":  "/api/video-rooms"
+                                          }
+                                      ],
+                          "method":  "POST"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/cameras",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "url_pattern":  "/api/cameras"
+                                          }
+                                      ],
+                          "method":  "GET"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/cameras",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "POST",
+                                              "url_pattern":  "/api/cameras"
+                                          }
+                                      ],
+                          "method":  "POST"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/chats",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "url_pattern":  "/api/chats"
+                                          }
+                                      ],
+                          "method":  "GET"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/chats",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "POST",
+                                              "url_pattern":  "/api/chats"
+                                          }
+                                      ],
+                          "method":  "POST"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/sms",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "url_pattern":  "/api/sms"
+                                          }
+                                      ],
+                          "method":  "GET"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/sms",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "POST",
+                                              "url_pattern":  "/api/sms"
+                                          }
+                                      ],
+                          "method":  "POST"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/credentials",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "url_pattern":  "/api/credentials"
+                                          }
+                                      ],
+                          "method":  "GET"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/credentials",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "POST",
+                                              "url_pattern":  "/api/credentials"
+                                          }
+                                      ],
+                          "method":  "POST"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/webhooks",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "url_pattern":  "/api/webhooks"
+                                          }
+                                      ],
+                          "method":  "GET"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/webhooks",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "POST",
+                                              "url_pattern":  "/api/webhooks"
+                                          }
+                                      ],
+                          "method":  "POST"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/throttling",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "url_pattern":  "/api/throttling"
+                                          }
+                                      ],
+                          "method":  "GET"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/throttling",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "POST",
+                                              "url_pattern":  "/api/throttling"
+                                          }
+                                      ],
+                          "method":  "POST"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/firewall",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "url_pattern":  "/api/firewall"
+                                          }
+                                      ],
+                          "method":  "GET"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/firewall",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "POST",
+                                              "url_pattern":  "/api/firewall"
+                                          }
+                                      ],
+                          "method":  "POST"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/fraud",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "url_pattern":  "/api/fraud"
+                                          }
+                                      ],
+                          "method":  "GET"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/fraud",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "POST",
+                                              "url_pattern":  "/api/fraud"
+                                          }
+                                      ],
+                          "method":  "POST"
+                      }
+                  ]
 }

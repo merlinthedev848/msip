@@ -1,11 +1,18 @@
 <script lang="ts">
-  let commits = [
-    { hash: 'a1b2c3d', msg: 'Added Yealink T46U to Exec Suite template', author: 'Alice Smith', time: '10 mins ago', type: 'Provisioning' },
-    { hash: 'f4e5d6c', msg: 'Banned IP range 45.33.12.0/24 (SIP Scanners)', author: 'System', time: '2 hours ago', type: 'Security' },
-    { hash: '7g8h9i0', msg: 'Updated inbound routing for Main DID', author: 'Bob Jones', time: 'Yesterday', type: 'Routing' },
-    { hash: 'z1x2c3v', msg: 'Created WebRTC Video Room: Sales Sync', author: 'Diana Prince', time: 'Yesterday', type: 'Media' },
-    { hash: 'b5n6m7l', msg: 'Initial PBX Configuration Baseline', author: 'System', time: '3 days ago', type: 'Core' }
-  ];
+  import { onMount } from 'svelte';
+  let commits = [];
+
+  onMount(async () => {
+    try {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/commits`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        commits = data.commits || [];
+      }
+    } catch (e) {}
+  });
 </script>
 
 <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">

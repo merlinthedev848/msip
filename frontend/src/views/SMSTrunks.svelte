@@ -1,16 +1,21 @@
 <script lang="ts">
-  let trunks = [
-    { name: 'Twilio Primary', host: 'smpp.twilio.com', status: 'Connected', binds: 4, tps: 45, latency: '12ms' },
-    { name: 'Bandwidth Failover', host: 'smpp.bandwidth.com', status: 'Connected', binds: 2, tps: 0, latency: '45ms' },
-    { name: 'Legacy Provider', host: '192.168.10.5', status: 'Disconnected', binds: 0, tps: 0, latency: '-' }
-  ];
+  import { onMount } from 'svelte';
+  let trunks = [];
+  let messages = [];
 
-  let messages = [
-    { id: 'msg_98x1', dir: 'Outbound', from: '+15550100', to: '+15559901', status: 'Delivered', text: 'Your appointment is confirmed for tomorrow at 9AM.', time: '10:45:12' },
-    { id: 'msg_98x2', dir: 'Inbound', from: '+15559901', to: '+15550100', status: 'Received', text: 'Thank you!', time: '10:47:01' },
-    { id: 'msg_98x3', dir: 'Outbound', from: '+15550100', to: '+15558822', status: 'Failed', text: 'Alert: Server CPU > 90%', time: '10:52:14' },
-    { id: 'msg_98x4', dir: 'Outbound', from: '+15550100', to: '+15557733', status: 'Sent', text: 'Please reply YES to confirm your order.', time: '11:05:00' }
-  ];
+  onMount(async () => {
+    try {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/sms`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        messages = (data.sms || []).map(m => ({
+          id: m.ID, dir: m.Direction, from: m.Sender, to: m.Receiver, status: 'Sent', text: m.Body, time: m.CreatedAt
+        }));
+      }
+    } catch (e) {}
+  });
 </script>
 
 <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">

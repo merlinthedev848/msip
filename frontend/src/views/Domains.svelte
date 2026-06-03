@@ -1,10 +1,20 @@
 <script lang="ts">
-  let domains = [
-    { id: 1, name: 'acme.sip.local', description: 'Acme Corporation', extCount: 45, maxExt: 50, cc: 12, maxCc: 20, status: 'Active' },
-    { id: 2, name: 'stark.sip.local', description: 'Stark Industries', extCount: 12, maxExt: 25, cc: 0, maxCc: 10, status: 'Active' },
-    { id: 3, name: 'wayne.sip.local', description: 'Wayne Enterprises', extCount: 150, maxExt: 500, cc: 42, maxCc: 100, status: 'Warning' },
-    { id: 4, name: 'oscorp.sip.local', description: 'Oscorp Science', extCount: 0, maxExt: 10, cc: 0, maxCc: 2, status: 'Suspended' }
-  ];
+  import { onMount } from 'svelte';
+  let domains = [];
+  
+  onMount(async () => {
+    try {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/domains`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        domains = (data.domains || []).map(d => ({
+          id: d.ID, name: d.Name, description: d.Domain, extCount: 0, maxExt: 50, cc: 0, maxCc: 20, status: 'Active'
+        }));
+      }
+    } catch (e) {}
+  });
 </script>
 
 <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">

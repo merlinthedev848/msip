@@ -1,10 +1,20 @@
 <script lang="ts">
-  let blockedDestinations = [
-    { country: 'Cuba', code: '+53', callsBlocked: 405, costSaved: '$850.40' },
-    { country: 'Somalia', code: '+252', callsBlocked: 112, costSaved: '$310.00' },
-    { country: 'North Korea', code: '+850', callsBlocked: 0, costSaved: '$0.00' },
-    { country: 'Latvia (Premium)', code: '+371', callsBlocked: 890, costSaved: '$1,200.50' }
-  ];
+  import { onMount } from 'svelte';
+  let blockedDestinations = [];
+
+  onMount(async () => {
+    try {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/fraud-rules`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        blockedDestinations = (data.fraud_rules || []).map(r => ({
+          country: r.BlockAction, code: r.Prefix, callsBlocked: 0, costSaved: '$0.00'
+        }));
+      }
+    } catch (e) {}
+  });
 </script>
 
 <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">

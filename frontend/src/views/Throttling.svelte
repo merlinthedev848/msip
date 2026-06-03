@@ -1,10 +1,20 @@
 <script lang="ts">
-  let rates = [
-    { ip: '192.168.1.100', desc: 'Main SIP Trunk', type: 'INVITE', current: 45, max: 100, status: 'Normal' },
-    { ip: '10.0.0.50', desc: 'SBC Gateway', type: 'OPTIONS', current: 180, max: 200, status: 'Warning' },
-    { ip: '45.33.12.99', desc: 'Unknown Scanner', type: 'REGISTER', current: 500, max: 50, status: 'Throttled' },
-    { ip: '192.168.1.105', desc: 'Exec Phone', type: 'SUBSCRIBE', current: 5, max: 20, status: 'Normal' }
-  ];
+  import { onMount } from 'svelte';
+  let rates = [];
+
+  onMount(async () => {
+    try {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/throttle-rules`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        rates = (data.throttle_rules || []).map(r => ({
+          ip: r.Name, desc: 'API Rule', type: 'ALL', current: 0, max: r.Rate, status: 'Normal'
+        }));
+      }
+    } catch (e) {}
+  });
 </script>
 
 <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">

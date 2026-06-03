@@ -38,6 +38,16 @@ func InitDB() {
 		&CDR{},
 		&IVRMenu{},
 		&IVRChoice{},
+		&Voicemail{},
+		&VideoRoom{},
+		&IPCamera{},
+		&TeamChat{},
+		&SMSMessage{},
+		&APICredential{},
+		&Webhook{},
+		&ThrottleRule{},
+		&FirewallRule{},
+		&FraudRule{},
 	)
 	if err != nil {
 		log.Fatalf("Failed to migrate database schema: %v", err)

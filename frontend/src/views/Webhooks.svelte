@@ -1,9 +1,20 @@
 <script lang="ts">
-  let webhooks = [
-    { url: 'https://crm.local/api/call-start', trigger: 'Call Connected', status: 'Healthy', events: 1405, lastCode: 200 },
-    { url: 'https://billing.local/api/cdr', trigger: 'Call Ended', status: 'Healthy', events: 1405, lastCode: 200 },
-    { url: 'https://slack.local/webhook', trigger: 'New Voicemail', status: 'Failing', events: 12, lastCode: 404 }
-  ];
+  import { onMount } from 'svelte';
+  let webhooks = [];
+
+  onMount(async () => {
+    try {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/webhooks`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        webhooks = (data.webhooks || []).map(w => ({
+          url: w.TargetUrl, trigger: w.Event, status: 'Healthy', events: 0, lastCode: 200
+        }));
+      }
+    } catch (e) {}
+  });
 </script>
 
 <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">
