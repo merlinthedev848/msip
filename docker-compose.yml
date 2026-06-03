@@ -98,6 +98,7 @@ services:
     ports:
       - "9060:9060/udp"
       - "9060:9060/tcp"
+    command: ./heplify-server
     environment:
       - HEPLIFYSERVER_DBDRIVER=postgres
       - HEPLIFYSERVER_DBADDR=homer-db:5432
