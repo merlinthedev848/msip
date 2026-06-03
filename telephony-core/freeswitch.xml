@@ -35,6 +35,8 @@
         <load module="mod_json_cdr"/>
         <load module="mod_voicemail"/>
         <load module="mod_flite"/>
+        <load module="mod_conference"/>
+        <load module="mod_callcenter"/>
       </modules>
     </configuration>
     

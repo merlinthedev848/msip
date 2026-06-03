@@ -10,9 +10,11 @@
   let callTimer: ReturnType<typeof setInterval>;
 
   let remoteAudio: HTMLAudioElement;
+  let remoteVideo: HTMLVideoElement;
   let userAgent: UserAgent;
   let registerer: Registerer;
   let session: any = null;
+  let currentStream: MediaStream = null;
 
   // Configure WebRTC details
   let sipExt = "1001";
@@ -76,7 +78,7 @@
     if (!target) return;
 
     const sdhOptions = {
-      constraints: { audio: true, video: false },
+      constraints: { audio: true, video: true },
       peerConnectionConfiguration: {
         iceServers: [
           { urls: 'stun:localhost:3478' },
@@ -100,10 +102,19 @@
         sdh.peerConnection.getReceivers().forEach((receiver) => {
           if (receiver.track) stream.addTrack(receiver.track);
         });
-        if (remoteAudio) {
-          remoteAudio.srcObject = stream;
-          remoteAudio.play();
-        }
+        currentStream = stream;
+        
+        // Let Svelte reactivity attach it to elements, or do it manually
+        setTimeout(() => {
+          if (remoteAudio) {
+            remoteAudio.srcObject = stream;
+            remoteAudio.play().catch(e => console.error(e));
+          }
+          if (remoteVideo) {
+            remoteVideo.srcObject = stream;
+            remoteVideo.play().catch(e => console.error(e));
+          }
+        }, 100);
       } else if (state === SessionState.Terminated) {
         hangup();
       }
@@ -121,7 +132,7 @@
     if (!session) return;
     try {
       const sdhOptions = {
-        constraints: { audio: true, video: false },
+        constraints: { audio: true, video: true },
         peerConnectionConfiguration: {
           iceServers: [
             { urls: 'stun:localhost:3478' },
@@ -233,11 +244,23 @@
             <h3 class="text-lg font-bold text-white mb-1">Calling...</h3>
             <p class="text-sm font-mono text-gray-400">{currentNumber}</p>
           {:else}
-            <div class="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center mb-6 shadow-lg shadow-indigo-500/30">
-              <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+            <div class="w-full flex-1 mb-4 flex items-center justify-center bg-black/50 rounded-xl overflow-hidden relative border border-gray-800">
+              {#if currentNumber === '9000'}
+                <!-- Display the actual WebRTC Video Stream -->
+                <video bind:this={remoteVideo} autoplay playsinline class="w-full h-full object-cover"></video>
+                <div class="absolute bottom-2 left-2 px-2 py-1 bg-black/60 backdrop-blur rounded text-xs text-white">Video MCU</div>
+              {:else}
+                <!-- Normal Audio Call Interface -->
+                <div class="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                  <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                </div>
+              {/if}
             </div>
-            <h3 class="text-xl font-bold text-white mb-1">Unknown Contact</h3>
-            <p class="text-sm font-mono text-indigo-400 mb-6">{currentNumber}</p>
+            
+            {#if currentNumber !== '9000'}
+              <h3 class="text-xl font-bold text-white mb-1">Unknown Contact</h3>
+            {/if}
+            <p class="text-sm font-mono text-indigo-400 mb-4">{currentNumber}</p>
             <div class="px-4 py-1.5 bg-gray-950 rounded-full text-white font-mono text-xl tracking-widest border border-gray-800 shadow-inner">
               {formatTime(callDuration)}
             </div>

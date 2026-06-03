@@ -1,38 +1,29 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  
-  let callsWaiting = 0;
-  let activeAgents = 14;
-  let abandonedCalls = 3;
-  let slaPercent = 94.2;
-  let avgWait = 42; // seconds
-  
+  import GlassCard from '../components/ui/GlassCard.svelte';
+
+  // Live WebSocket Metrics
+  let metrics = {
+    active_calls: 0,
+    agents_online: 0,
+    agents_busy: 0,
+    queue_length: 0,
+    avg_wait_time: 0,
+    sla_percentage: 0,
+    timestamp: 0
+  };
+
+  let ws: WebSocket;
+  let isConnected = false;
+
   let queueStats = [
     { name: 'Support Tier 1', waiting: 4, agents: 8, sla: 92 },
     { name: 'Sales Global', waiting: 1, agents: 4, sla: 98 },
     { name: 'Billing', waiting: 0, agents: 2, sla: 100 }
   ];
 
-  let interval: ReturnType<typeof setInterval>;
-
   onMount(() => {
-    interval = setInterval(() => {
-      // Fluctuate stats for demo purposes
-      if (Math.random() > 0.6) {
-        callsWaiting = Math.max(0, callsWaiting + (Math.random() > 0.5 ? 1 : -1));
-        if (callsWaiting > 0 && Math.random() > 0.8) abandonedCalls++;
-      }
-      
-      queueStats = queueStats.map(q => ({
-        ...q,
-        waiting: Math.max(0, q.waiting + (Math.random() > 0.7 ? 1 : -1)),
-        sla: Math.max(50, Math.min(100, q.sla + (Math.random() * 2 - 1)))
-      }));
-      
-      callsWaiting = queueStats.reduce((sum, q) => sum + q.waiting, 0);
-      slaPercent = queueStats.reduce((sum, q) => sum + q.sla, 0) / queueStats.length;
-      
-    }, 2000);
+    connectWebSocket();
   });
 
   onDestroy(() => {
@@ -65,28 +56,28 @@
     <div class="bg-gray-900/60 rounded-[2rem] border border-gray-800 p-8 flex flex-col justify-center items-center relative overflow-hidden group">
       <div class="absolute inset-0 bg-gradient-to-br from-rose-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
       <p class="text-sm font-bold text-gray-500 uppercase tracking-[0.3em] mb-4">Calls Waiting</p>
-      <h2 class="text-8xl font-black {callsWaiting > 5 ? 'text-rose-500 animate-pulse' : 'text-white'} font-mono transition-colors duration-500">
-        {callsWaiting}
+      <h2 class="text-8xl font-black {metrics.queue_length > 5 ? 'text-rose-500 animate-pulse' : 'text-white'} font-mono transition-colors duration-500">
+        {metrics.queue_length}
       </h2>
     </div>
 
     <div class="bg-gray-900/60 rounded-[2rem] border border-gray-800 p-8 flex flex-col justify-center items-center relative overflow-hidden group">
       <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
       <p class="text-sm font-bold text-gray-500 uppercase tracking-[0.3em] mb-4">Active Agents</p>
-      <h2 class="text-8xl font-black text-white font-mono">{activeAgents}</h2>
+      <h2 class="text-8xl font-black text-white font-mono">{metrics.agents_online}</h2>
     </div>
 
     <div class="bg-gray-900/60 rounded-[2rem] border border-gray-800 p-8 flex flex-col justify-center items-center relative overflow-hidden group">
       <div class="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
       <p class="text-sm font-bold text-gray-500 uppercase tracking-[0.3em] mb-4">Avg Wait Time</p>
-      <h2 class="text-7xl font-black text-white font-mono">{formatTime(avgWait)}</h2>
+      <h2 class="text-7xl font-black text-white font-mono">{formatTime(metrics.avg_wait_time)}</h2>
     </div>
 
     <div class="bg-gray-900/60 rounded-[2rem] border border-gray-800 p-8 flex flex-col justify-center items-center relative overflow-hidden group">
       <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
       <p class="text-sm font-bold text-gray-500 uppercase tracking-[0.3em] mb-4">Global SLA</p>
       <div class="flex items-baseline">
-        <h2 class="text-7xl font-black {slaPercent < 90 ? 'text-amber-500' : 'text-emerald-400'} font-mono">{slaPercent.toFixed(1)}</h2>
+        <h2 class="text-7xl font-black {metrics.sla_percentage < 90 ? 'text-amber-500' : 'text-emerald-400'} font-mono">{(metrics.sla_percentage).toFixed(1)}</h2>
         <span class="text-3xl font-bold text-gray-500 ml-2">%</span>
       </div>
     </div>

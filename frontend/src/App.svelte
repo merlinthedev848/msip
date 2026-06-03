@@ -21,6 +21,7 @@
   import Firewall from './views/Firewall.svelte';
   import AntiFraud from './views/AntiFraud.svelte';
   import VersionControl from './views/VersionControl.svelte';
+  import Admins from './views/Admins.svelte';
   
   // Hybrid Features
   import Wallboard from './views/Wallboard.svelte';
@@ -29,7 +30,17 @@
   
   import Softphone from './components/Softphone.svelte';
 
+  import Login from './views/Login.svelte';
+
   let currentPath = window.location.pathname;
+  let token = localStorage.getItem('pbx_token');
+  let user = JSON.parse(localStorage.getItem('pbx_user') || '{}');
+
+  function handleLogout() {
+    localStorage.removeItem('pbx_token');
+    localStorage.removeItem('pbx_user');
+    window.location.href = '/';
+  }
 
   onMount(() => {
     const handlePopState = () => {
@@ -37,7 +48,6 @@
     };
     window.addEventListener('popstate', handlePopState);
     
-    // Custom event to listen for navigation from Sidebar
     window.addEventListener('app-navigate', (e: any) => {
       currentPath = e.detail.path;
     });
@@ -67,6 +77,7 @@
     '/firewall': Firewall,
     '/fraud': AntiFraud,
     '/versioning': VersionControl,
+    '/admins': Admins,
     '/wallboard': Wallboard,
     '/domains': Domains,
     '/provisioning': Provisioning
@@ -76,47 +87,53 @@
 </script>
 
 <div>
-  <main class="flex min-h-screen bg-gray-900 font-sans selection:bg-indigo-500 selection:text-white text-gray-100">
-    <Sidebar />
-    
-    <div class="flex-1 flex flex-col h-screen overflow-hidden">
-      <!-- Header -->
-      <header class="h-16 border-b border-gray-800 bg-gray-900/80 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-20">
-        <div class="flex items-center">
-          <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-widest">Workspace</h2>
-        </div>
-        <div class="flex items-center space-x-4">
-          <button class="bg-gray-800 hover:bg-gray-700 text-sm py-1.5 px-4 rounded-full transition-colors border border-gray-700 text-gray-300 shadow-sm flex items-center space-x-2">
-            <div class="w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center text-xs text-white font-bold">A</div>
-            <span>Admin</span>
-          </button>
-        </div>
-      </header>
-
-      <!-- Main Content Area -->
-      <div class="flex-1 overflow-y-auto p-8 relative">
-        <!-- Ambient Background Glow -->
-        <div class="absolute top-0 left-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none -z-10"></div>
-        <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-emerald-600/5 rounded-full blur-3xl pointer-events-none -z-10"></div>
-        
-        <div class="w-full pb-20">
-          {#if ActiveComponent}
-            <svelte:component this={ActiveComponent} />
-          {:else}
-            <div class="p-12 text-center flex flex-col items-center justify-center h-full">
-              <div class="w-16 h-16 bg-gray-800 rounded-2xl flex items-center justify-center mb-4">
-                <svg class="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+  {#if !token}
+    <Login />
+  {:else}
+    <main class="flex min-h-screen bg-gray-900 font-sans selection:bg-indigo-500 selection:text-white text-gray-100">
+      <Sidebar />
+      
+      <div class="flex-1 flex flex-col h-screen overflow-hidden">
+        <!-- Header -->
+        <header class="h-16 border-b border-gray-800 bg-gray-900/80 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-20">
+          <div class="flex items-center">
+            <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-widest">Workspace</h2>
+          </div>
+          <div class="flex items-center space-x-4">
+            <button on:click={handleLogout} class="bg-gray-800 hover:bg-rose-500/20 hover:text-rose-400 hover:border-rose-500/50 text-sm py-1.5 px-4 rounded-full transition-colors border border-gray-700 text-gray-300 shadow-sm flex items-center space-x-2">
+              <div class="w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center text-xs text-white font-bold">
+                {user.email ? user.email[0].toUpperCase() : 'U'}
               </div>
-              <h2 class="text-xl font-semibold text-white mb-2">404 Not Found</h2>
-              <p class="text-gray-400 max-w-md">The route "{currentPath}" does not exist.</p>
-            </div>
-          {/if}
+              <span>{user.email || 'Admin'} (Logout)</span>
+            </button>
+          </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 overflow-y-auto p-8 relative">
+          <!-- Ambient Background Glow -->
+          <div class="absolute top-0 left-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none -z-10"></div>
+          <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-emerald-600/5 rounded-full blur-3xl pointer-events-none -z-10"></div>
+          
+          <div class="w-full pb-20">
+            {#if ActiveComponent}
+              <svelte:component this={ActiveComponent} />
+            {:else}
+              <div class="p-12 text-center flex flex-col items-center justify-center h-full">
+                <div class="w-16 h-16 bg-gray-800 rounded-2xl flex items-center justify-center mb-4">
+                  <svg class="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                </div>
+                <h2 class="text-xl font-semibold text-white mb-2">404 Not Found</h2>
+                <p class="text-gray-400 max-w-md">The route "{currentPath}" does not exist.</p>
+              </div>
+            {/if}
+          </div>
         </div>
       </div>
-    </div>
-    
-    <Softphone />
-  </main>
+      
+      <Softphone />
+    </main>
+  {/if}
 </div>
 
 <style>

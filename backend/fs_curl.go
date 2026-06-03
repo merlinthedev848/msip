@@ -108,17 +108,32 @@ func handleDialplan(c *gin.Context) {
 
 	xml += `
       <!-- AI Dictation / Transcription Service -->
-      <extension name="ai_dictation">
+      <extension name="Dictation_AI">
         <condition field="destination_number" expression="^\*88$">
           <action application="answer"/>
-          <!-- Play a 1-second beep (800Hz) to signal start of recording -->
+          <action application="sleep" data="1000"/>
           <action application="playback" data="tone_stream://%(1000,0,800)"/>
-          <action application="set" data="playback_terminators=#"/>
-          <!-- Record the audio (max 60 seconds) to the shared volume -->
-          <action application="record" data="/usr/local/freeswitch/recordings/${uuid}_dictation.wav 60"/>
-          <!-- Play a double beep to signal completion -->
-          <action application="playback" data="tone_stream://%(200,50,800);%(200,0,800)"/>
+          <action application="record" data="/usr/local/freeswitch/recordings/${uuid}_dictation.wav 600 200"/>
           <action application="hangup"/>
+        </condition>
+      </extension>
+
+      <!-- Conversational AI Receptionist (Live Streaming) -->
+      <extension name="Conversational_AI_Receptionist">
+        <condition field="destination_number" expression="^\*99$">
+          <action application="answer"/>
+          <!-- Use mod_audio_fork to stream raw audio to the Go backend WebSocket -->
+          <action application="uuid_audio_fork" data="${uuid} ws://pbx_backend:8081/api/ai/stream mono 8k"/>
+          <action application="park"/>
+        </condition>
+      </extension>
+
+      <!-- Video Conference MCU Room -->
+      <extension name="Video_Room_9000">
+        <condition field="destination_number" expression="^9000$">
+          <action application="answer"/>
+          <!-- Enable video processing for the conference -->
+          <action application="conference" data="video_mcu_9000@video_layout_1++flags{video_muxing}"/>
         </condition>
       </extension>
 

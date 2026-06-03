@@ -16,6 +16,7 @@
       items: [
         { name: 'Global Dashboard', path: '/' },
         { name: 'Domains & Tenants', path: '/domains' },
+        { name: 'Admins & Roles', path: '/admins' },
         { name: 'Call Center Wallboard', path: '/wallboard' }
       ]
     },

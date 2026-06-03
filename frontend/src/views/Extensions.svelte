@@ -16,14 +16,17 @@
 
   async function fetchExtensions() {
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/extensions`);
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/extensions`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
+      });
       if (res.ok) {
         const data = await res.json();
         extensions = data.extensions.map(e => ({
           ext: e.ExtensionNumber,
           name: 'DB Endpoint',
           status: e.IsActive ? 'Online' : 'Offline',
-          ip: 'Dynamic'
+          ip: 'Dynamic',
+          code: e.ProvisioningCode || 'N/A'
         }));
         isApiConnected = true;
       } else { throw new Error("API Offline"); }
@@ -47,7 +50,10 @@
     try {
       const res = await fetch(`http://${window.location.hostname}:8080/api/v1/extensions`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('pbx_token')}`
+        },
         body: JSON.stringify({
           ExtensionNumber: newExtNumber,
           PasswordHash: newExtPassword,
@@ -104,31 +110,27 @@
     <div class="overflow-x-auto">
       <table class="w-full text-left border-collapse">
         <thead>
-          <tr class="bg-gray-900/40 text-gray-400 text-xs uppercase tracking-wider">
-            <th class="p-4 font-medium">Ext</th>
-            <th class="p-4 font-medium">Name</th>
-            <th class="p-4 font-medium">Type</th>
-            <th class="p-4 font-medium">Status</th>
-            <th class="p-4 font-medium">IP Address</th>
-            <th class="p-4 font-medium text-right">Actions</th>
+          <tr class="bg-gray-900/50 border-b border-gray-800">
+            <th class="py-4 px-6 text-xs font-semibold text-gray-400 uppercase tracking-wider">Ext</th>
+            <th class="py-4 px-6 text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
+            <th class="py-4 px-6 text-xs font-semibold text-gray-400 uppercase tracking-wider">Provisioning Code</th>
+            <th class="py-4 px-6 text-xs font-semibold text-gray-400 uppercase tracking-wider text-right">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-800/50 text-sm text-gray-300">
-            {#each extensions as ext}
+          {#each extensions as ext}
             <tr class="hover:bg-gray-800/30 transition-colors group cursor-pointer">
               <td class="p-4 font-mono text-indigo-400 font-medium">{ext.ext}</td>
-              <td class="p-4 text-white font-medium">{ext.name}</td>
               <td class="p-4">
-                <span class="px-2 py-1 bg-gray-800 rounded-md text-xs text-gray-400 border border-gray-700">{ext.type || 'SIP'}</span>
+                <span class="px-2.5 py-1 rounded-md text-xs font-medium border {ext.status === 'Online' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-gray-500/10 text-gray-400 border-gray-500/20'}">
+                  {ext.status}
+                </span>
               </td>
               <td class="p-4">
-                {#if ext.status === 'Online'}
-                  <Badge status="success">{ext.status}</Badge>
-                {:else}
-                  <Badge status="neutral">{ext.status}</Badge>
-                {/if}
+                <span class="font-mono text-sm text-indigo-400 tracking-widest bg-indigo-500/10 px-2 py-1 rounded border border-indigo-500/20">
+                  {ext.code}
+                </span>
               </td>
-              <td class="p-4 font-mono text-xs text-gray-500">{ext.ip}</td>
               <td class="p-4 text-right">
                 <button title="Edit Extension" aria-label="Edit Extension" class="text-gray-500 hover:text-white transition-colors opacity-0 group-hover:opacity-100 p-1">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>

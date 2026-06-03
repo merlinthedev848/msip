@@ -14,16 +14,30 @@ type Base struct {
 }
 
 type Tenant struct {
-	Base
-	Name string `gorm:"size:255;not null"`
+	ID        uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
+	Name      string    `gorm:"size:255;not null"`
+	Domain    string    `gorm:"size:255;uniqueIndex;not null"` // e.g. pbx.company.com
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+// User represents a dashboard admin for a specific tenant
+type User struct {
+	ID           uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
+	TenantID     uuid.UUID `gorm:"type:uuid;index;not null"`
+	Email        string    `gorm:"size:255;uniqueIndex;not null"`
+	PasswordHash string    `gorm:"not null"`
+	Role         string    `gorm:"size:50;default:'admin'"` // 'superadmin', 'admin', 'viewer'
+	CreatedAt    time.Time
 }
 
 type Extension struct {
 	Base
-	TenantID       uuid.UUID `gorm:"type:uuid;not null"`
-	ExtensionNumber string    `gorm:"size:50;not null;uniqueIndex:idx_tenant_ext"`
-	PasswordHash   string    `gorm:"size:255;not null"`
-	IsActive       bool      `gorm:"default:true"`
+	TenantID         uuid.UUID `gorm:"type:uuid;not null"`
+	ExtensionNumber  string    `gorm:"size:50;not null;uniqueIndex:idx_tenant_ext"`
+	PasswordHash     string    `gorm:"size:255;not null"`
+	IsActive         bool      `gorm:"default:true"`
+	ProvisioningCode string    `gorm:"size:8;uniqueIndex"`
 }
 
 type InboundRoute struct {
@@ -53,6 +67,7 @@ type Trunk struct {
 // CDR stores Call Detail Records pushed by FreeSWITCH
 type CDR struct {
 	Base
+	TenantID       uuid.UUID `gorm:"type:uuid"` // Optional for system calls, but links to tenant
 	CallerIDName   string `gorm:"size:100"`
 	CallerIDNumber string `gorm:"size:50"`
 	Destination    string `gorm:"size:100"`

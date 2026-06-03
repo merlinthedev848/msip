@@ -16,7 +16,9 @@
 
   async function fetchIVRs() {
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/ivrs`);
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/ivrs`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
+      });
       if (res.ok) {
         const data = await res.json();
         ivrs = data.ivrs || [];
@@ -38,7 +40,10 @@
     try {
       const res = await fetch(`http://${window.location.hostname}:8080/api/v1/ivrs`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('pbx_token')}`
+        },
         body: JSON.stringify({
           Name: newIvrName,
           Extension: newIvrExtension,

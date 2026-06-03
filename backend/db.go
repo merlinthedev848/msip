@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -30,6 +30,7 @@ func InitDB() {
 	log.Println("Database connection established. Running auto-migrations...")
 	err = DB.AutoMigrate(
 		&Tenant{},
+		&User{},
 		&Extension{},
 		&InboundRoute{},
 		&OutboundRoute{},
@@ -49,6 +50,17 @@ func InitDB() {
 		defaultTenant := Tenant{Name: "Default Organization"}
 		DB.Create(&defaultTenant)
 		log.Printf("Seeded default tenant: %s", defaultTenant.ID.String())
+
+		// Seed a default admin user
+		hash, _ := bcrypt.GenerateFromPassword([]byte("admin123"), bcrypt.DefaultCost)
+		defaultUser := User{
+			TenantID:     defaultTenant.ID,
+			Email:        "admin@pbx.local",
+			PasswordHash: string(hash),
+			Role:         "superadmin",
+		}
+		DB.Create(&defaultUser)
+		log.Printf("Seeded default admin user: admin@pbx.local")
 
 		// Seed a default test extension: 1001 / testpass
 		defaultExt := Extension{
