@@ -135,23 +135,23 @@
   <div class="bg-gray-900 border border-gray-800 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
     <div class="px-6 py-4 border-b border-gray-800 flex justify-between items-center bg-gray-900/50">
       <h3 class="text-lg font-semibold text-white">Invite User</h3>
-      <button class="text-gray-500 hover:text-white transition-colors" on:click={() => showModal = false}>
+      <button class="text-gray-500 hover:text-white transition-colors" aria-label="Close" on:click={() => showModal = false}>
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
       </button>
     </div>
     
     <form on:submit={handleAddUser} class="p-6 space-y-4">
       <div>
-        <label class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">Email Address</label>
-        <input type="email" bind:value={newEmail} required class="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+        <label for="email" class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">Email Address</label>
+        <input id="email" type="email" bind:value={newEmail} required class="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
       </div>
       <div>
-        <label class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">Password</label>
-        <input type="password" bind:value={newPassword} required class="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+        <label for="password" class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">Password</label>
+        <input id="password" type="password" bind:value={newPassword} required class="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
       </div>
       <div>
-        <label class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">Custom Role</label>
-        <select bind:value={newRole} class="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+        <label for="role" class="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-1.5">Custom Role</label>
+        <select id="role" bind:value={newRole} class="w-full bg-gray-950 border border-gray-800 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
           <option value="admin">Administrator (Full Access)</option>
           <option value="viewer">Viewer (Read-Only)</option>
         </select>
