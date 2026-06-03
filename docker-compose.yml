@@ -106,7 +106,7 @@ services:
     restart: unless-stopped
 
   homer-app:
-    image: sipcapture/homer-app:latest
+    image: ghcr.io/sipcapture/homer-app:latest
     container_name: pbx_homer_app
     environment:
       - DB_HOST=homer-db
