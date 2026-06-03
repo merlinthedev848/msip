@@ -44,7 +44,7 @@ services:
     restart: unless-stopped
 
   kamailio:
-    image: kamailio/kamailio:latest
+    image: ghcr.io/kamailio/kamailio:6.1.3-bullseye
     container_name: pbx_kamailio
     volumes:
       - ./edge-proxy/kamailio.cfg:/etc/kamailio/kamailio.cfg:ro
