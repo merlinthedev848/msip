@@ -16,7 +16,7 @@
 
   async function fetchIVRs() {
     try {
-      const res = await fetch("http://localhost:8080/api/v1/ivrs");
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/ivrs`);
       if (res.ok) {
         const data = await res.json();
         ivrs = data.ivrs || [];
@@ -36,7 +36,7 @@
     e.preventDefault();
     isSubmitting = true;
     try {
-      const res = await fetch("http://localhost:8080/api/v1/ivrs", {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/ivrs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

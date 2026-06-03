@@ -16,7 +16,7 @@
 
   async function fetchExtensions() {
     try {
-      const res = await fetch("http://localhost:8080/api/v1/extensions");
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/extensions`);
       if (res.ok) {
         const data = await res.json();
         extensions = data.extensions.map(e => ({
@@ -29,10 +29,7 @@
       } else { throw new Error("API Offline"); }
     } catch (e) {
       isApiConnected = false;
-      extensions = [
-        { ext: '1001', name: 'Sales Frontdesk', status: 'Online', ip: '192.168.1.104' },
-        { ext: '1002', name: 'Billing Dept', status: 'Online', ip: '192.168.1.105' },
-      ];
+      extensions = [];
     }
   }
 
@@ -42,14 +39,19 @@
 
   async function handleCreateExtension(e) {
     e.preventDefault();
+    if (newExtPassword !== newExtConfirm) {
+      alert("Passwords do not match!");
+      return;
+    }
     isSubmitting = true;
     try {
-      const res = await fetch("http://localhost:8080/api/v1/extensions", {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/extensions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ExtensionNumber: newExtNumber,
-          PasswordHash: newExtPassword
+          PasswordHash: newExtPassword,
+          IsActive: true
         })
       });
       
@@ -57,6 +59,7 @@
         isModalOpen = false;
         newExtNumber = '';
         newExtPassword = '';
+        newExtConfirm = '';
         await fetchExtensions();
       } else {
         alert("Failed to create extension.");

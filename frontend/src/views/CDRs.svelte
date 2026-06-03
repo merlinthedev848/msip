@@ -8,7 +8,7 @@
 
   async function fetchCDRs() {
     try {
-      const res = await fetch("http://localhost:8080/api/v1/cdr");
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/cdr`);
       if (res.ok) {
         const data = await res.json();
         cdrs = data.cdrs || [];

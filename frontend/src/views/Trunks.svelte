@@ -16,7 +16,7 @@
 
   async function fetchTrunks() {
     try {
-      const res = await fetch("http://localhost:8080/api/v1/trunks");
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/trunks`);
       if (res.ok) {
         const data = await res.json();
         trunks = data.trunks || [];
@@ -36,7 +36,7 @@
     e.preventDefault();
     isSubmitting = true;
     try {
-      const res = await fetch("http://localhost:8080/api/v1/trunks", {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/trunks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
