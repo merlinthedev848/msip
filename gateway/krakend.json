@@ -703,6 +703,672 @@
                                           }
                                       ],
                           "method":  "POST"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/domains/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "PUT",
+                                              "url_pattern":  "/api/domains/{id}"
+                                          }
+                                      ],
+                          "method":  "PUT"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/domains/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "DELETE",
+                                              "url_pattern":  "/api/domains/{id}"
+                                          }
+                                      ],
+                          "method":  "DELETE"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/extensions/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "PUT",
+                                              "url_pattern":  "/api/extensions/{id}"
+                                          }
+                                      ],
+                          "method":  "PUT"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/extensions/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "DELETE",
+                                              "url_pattern":  "/api/extensions/{id}"
+                                          }
+                                      ],
+                          "method":  "DELETE"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/trunks/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "PUT",
+                                              "url_pattern":  "/api/trunks/{id}"
+                                          }
+                                      ],
+                          "method":  "PUT"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/trunks/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "DELETE",
+                                              "url_pattern":  "/api/trunks/{id}"
+                                          }
+                                      ],
+                          "method":  "DELETE"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/cdr/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "PUT",
+                                              "url_pattern":  "/api/cdr/{id}"
+                                          }
+                                      ],
+                          "method":  "PUT"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/cdr/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "DELETE",
+                                              "url_pattern":  "/api/cdr/{id}"
+                                          }
+                                      ],
+                          "method":  "DELETE"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/ivrs/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "PUT",
+                                              "url_pattern":  "/api/ivrs/{id}"
+                                          }
+                                      ],
+                          "method":  "PUT"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/ivrs/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "DELETE",
+                                              "url_pattern":  "/api/ivrs/{id}"
+                                          }
+                                      ],
+                          "method":  "DELETE"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/inbound-routes/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "PUT",
+                                              "url_pattern":  "/api/inbound-routes/{id}"
+                                          }
+                                      ],
+                          "method":  "PUT"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/inbound-routes/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "DELETE",
+                                              "url_pattern":  "/api/inbound-routes/{id}"
+                                          }
+                                      ],
+                          "method":  "DELETE"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/outbound-routes/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "PUT",
+                                              "url_pattern":  "/api/outbound-routes/{id}"
+                                          }
+                                      ],
+                          "method":  "PUT"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/outbound-routes/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "DELETE",
+                                              "url_pattern":  "/api/outbound-routes/{id}"
+                                          }
+                                      ],
+                          "method":  "DELETE"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/voicemails/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "PUT",
+                                              "url_pattern":  "/api/voicemails/{id}"
+                                          }
+                                      ],
+                          "method":  "PUT"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/voicemails/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "DELETE",
+                                              "url_pattern":  "/api/voicemails/{id}"
+                                          }
+                                      ],
+                          "method":  "DELETE"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/video-rooms/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "PUT",
+                                              "url_pattern":  "/api/video-rooms/{id}"
+                                          }
+                                      ],
+                          "method":  "PUT"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/video-rooms/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "DELETE",
+                                              "url_pattern":  "/api/video-rooms/{id}"
+                                          }
+                                      ],
+                          "method":  "DELETE"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/cameras/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "PUT",
+                                              "url_pattern":  "/api/cameras/{id}"
+                                          }
+                                      ],
+                          "method":  "PUT"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/cameras/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "DELETE",
+                                              "url_pattern":  "/api/cameras/{id}"
+                                          }
+                                      ],
+                          "method":  "DELETE"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/chats/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "PUT",
+                                              "url_pattern":  "/api/chats/{id}"
+                                          }
+                                      ],
+                          "method":  "PUT"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/chats/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "DELETE",
+                                              "url_pattern":  "/api/chats/{id}"
+                                          }
+                                      ],
+                          "method":  "DELETE"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/sms/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "PUT",
+                                              "url_pattern":  "/api/sms/{id}"
+                                          }
+                                      ],
+                          "method":  "PUT"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/sms/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "DELETE",
+                                              "url_pattern":  "/api/sms/{id}"
+                                          }
+                                      ],
+                          "method":  "DELETE"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/credentials/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "PUT",
+                                              "url_pattern":  "/api/credentials/{id}"
+                                          }
+                                      ],
+                          "method":  "PUT"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/credentials/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "DELETE",
+                                              "url_pattern":  "/api/credentials/{id}"
+                                          }
+                                      ],
+                          "method":  "DELETE"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/webhooks/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "PUT",
+                                              "url_pattern":  "/api/webhooks/{id}"
+                                          }
+                                      ],
+                          "method":  "PUT"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/webhooks/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "DELETE",
+                                              "url_pattern":  "/api/webhooks/{id}"
+                                          }
+                                      ],
+                          "method":  "DELETE"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/throttling/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "PUT",
+                                              "url_pattern":  "/api/throttling/{id}"
+                                          }
+                                      ],
+                          "method":  "PUT"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/throttling/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "DELETE",
+                                              "url_pattern":  "/api/throttling/{id}"
+                                          }
+                                      ],
+                          "method":  "DELETE"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/firewall/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "PUT",
+                                              "url_pattern":  "/api/firewall/{id}"
+                                          }
+                                      ],
+                          "method":  "PUT"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/firewall/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "DELETE",
+                                              "url_pattern":  "/api/firewall/{id}"
+                                          }
+                                      ],
+                          "method":  "DELETE"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/fraud/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "PUT",
+                                              "url_pattern":  "/api/fraud/{id}"
+                                          }
+                                      ],
+                          "method":  "PUT"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/fraud/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "DELETE",
+                                              "url_pattern":  "/api/fraud/{id}"
+                                          }
+                                      ],
+                          "method":  "DELETE"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/dashboard/stats",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "GET",
+                                              "url_pattern":  "/api/dashboard/stats"
+                                          }
+                                      ],
+                          "method":  "GET"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/users/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "PUT",
+                                              "url_pattern":  "/api/users/{id}"
+                                          }
+                                      ],
+                          "method":  "PUT"
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/users/{id}",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "method":  "DELETE",
+                                              "url_pattern":  "/api/users/{id}"
+                                          }
+                                      ],
+                          "method":  "DELETE"
                       }
                   ]
 }

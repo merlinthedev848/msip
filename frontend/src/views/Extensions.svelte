@@ -12,6 +12,7 @@
   let isModalOpen = false;
   let newExtNumber = '';
   let newExtPassword = '';
+  let newExtConfirm = '';
   let isSubmitting = false;
 
   async function fetchExtensions() {
@@ -21,7 +22,9 @@
       });
       if (res.ok) {
         const data = await res.json();
-        extensions = data.extensions.map(e => ({
+        const data = await res.json();
+        extensions = (data.extensions || []).map(e => ({
+          id: e.ID,
           ext: e.ExtensionNumber,
           name: 'DB Endpoint',
           status: e.IsActive ? 'Online' : 'Offline',
@@ -75,6 +78,17 @@
     } finally {
       isSubmitting = false;
     }
+  }
+
+  async function handleDeleteExtension(id) {
+    if(!confirm("Are you sure you want to delete this extension?")) return;
+    try {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/extensions/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
+      });
+      if (res.ok) fetchExtensions();
+    } catch (e) {}
   }
 </script>
 
@@ -131,9 +145,12 @@
                   {ext.code}
                 </span>
               </td>
-              <td class="p-4 text-right">
-                <button title="Edit Extension" aria-label="Edit Extension" class="text-slate-500 hover:text-slate-900 transition-colors opacity-0 group-hover:opacity-100 p-1">
+              <td class="p-4 text-right flex justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button title="Edit Extension" aria-label="Edit Extension" class="text-slate-500 hover:text-slate-900 transition-colors p-1">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                </button>
+                <button title="Delete Extension" aria-label="Delete Extension" class="text-slate-500 hover:text-red-400 transition-colors p-1" on:click={() => handleDeleteExtension(ext.id)}>
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                 </button>
               </td>
             </tr>
@@ -155,6 +172,10 @@
       <label for="extPassword" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">SIP Password</label>
       <input id="extPassword" type="password" bind:value={newExtPassword} required placeholder="Strong password" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
     </div>
+    <div>
+      <label for="extConfirm" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Confirm Password</label>
+      <input id="extConfirm" type="password" bind:value={newExtConfirm} required placeholder="Confirm password" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
+    </div>
     
     <div class="pt-4 flex justify-end space-x-3">
       <Button variant="secondary" on:click={() => isModalOpen = false} type="button">Cancel</Button>
@@ -164,5 +185,6 @@
     </div>
   </form>
 </Modal>
+
 
 

@@ -65,6 +65,17 @@
       isSubmitting = false;
     }
   }
+
+  async function handleDeleteIVR(id) {
+    if(!confirm("Are you sure you want to delete this IVR menu?")) return;
+    try {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/ivrs/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
+      });
+      if (res.ok) fetchIVRs();
+    } catch (e) {}
+  }
 </script>
 
 <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">
@@ -98,6 +109,7 @@
         </div>
         <div class="mt-6 pt-4 border-t border-slate-200 flex justify-end space-x-3">
           <Button variant="secondary" className="px-4 text-xs">Edit Menu</Button>
+          <Button variant="danger" className="px-4 text-xs" on:click={() => handleDeleteIVR(ivr.ID)}>Delete</Button>
         </div>
       </GlassCard>
     {/each}
@@ -129,3 +141,4 @@
     </div>
   </form>
 </Modal>
+

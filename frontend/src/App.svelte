@@ -63,7 +63,7 @@
     '/outbound-routes': OutboundRoutes,
     '/trunks': Trunks,
     '/extensions': Extensions,
-    '/ivr': IVR,
+    '/ivr': IVRs,
     '/voicemail': Voicemail,
     '/video-rooms': VideoRooms,
     '/cameras': Camera,
@@ -81,12 +81,16 @@
     '/provisioning': Provisioning
   };
 
-  $: ActiveComponent = routes[currentPath];
+  $: ActiveComponent = currentPath === '/wallboard-fullscreen' ? Wallboard : routes[currentPath];
 </script>
 
 <div>
   {#if !token}
     <Login />
+  {:else if currentPath === '/wallboard-fullscreen'}
+    <div class="h-screen w-screen bg-gray-950 overflow-hidden">
+      <Wallboard />
+    </div>
   {:else}
     <main class="flex min-h-screen bg-slate-50 font-sans selection:bg-blue-500 selection:text-white text-slate-900">
       <Sidebar />

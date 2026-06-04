@@ -61,13 +61,20 @@
   
   <header class="flex justify-between items-center mb-10">
     <div>
-      <h1 class="text-4xl font-black text-slate-900 tracking-tighter">Call Center Wallboard</h1>
-      <p class="text-slate-500 font-medium">Real-time queue analytics and SLA tracking.</p>
+      <h1 class="text-3xl font-black text-slate-900 tracking-tight mb-2 flex items-center">
+        Live Call Centre
+        <span class="ml-3 px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100 text-xs font-bold uppercase tracking-wider flex items-center">
+          <span class="w-1.5 h-1.5 rounded-full {isConnected ? 'bg-indigo-400 animate-pulse' : 'bg-rose-500'} mr-2"></span>
+          {isConnected ? 'Stream Active' : 'Connecting...'}
+        </span>
+      </h1>
+      <p class="text-slate-500 font-medium text-sm">Real-time queue and agent performance metrics.</p>
     </div>
-    <div class="text-right">
-      <div class="text-3xl font-black font-mono text-slate-900 tracking-widest">{new Date().toLocaleTimeString('en-US', { hour12: false })}</div>
-      <p class="text-emerald-400 text-xs font-bold uppercase tracking-[0.2em]">Live Connection</p>
-    </div>
+    
+    <button on:click={() => window.open('/wallboard-fullscreen', '_blank')} class="bg-slate-100 hover:bg-slate-200 text-slate-900 px-4 py-2 rounded-xl font-bold text-sm transition-colors flex items-center border border-slate-200">
+      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+      Pop Out Display
+    </button>
   </header>
 
   <!-- Massive KPIs -->
@@ -138,4 +145,5 @@
     </table>
   </div>
 </div>
+
 

@@ -2,8 +2,13 @@
   import { onMount } from 'svelte';
   let channels = [];
   let messages = [];
+  import Modal from '../components/ui/Modal.svelte';
+  let channels = [];
+  let messages = [];
+  let isModalOpen = false;
+  let newName = '';
 
-  onMount(async () => {
+  async function fetchChats() {
     try {
       const res = await fetch(`http://${window.location.hostname}:8080/api/v1/chats`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
@@ -16,7 +21,39 @@
         if (channels.length > 0) channels[0].active = true;
       }
     } catch (e) {}
-  });
+  }
+
+  onMount(fetchChats);
+
+  async function handleCreateChat(e) {
+    e.preventDefault();
+    try {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/chats`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('pbx_token')}`
+        },
+        body: JSON.stringify({ Name: newName })
+      });
+      if (res.ok) {
+        isModalOpen = false;
+        newName = '';
+        fetchChats();
+      }
+    } catch (e) {}
+  }
+
+  async function handleDeleteChat(id) {
+    if(!confirm("Delete this channel?")) return;
+    try {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/chats/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
+      });
+      if (res.ok) fetchChats();
+    } catch (e) {}
+  }
 </script>
 
 <div class="h-[calc(100vh-120px)] flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">
@@ -25,7 +62,7 @@
       <h1 class="text-3xl font-black text-slate-900 tracking-tight mb-2">Team Chat</h1>
       <p class="text-slate-500 font-medium text-sm">Persistent encrypted XMPP messaging channels.</p>
     </div>
-    <button class="bg-indigo-600 hover:bg-indigo-500 text-slate-900 px-6 py-2 rounded-xl font-bold transition-colors shadow-lg shadow-indigo-600/20 flex items-center">
+    <button class="bg-indigo-600 hover:bg-indigo-500 text-slate-900 px-6 py-2 rounded-xl font-bold transition-colors shadow-lg shadow-indigo-600/20 flex items-center" on:click={() => isModalOpen = true}>
       <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
       New Channel
     </button>
@@ -47,9 +84,12 @@
               <span class="text-lg font-bold text-slate-500 mr-2">#</span>
               <span class="font-bold text-sm {chan.active ? 'text-blue-600' : 'text-slate-700 group-hover:text-slate-900'}">{chan.name}</span>
             </div>
-            {#if chan.unread > 0}
-              <span class="bg-rose-500 text-slate-900 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-[0_0_10px_rgba(244,63,94,0.5)]">{chan.unread}</span>
-            {/if}
+            <div class="flex items-center space-x-2">
+              {#if chan.unread > 0}
+                <span class="bg-rose-500 text-slate-900 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-[0_0_10px_rgba(244,63,94,0.5)]">{chan.unread}</span>
+              {/if}
+              <button class="text-rose-500 hover:text-slate-900 p-1 rounded transition-colors opacity-0 group-hover:opacity-100" on:click|stopPropagation={() => handleDeleteChat(chan.id)}><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+            </div>
           </button>
         {/each}
       </div>
@@ -103,6 +143,22 @@
         </div>
       </div>
     </div>
+    </div>
   </div>
 </div>
+
+<Modal bind:isOpen={isModalOpen} title="Create Channel">
+  <form on:submit={handleCreateChat} class="space-y-4">
+    <div>
+      <label class="block text-sm font-bold text-slate-500 mb-1">Channel Name</label>
+      <input type="text" bind:value={newName} required placeholder="e.g. general" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
+    </div>
+    <div class="pt-4 flex justify-end space-x-3">
+      <button type="button" class="px-4 py-2 text-slate-500 hover:text-slate-900" on:click={() => isModalOpen = false}>Cancel</button>
+      <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-slate-900 px-6 py-2 rounded-xl font-bold shadow-lg shadow-indigo-500/20">Create</button>
+    </div>
+  </form>
+</Modal>
+
+
 

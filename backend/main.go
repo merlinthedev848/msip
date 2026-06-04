@@ -482,6 +482,238 @@ func main() {
 			c.JSON(http.StatusCreated, record)
 		})
 
+        // CRUD for extensions
+        v1.PUT("/extensions/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            var record Extension
+            if err := DB.First(&record, "id = ?", id).Error; err != nil { c.JSON(http.StatusNotFound, gin.H{"error": "Not found"}); return }
+            if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
+            DB.Save(&record)
+            c.JSON(http.StatusOK, record)
+        })
+        v1.DELETE("/extensions/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            if err := DB.Delete(&Extension{}, "id = ?", id).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+            c.JSON(http.StatusOK, gin.H{"message": "deleted"})
+        })
+        // CRUD for trunks
+        v1.PUT("/trunks/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            var record Trunk
+            if err := DB.First(&record, "id = ?", id).Error; err != nil { c.JSON(http.StatusNotFound, gin.H{"error": "Not found"}); return }
+            if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
+            DB.Save(&record)
+            c.JSON(http.StatusOK, record)
+        })
+        v1.DELETE("/trunks/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            if err := DB.Delete(&Trunk{}, "id = ?", id).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+            c.JSON(http.StatusOK, gin.H{"message": "deleted"})
+        })
+        // CRUD for ivrs
+        v1.PUT("/ivrs/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            var record IVRMenu
+            if err := DB.First(&record, "id = ?", id).Error; err != nil { c.JSON(http.StatusNotFound, gin.H{"error": "Not found"}); return }
+            if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
+            DB.Save(&record)
+            c.JSON(http.StatusOK, record)
+        })
+        v1.DELETE("/ivrs/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            if err := DB.Delete(&IVRMenu{}, "id = ?", id).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+            c.JSON(http.StatusOK, gin.H{"message": "deleted"})
+        })
+        // CRUD for routing
+        v1.PUT("/routing/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            var record RoutingRule
+            if err := DB.First(&record, "id = ?", id).Error; err != nil { c.JSON(http.StatusNotFound, gin.H{"error": "Not found"}); return }
+            if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
+            DB.Save(&record)
+            c.JSON(http.StatusOK, record)
+        })
+        v1.DELETE("/routing/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            if err := DB.Delete(&RoutingRule{}, "id = ?", id).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+            c.JSON(http.StatusOK, gin.H{"message": "deleted"})
+        })
+        // CRUD for outbound-routes
+        v1.PUT("/outbound-routes/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            var record OutboundRoute
+            if err := DB.First(&record, "id = ?", id).Error; err != nil { c.JSON(http.StatusNotFound, gin.H{"error": "Not found"}); return }
+            if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
+            DB.Save(&record)
+            c.JSON(http.StatusOK, record)
+        })
+        v1.DELETE("/outbound-routes/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            if err := DB.Delete(&OutboundRoute{}, "id = ?", id).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+            c.JSON(http.StatusOK, gin.H{"message": "deleted"})
+        })
+        // CRUD for voicemails
+        v1.PUT("/voicemails/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            var record Voicemail
+            if err := DB.First(&record, "id = ?", id).Error; err != nil { c.JSON(http.StatusNotFound, gin.H{"error": "Not found"}); return }
+            if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
+            DB.Save(&record)
+            c.JSON(http.StatusOK, record)
+        })
+        v1.DELETE("/voicemails/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            if err := DB.Delete(&Voicemail{}, "id = ?", id).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+            c.JSON(http.StatusOK, gin.H{"message": "deleted"})
+        })
+        // CRUD for video-rooms
+        v1.PUT("/video-rooms/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            var record VideoRoom
+            if err := DB.First(&record, "id = ?", id).Error; err != nil { c.JSON(http.StatusNotFound, gin.H{"error": "Not found"}); return }
+            if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
+            DB.Save(&record)
+            c.JSON(http.StatusOK, record)
+        })
+        v1.DELETE("/video-rooms/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            if err := DB.Delete(&VideoRoom{}, "id = ?", id).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+            c.JSON(http.StatusOK, gin.H{"message": "deleted"})
+        })
+        // CRUD for cameras
+        v1.PUT("/cameras/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            var record Camera
+            if err := DB.First(&record, "id = ?", id).Error; err != nil { c.JSON(http.StatusNotFound, gin.H{"error": "Not found"}); return }
+            if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
+            DB.Save(&record)
+            c.JSON(http.StatusOK, record)
+        })
+        v1.DELETE("/cameras/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            if err := DB.Delete(&Camera{}, "id = ?", id).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+            c.JSON(http.StatusOK, gin.H{"message": "deleted"})
+        })
+        // CRUD for chats
+        v1.PUT("/chats/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            var record Chat
+            if err := DB.First(&record, "id = ?", id).Error; err != nil { c.JSON(http.StatusNotFound, gin.H{"error": "Not found"}); return }
+            if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
+            DB.Save(&record)
+            c.JSON(http.StatusOK, record)
+        })
+        v1.DELETE("/chats/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            if err := DB.Delete(&Chat{}, "id = ?", id).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+            c.JSON(http.StatusOK, gin.H{"message": "deleted"})
+        })
+        // CRUD for sms
+        v1.PUT("/sms/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            var record SMSMessage
+            if err := DB.First(&record, "id = ?", id).Error; err != nil { c.JSON(http.StatusNotFound, gin.H{"error": "Not found"}); return }
+            if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
+            DB.Save(&record)
+            c.JSON(http.StatusOK, record)
+        })
+        v1.DELETE("/sms/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            if err := DB.Delete(&SMSMessage{}, "id = ?", id).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+            c.JSON(http.StatusOK, gin.H{"message": "deleted"})
+        })
+        // CRUD for credentials
+        v1.PUT("/credentials/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            var record APICredential
+            if err := DB.First(&record, "id = ?", id).Error; err != nil { c.JSON(http.StatusNotFound, gin.H{"error": "Not found"}); return }
+            if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
+            DB.Save(&record)
+            c.JSON(http.StatusOK, record)
+        })
+        v1.DELETE("/credentials/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            if err := DB.Delete(&APICredential{}, "id = ?", id).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+            c.JSON(http.StatusOK, gin.H{"message": "deleted"})
+        })
+        // CRUD for webhooks
+        v1.PUT("/webhooks/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            var record Webhook
+            if err := DB.First(&record, "id = ?", id).Error; err != nil { c.JSON(http.StatusNotFound, gin.H{"error": "Not found"}); return }
+            if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
+            DB.Save(&record)
+            c.JSON(http.StatusOK, record)
+        })
+        v1.DELETE("/webhooks/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            if err := DB.Delete(&Webhook{}, "id = ?", id).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+            c.JSON(http.StatusOK, gin.H{"message": "deleted"})
+        })
+        // CRUD for throttling
+        v1.PUT("/throttling/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            var record ThrottleRule
+            if err := DB.First(&record, "id = ?", id).Error; err != nil { c.JSON(http.StatusNotFound, gin.H{"error": "Not found"}); return }
+            if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
+            DB.Save(&record)
+            c.JSON(http.StatusOK, record)
+        })
+        v1.DELETE("/throttling/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            if err := DB.Delete(&ThrottleRule{}, "id = ?", id).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+            c.JSON(http.StatusOK, gin.H{"message": "deleted"})
+        })
+        // CRUD for firewall
+        v1.PUT("/firewall/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            var record FirewallRule
+            if err := DB.First(&record, "id = ?", id).Error; err != nil { c.JSON(http.StatusNotFound, gin.H{"error": "Not found"}); return }
+            if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
+            DB.Save(&record)
+            c.JSON(http.StatusOK, record)
+        })
+        v1.DELETE("/firewall/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            if err := DB.Delete(&FirewallRule{}, "id = ?", id).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+            c.JSON(http.StatusOK, gin.H{"message": "deleted"})
+        })
+        // CRUD for fraud
+        v1.PUT("/fraud/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            var record FraudRule
+            if err := DB.First(&record, "id = ?", id).Error; err != nil { c.JSON(http.StatusNotFound, gin.H{"error": "Not found"}); return }
+            if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
+            DB.Save(&record)
+            c.JSON(http.StatusOK, record)
+        })
+        v1.DELETE("/fraud/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            if err := DB.Delete(&FraudRule{}, "id = ?", id).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+            c.JSON(http.StatusOK, gin.H{"message": "deleted"})
+        })
+        // CRUD for users
+        v1.PUT(/users/:id, func(c *gin.Context) {
+            id := c.Param(id)
+            var record User
+            if err := DB.First(&record, id = ?, id).Error; err != nil { c.JSON(http.StatusNotFound, gin.H{error: Not found}); return }
+            if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{error: err.Error()}); return }
+            DB.Save(&record)
+            c.JSON(http.StatusOK, record)
+        })
+        v1.DELETE(/users/:id, func(c *gin.Context) {
+            id := c.Param(id)
+            if err := DB.Delete(&User{}, id = ?, id).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{error: err.Error()}); return }
+            c.JSON(http.StatusOK, gin.H{message: deleted})
+        })
+        // Dashboard Stats
+        v1.GET("/dashboard/stats", func(c *gin.Context) {
+            var extCount, trunkCount, routeCount int64
+            DB.Model(&Extension{}).Count(&extCount)
+            DB.Model(&Trunk{}).Count(&trunkCount)
+            DB.Model(&RoutingRule{}).Count(&routeCount)
+            c.JSON(http.StatusOK, gin.H{"extensions": extCount, "trunks": trunkCount, "routes": routeCount})
+        })
 		} // closes v1 group
 	}
 

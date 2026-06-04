@@ -22,6 +22,22 @@
   $: ramPath = `M 0,30 L ${ramPoints} L 100,30 Z`;
 
   let liveCallList = [];
+
+  onMount(async () => {
+    try {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/dashboard/stats`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        activeExtensions = data.extensions || 0;
+        // Mocking calls and usage for UI demo purposes based on extensions
+        activeCalls = Math.floor(activeExtensions / 2);
+        cpuUsage = 24 + Math.floor(Math.random() * 10);
+        ramUsage = 3200 + (activeExtensions * 10);
+      }
+    } catch (e) {}
+  });
 </script>
 
 <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">
@@ -225,4 +241,5 @@
   </div>
 
 </div>
+
 

@@ -5,7 +5,7 @@
   import Button from '../components/ui/Button.svelte';
 
   let voicemails = [];
-  onMount(async () => {
+  async function fetchVoicemails() {
     try {
       const res = await fetch(`http://${window.location.hostname}:8080/api/v1/voicemails`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
@@ -15,7 +15,34 @@
         voicemails = data.voicemails || [];
       }
     } catch (e) {}
-  });
+  }
+
+  onMount(fetchVoicemails);
+
+  async function handleDelete(id) {
+    if(!confirm("Delete this voicemail?")) return;
+    try {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/voicemails/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
+      });
+      if (res.ok) fetchVoicemails();
+    } catch (e) {}
+  }
+
+  async function handleSimulate() {
+    try {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/voicemails`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('pbx_token')}`
+        },
+        body: JSON.stringify({ CallerID: 'Test Caller', Extension: '1001', Duration: 15, IsRead: false })
+      });
+      if (res.ok) fetchVoicemails();
+    } catch (e) {}
+  }
 </script>
 
 <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">
@@ -24,6 +51,9 @@
       <h1 class="text-3xl font-bold tracking-tight text-slate-900 mb-1">Visual Voicemail</h1>
       <p class="text-slate-500 text-sm">Listen and read transcriptions of incoming messages.</p>
     </div>
+    <button class="bg-indigo-600 hover:bg-indigo-500 text-slate-900 px-4 py-2 rounded-xl font-bold text-sm transition-colors" on:click={handleSimulate}>
+      Simulate Voicemail
+    </button>
   </header>
 
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -59,9 +89,13 @@
           <div class="h-full bg-indigo-500 w-1/3"></div>
         </div>
         <span class="text-xs text-slate-500 font-mono">0:00 / {vm.Duration}</span>
+        <button class="text-rose-500 hover:text-slate-900 p-2 rounded hover:bg-rose-500 ml-4 transition-colors" on:click={() => handleDelete(vm.ID)}>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+        </button>
       </div>
     </GlassCard>
     {/each}
   </div>
 </div>
+
 

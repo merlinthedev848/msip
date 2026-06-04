@@ -2,8 +2,14 @@
   import { onMount } from 'svelte';
   let trunks = [];
   let messages = [];
+  import Modal from '../components/ui/Modal.svelte';
+  let trunks = [];
+  let messages = [];
+  let isModalOpen = false;
+  let newSmsTo = '';
+  let newSmsBody = '';
 
-  onMount(async () => {
+  async function fetchSMS() {
     try {
       const res = await fetch(`http://${window.location.hostname}:8080/api/v1/sms`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
@@ -15,7 +21,39 @@
         }));
       }
     } catch (e) {}
-  });
+  }
+
+  onMount(fetchSMS);
+
+  async function handleSendSMS(e) {
+    e.preventDefault();
+    try {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/sms`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('pbx_token')}`
+        },
+        body: JSON.stringify({ Direction: 'outbound', Sender: 'System', Receiver: newSmsTo, Body: newSmsBody })
+      });
+      if (res.ok) {
+        isModalOpen = false;
+        newSmsTo = ''; newSmsBody = '';
+        fetchSMS();
+      }
+    } catch (e) {}
+  }
+
+  async function handleDeleteSMS(id) {
+    if(!confirm("Delete this message?")) return;
+    try {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/sms/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
+      });
+      if (res.ok) fetchSMS();
+    } catch (e) {}
+  }
 </script>
 
 <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">
@@ -24,9 +62,9 @@
       <h1 class="text-3xl font-black text-slate-900 tracking-tight mb-2">SMS Trunks & Routing</h1>
       <p class="text-slate-500 font-medium text-sm">Manage SMPP binds, message routing, and A2P compliance.</p>
     </div>
-    <button class="bg-indigo-600 hover:bg-indigo-500 text-slate-900 px-6 py-2 rounded-xl font-bold transition-colors shadow-lg shadow-indigo-600/20 flex items-center">
+    <button class="bg-indigo-600 hover:bg-indigo-500 text-slate-900 px-6 py-2 rounded-xl font-bold transition-colors shadow-lg shadow-indigo-600/20 flex items-center" on:click={() => isModalOpen = true}>
       <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-      Add SMPP Trunk
+      Send Message
     </button>
   </header>
 
@@ -83,6 +121,23 @@
     </div>
   </div>
 
+<Modal bind:isOpen={isModalOpen} title="Send SMS Message">
+  <form on:submit={handleSendSMS} class="space-y-4">
+    <div>
+      <label class="block text-sm font-bold text-slate-500 mb-1">Recipient Number</label>
+      <input type="text" bind:value={newSmsTo} required placeholder="+1234567890" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
+    </div>
+    <div>
+      <label class="block text-sm font-bold text-slate-500 mb-1">Message Body</label>
+      <textarea bind:value={newSmsBody} required rows="3" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+    </div>
+    <div class="pt-4 flex justify-end space-x-3">
+      <button type="button" class="px-4 py-2 text-slate-500 hover:text-slate-900" on:click={() => isModalOpen = false}>Cancel</button>
+      <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-slate-900 px-6 py-2 rounded-xl font-bold shadow-lg shadow-indigo-500/20">Send</button>
+    </div>
+  </form>
+</Modal>
+
   <!-- Message Log -->
   <div class="bg-white/60 rounded-[2rem] border border-slate-200 overflow-hidden shadow-2xl">
     <div class="p-5 border-b border-slate-200 flex justify-between items-center bg-slate-50/30">
@@ -128,4 +183,5 @@
     </table>
   </div>
 </div>
+
 

@@ -54,6 +54,19 @@
     }
   }
 
+  async function handleDeleteUser(id) {
+    if(!confirm("Are you sure you want to delete this admin?")) return;
+    try {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/users/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
+      });
+      if (res.ok) fetchUsers();
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
   onMount(() => {
     fetchUsers();
   });
@@ -115,13 +128,12 @@
                     {user.Role.toUpperCase()}
                   </span>
                 </td>
-                <td class="py-4 px-6 text-sm text-slate-500">
-                  {new Date(user.CreatedAt).toLocaleDateString()}
-                </td>
-                <td class="py-4 px-6 text-right">
-                  <button class="text-slate-500 hover:text-blue-600 p-2 transition-colors">Edit</button>
-                </td>
-              </tr>
+                  <td class="py-4 font-mono text-sm text-slate-500">Never</td>
+                  <td class="py-4 text-right">
+                    <button class="text-slate-500 hover:text-slate-900 mx-2 transition-colors">Edit</button>
+                    <button class="text-red-400 hover:text-red-300 mx-2 transition-colors" on:click={() => handleDeleteUser(user.ID)}>Revoke</button>
+                  </td>
+                </tr>
             {/each}
           </tbody>
         </table>
@@ -165,3 +177,4 @@
   </div>
 </div>
 {/if}
+
