@@ -527,7 +527,7 @@ func main() {
         // CRUD for routing
         v1.PUT("/routing/:id", func(c *gin.Context) {
             id := c.Param("id")
-            var record RoutingRule
+            var record InboundRoute
             if err := DB.First(&record, "id = ?", id).Error; err != nil { c.JSON(http.StatusNotFound, gin.H{"error": "Not found"}); return }
             if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
             DB.Save(&record)
@@ -535,7 +535,7 @@ func main() {
         })
         v1.DELETE("/routing/:id", func(c *gin.Context) {
             id := c.Param("id")
-            if err := DB.Delete(&RoutingRule{}, "id = ?", id).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+            if err := DB.Delete(&InboundRoute{}, "id = ?", id).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
             c.JSON(http.StatusOK, gin.H{"message": "deleted"})
         })
         // CRUD for outbound-routes
@@ -583,7 +583,7 @@ func main() {
         // CRUD for cameras
         v1.PUT("/cameras/:id", func(c *gin.Context) {
             id := c.Param("id")
-            var record Camera
+            var record IPCamera
             if err := DB.First(&record, "id = ?", id).Error; err != nil { c.JSON(http.StatusNotFound, gin.H{"error": "Not found"}); return }
             if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
             DB.Save(&record)
@@ -591,13 +591,13 @@ func main() {
         })
         v1.DELETE("/cameras/:id", func(c *gin.Context) {
             id := c.Param("id")
-            if err := DB.Delete(&Camera{}, "id = ?", id).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+            if err := DB.Delete(&IPCamera{}, "id = ?", id).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
             c.JSON(http.StatusOK, gin.H{"message": "deleted"})
         })
         // CRUD for chats
         v1.PUT("/chats/:id", func(c *gin.Context) {
             id := c.Param("id")
-            var record Chat
+            var record TeamChat
             if err := DB.First(&record, "id = ?", id).Error; err != nil { c.JSON(http.StatusNotFound, gin.H{"error": "Not found"}); return }
             if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
             DB.Save(&record)
@@ -605,7 +605,7 @@ func main() {
         })
         v1.DELETE("/chats/:id", func(c *gin.Context) {
             id := c.Param("id")
-            if err := DB.Delete(&Chat{}, "id = ?", id).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+            if err := DB.Delete(&TeamChat{}, "id = ?", id).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
             c.JSON(http.StatusOK, gin.H{"message": "deleted"})
         })
         // CRUD for sms
@@ -711,7 +711,7 @@ func main() {
             var extCount, trunkCount, routeCount int64
             DB.Model(&Extension{}).Count(&extCount)
             DB.Model(&Trunk{}).Count(&trunkCount)
-            DB.Model(&RoutingRule{}).Count(&routeCount)
+            DB.Model(&InboundRoute{}).Count(&routeCount)
             c.JSON(http.StatusOK, gin.H{"extensions": extCount, "trunks": trunkCount, "routes": routeCount})
         })
 		} // closes v1 group
