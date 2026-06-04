@@ -77,7 +77,7 @@
       </div>
       <div class="space-y-2 p-3">
         {#each channels as chan}
-          <button class="w-full flex items-center justify-between p-3 rounded-xl transition-colors group {chan.active ? 'bg-indigo-600/10 border border-blue-100' : 'hover:bg-slate-50 border border-transparent'}">
+          <div class="w-full flex items-center justify-between p-3 rounded-xl transition-colors group {chan.active ? 'bg-indigo-600/10 border border-blue-100' : 'hover:bg-slate-50 border border-transparent'}">
             <div class="flex items-center">
               <span class="text-lg font-bold text-slate-500 mr-2">#</span>
               <span class="font-bold text-sm {chan.active ? 'text-blue-600' : 'text-slate-700 group-hover:text-slate-900'}">{chan.name}</span>
@@ -88,7 +88,7 @@
               {/if}
               <button class="text-rose-500 hover:text-slate-900 p-1 rounded transition-colors opacity-0 group-hover:opacity-100" on:click|stopPropagation={() => handleDeleteChat(chan.id)}><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
             </div>
-          </button>
+          </div>
         {/each}
       </div>
     </div>
