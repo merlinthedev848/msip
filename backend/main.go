@@ -693,18 +693,18 @@ func main() {
             c.JSON(http.StatusOK, gin.H{"message": "deleted"})
         })
         // CRUD for users
-        v1.PUT(/users/:id, func(c *gin.Context) {
-            id := c.Param(id)
+        v1.PUT("/users/:id", func(c *gin.Context) {
+            id := c.Param("id")
             var record User
-            if err := DB.First(&record, id = ?, id).Error; err != nil { c.JSON(http.StatusNotFound, gin.H{error: Not found}); return }
-            if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{error: err.Error()}); return }
+            if err := DB.First(&record, "id = ?", id).Error; err != nil { c.JSON(http.StatusNotFound, gin.H{"error": "Not found"}); return }
+            if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
             DB.Save(&record)
             c.JSON(http.StatusOK, record)
         })
-        v1.DELETE(/users/:id, func(c *gin.Context) {
-            id := c.Param(id)
-            if err := DB.Delete(&User{}, id = ?, id).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{error: err.Error()}); return }
-            c.JSON(http.StatusOK, gin.H{message: deleted})
+        v1.DELETE("/users/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            if err := DB.Delete(&User{}, "id = ?", id).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+            c.JSON(http.StatusOK, gin.H{"message": "deleted"})
         })
         // Dashboard Stats
         v1.GET("/dashboard/stats", func(c *gin.Context) {
