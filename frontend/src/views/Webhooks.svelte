@@ -126,8 +126,6 @@
       </div>
     </div>
   </div>
-    </div>
-  </div>
 </div>
 
 <Modal bind:isOpen={isModalOpen} title="Create Webhook">

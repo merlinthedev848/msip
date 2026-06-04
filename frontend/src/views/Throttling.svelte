@@ -124,7 +124,6 @@
       </tbody>
     </table>
   </div>
-  </div>
 </div>
 
 <Modal bind:isOpen={isModalOpen} title="Add Throttling Rule">

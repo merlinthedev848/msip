@@ -3,8 +3,6 @@
   let channels = [];
   let messages = [];
   import Modal from '../components/ui/Modal.svelte';
-  let channels = [];
-  let messages = [];
   let isModalOpen = false;
   let newName = '';
 

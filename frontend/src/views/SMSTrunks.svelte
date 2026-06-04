@@ -1,7 +1,5 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  let trunks = [];
-  let messages = [];
   import Modal from '../components/ui/Modal.svelte';
   let trunks = [];
   let messages = [];

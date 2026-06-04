@@ -22,7 +22,6 @@
       });
       if (res.ok) {
         const data = await res.json();
-        const data = await res.json();
         extensions = (data.extensions || []).map(e => ({
           id: e.ID,
           ext: e.ExtensionNumber,
