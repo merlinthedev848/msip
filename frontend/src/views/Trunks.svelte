@@ -65,13 +65,24 @@
       isSubmitting = false;
     }
   }
+
+  async function handleDeleteTrunk(id) {
+    if(!confirm("Are you sure you want to delete this trunk?")) return;
+    try {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/trunks/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
+      });
+      if (res.ok) fetchTrunks();
+    } catch (e) {}
+  }
 </script>
 
 <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">
   <header class="flex justify-between items-end mb-8">
     <div>
-      <h1 class="text-3xl font-bold tracking-tight text-white mb-1">SIP Trunks</h1>
-      <p class="text-gray-400 text-sm">Manage external carrier connections.</p>
+      <h1 class="text-3xl font-bold tracking-tight text-slate-900 mb-1">SIP Trunks</h1>
+      <p class="text-slate-500 text-sm">Manage external carrier connections.</p>
     </div>
     <Button variant="primary" on:click={() => isModalOpen = true}>Add Trunk</Button>
   </header>
@@ -92,19 +103,19 @@
       <GlassCard>
         <div class="flex justify-between items-start mb-6">
           <div>
-            <h3 class="text-xl font-bold text-white">Twilio Primary</h3>
-            <p class="text-sm text-gray-400">sip.twilio.com</p>
+            <h3 class="text-xl font-bold text-slate-900">Twilio Primary</h3>
+            <p class="text-sm text-slate-500">sip.twilio.com</p>
           </div>
           <Badge status="success" pulse={true}>Registered</Badge>
         </div>
         <div class="space-y-4">
           <div class="flex justify-between text-sm">
-            <span class="text-gray-500">Auth Method</span>
-            <span class="text-gray-300">IP ACL</span>
+            <span class="text-slate-500">Auth Method</span>
+            <span class="text-slate-700">IP ACL</span>
           </div>
           <div class="flex justify-between text-sm">
-            <span class="text-gray-500">Channels</span>
-            <span class="text-gray-300">Unlimited</span>
+            <span class="text-slate-500">Channels</span>
+            <span class="text-slate-700">Unlimited</span>
           </div>
         </div>
       </GlassCard>
@@ -115,24 +126,24 @@
       <GlassCard>
         <div class="flex justify-between items-start mb-6">
           <div>
-            <h3 class="text-xl font-bold text-white">{trunk.ProviderName}</h3>
-            <p class="text-sm text-gray-400">{trunk.SIPServer}</p>
+            <h3 class="text-xl font-bold text-slate-900">{trunk.ProviderName}</h3>
+            <p class="text-sm text-slate-500">{trunk.SIPServer}</p>
           </div>
           <Badge status="success" pulse={true}>Registered</Badge>
         </div>
         <div class="space-y-4">
           <div class="flex justify-between text-sm">
-            <span class="text-gray-500">Auth Method</span>
-            <span class="text-gray-300">{trunk.AuthMethod}</span>
+            <span class="text-slate-500">Auth Method</span>
+            <span class="text-slate-700">{trunk.AuthMethod}</span>
           </div>
           <div class="flex justify-between text-sm">
-            <span class="text-gray-500">Database ID</span>
-            <span class="text-gray-300 font-mono text-xs">{trunk.ID.substring(0, 8)}...</span>
+            <span class="text-slate-500">Database ID</span>
+            <span class="text-slate-700 font-mono text-xs">{trunk.ID.substring(0, 8)}...</span>
           </div>
         </div>
-        <div class="mt-6 pt-4 border-t border-gray-800 flex justify-end space-x-3">
+        <div class="mt-6 pt-4 border-t border-slate-200 flex justify-end space-x-3">
           <Button variant="secondary" className="px-4 text-xs">Configure</Button>
-          <Button variant="danger" className="px-4 text-xs">Disable</Button>
+          <Button variant="danger" className="px-4 text-xs" on:click={() => handleDeleteTrunk(trunk.ID)}>Delete</Button>
         </div>
       </GlassCard>
     {/each}
@@ -143,16 +154,16 @@
 <Modal bind:isOpen={isModalOpen} title="Add SIP Trunk" description="Connect to an external carrier or upstream PBX.">
   <form on:submit={handleCreateTrunk} class="space-y-5">
     <div>
-      <label for="trunkName" class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Provider Name</label>
-      <input id="trunkName" type="text" bind:value={newTrunkName} required placeholder="e.g. Twilio, Flowroute" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
+      <label for="trunkName" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Provider Name</label>
+      <input id="trunkName" type="text" bind:value={newTrunkName} required placeholder="e.g. Twilio, Flowroute" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
     </div>
     <div>
-      <label for="trunkServer" class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">SIP Server (IP/Domain)</label>
-      <input id="trunkServer" type="text" bind:value={newTrunkServer} required placeholder="e.g. sip.provider.com" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
+      <label for="trunkServer" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">SIP Server (IP/Domain)</label>
+      <input id="trunkServer" type="text" bind:value={newTrunkServer} required placeholder="e.g. sip.provider.com" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
     </div>
     <div>
-      <label for="trunkAuth" class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Authentication Method</label>
-      <select id="trunkAuth" bind:value={newTrunkAuth} class="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none appearance-none">
+      <label for="trunkAuth" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Authentication Method</label>
+      <select id="trunkAuth" bind:value={newTrunkAuth} class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none appearance-none">
         <option value="IP_ACL">IP Authentication (ACL)</option>
         <option value="USERPASS">Username / Password</option>
       </select>
@@ -160,10 +171,11 @@
     
     <div class="pt-4 flex justify-end space-x-3">
       <Button variant="secondary" on:click={() => isModalOpen = false} type="button">Cancel</Button>
-      <button type="submit" disabled={isSubmitting} class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50">
+      <button type="submit" disabled={isSubmitting} class="bg-indigo-600 hover:bg-indigo-500 text-slate-900 px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50">
         {isSubmitting ? 'Saving...' : 'Add Trunk'}
       </button>
     </div>
   </form>
 </Modal>
+
 
