@@ -88,18 +88,18 @@
   {#if !token}
     <Login />
   {:else}
-    <main class="flex min-h-screen bg-gray-900 font-sans selection:bg-indigo-500 selection:text-white text-gray-100">
+    <main class="flex min-h-screen bg-slate-50 font-sans selection:bg-blue-500 selection:text-white text-slate-900">
       <Sidebar />
       
       <div class="flex-1 flex flex-col h-screen overflow-hidden">
         <!-- Header -->
-        <header class="h-16 border-b border-gray-800 bg-gray-900/80 backdrop-blur-md flex items-center justify-between px-8 sticky top-0 z-20">
+        <header class="h-16 border-b border-slate-200 bg-white flex items-center justify-between px-8 sticky top-0 z-20 shadow-sm">
           <div class="flex items-center">
-            <h2 class="text-sm font-semibold text-gray-400 uppercase tracking-widest">Workspace</h2>
+            <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-widest">Workspace</h2>
           </div>
           <div class="flex items-center space-x-4">
-            <button on:click={handleLogout} class="bg-gray-800 hover:bg-rose-500/20 hover:text-rose-400 hover:border-rose-500/50 text-sm py-1.5 px-4 rounded-full transition-colors border border-gray-700 text-gray-300 shadow-sm flex items-center space-x-2">
-              <div class="w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center text-xs text-white font-bold">
+            <button on:click={handleLogout} class="bg-white hover:bg-slate-50 hover:text-slate-900 text-sm py-1.5 px-4 rounded-full transition-colors border border-slate-200 text-slate-600 shadow-sm flex items-center space-x-2">
+              <div class="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center text-xs text-white font-bold">
                 {user.email ? user.email[0].toUpperCase() : 'U'}
               </div>
               <span>{user.email || 'Admin'} (Logout)</span>
@@ -109,9 +109,6 @@
 
         <!-- Main Content Area -->
         <div class="flex-1 overflow-y-auto p-8 relative">
-          <!-- Ambient Background Glow -->
-          <div class="absolute top-0 left-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none -z-10"></div>
-          <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-emerald-600/5 rounded-full blur-3xl pointer-events-none -z-10"></div>
           
           <div class="w-full pb-20">
             {#if ActiveComponent}
@@ -137,6 +134,6 @@
   :global(body) {
     margin: 0;
     padding: 0;
-    background-color: #111827;
+    background-color: #f8fafc;
   }
 </style>

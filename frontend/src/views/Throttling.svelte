@@ -20,22 +20,22 @@
 <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">
   <header class="flex justify-between items-end mb-8">
     <div>
-      <h1 class="text-3xl font-black text-white tracking-tight mb-2">Rate Throttling</h1>
-      <p class="text-gray-400 font-medium text-sm">Monitor and limit SIP packet rates per IP to prevent DoS attacks.</p>
+      <h1 class="text-3xl font-black text-slate-900 tracking-tight mb-2">Rate Throttling</h1>
+      <p class="text-slate-500 font-medium text-sm">Monitor and limit SIP packet rates per IP to prevent DoS attacks.</p>
     </div>
   </header>
 
-  <div class="bg-gray-900/60 rounded-[2rem] border border-gray-800 overflow-hidden shadow-2xl">
-    <div class="p-5 border-b border-gray-800 flex justify-between items-center bg-gray-950/30">
-      <h3 class="text-sm font-bold text-white uppercase tracking-widest flex items-center">
-        <svg class="w-4 h-4 mr-2 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+  <div class="bg-white/60 rounded-[2rem] border border-slate-200 overflow-hidden shadow-2xl">
+    <div class="p-5 border-b border-slate-200 flex justify-between items-center bg-slate-50/30">
+      <h3 class="text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center">
+        <svg class="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
         Active Limits (Packets/sec)
       </h3>
     </div>
     
     <table class="w-full text-left">
       <thead>
-        <tr class="text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em] border-b border-gray-800">
+        <tr class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] border-b border-slate-200">
           <th class="p-6">Source IP</th>
           <th class="p-6">SIP Method</th>
           <th class="p-6 w-1/3">Traffic Load</th>
@@ -44,20 +44,20 @@
       </thead>
       <tbody class="divide-y divide-gray-800/50">
         {#each rates as rate}
-          <tr class="hover:bg-gray-800/30 transition-colors group">
+          <tr class="hover:bg-slate-100/30 transition-colors group">
             <td class="p-6">
-              <span class="font-bold text-white block">{rate.ip}</span>
-              <span class="text-xs text-gray-500">{rate.desc}</span>
+              <span class="font-bold text-slate-900 block">{rate.ip}</span>
+              <span class="text-xs text-slate-500">{rate.desc}</span>
             </td>
             <td class="p-6">
-              <span class="px-2 py-1 bg-gray-800 border border-gray-700 rounded text-xs font-mono font-bold text-indigo-400">{rate.type}</span>
+              <span class="px-2 py-1 bg-slate-100 border border-slate-200 rounded text-xs font-mono font-bold text-blue-600">{rate.type}</span>
             </td>
             <td class="p-6">
               <div class="flex items-center justify-between mb-2">
-                <span class="text-xs font-bold text-white">{rate.current} <span class="text-gray-500">pps</span></span>
-                <span class="text-xs font-bold text-gray-500">Limit: {rate.max}</span>
+                <span class="text-xs font-bold text-slate-900">{rate.current} <span class="text-slate-500">pps</span></span>
+                <span class="text-xs font-bold text-slate-500">Limit: {rate.max}</span>
               </div>
-              <div class="w-full h-2 bg-gray-800 rounded-full overflow-hidden relative">
+              <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden relative">
                 <div class="absolute h-full transition-all duration-1000 ease-out
                   {rate.status === 'Normal' ? 'bg-emerald-500' : 
                    rate.status === 'Warning' ? 'bg-amber-500' : 
@@ -68,7 +68,7 @@
             </td>
             <td class="p-6 text-right">
               <span class="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest
-                {rate.status === 'Normal' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 
+                {rate.status === 'Normal' ? 'bg-emerald-50 text-emerald-400 border border-emerald-500/20' : 
                  rate.status === 'Warning' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 
                  'bg-rose-500/10 text-rose-400 border border-rose-500/20 animate-pulse'}">
                 {rate.status}

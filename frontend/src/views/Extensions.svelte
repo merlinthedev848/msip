@@ -82,8 +82,8 @@
   
   <header class="flex justify-between items-end mb-8">
     <div>
-      <h1 class="text-3xl font-bold tracking-tight text-white mb-1">Extensions</h1>
-      <p class="text-gray-400 text-sm">Manage SIP devices and user endpoints.</p>
+      <h1 class="text-3xl font-bold tracking-tight text-slate-900 mb-1">Extensions</h1>
+      <p class="text-slate-500 text-sm">Manage SIP devices and user endpoints.</p>
     </div>
     <Button variant="primary" on:click={() => isModalOpen = true}>
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
@@ -102,37 +102,37 @@
   {/if}
 
   <GlassCard className="p-0 overflow-hidden">
-    <div class="p-4 border-b border-gray-800/50 bg-gray-900/20 flex items-center">
-      <svg class="w-5 h-5 text-gray-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-      <input type="text" placeholder="Search extensions..." class="bg-transparent border-none text-gray-300 focus:outline-none w-full placeholder-gray-600 text-sm" />
+    <div class="p-4 border-b border-slate-200/50 bg-white/20 flex items-center">
+      <svg class="w-5 h-5 text-slate-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+      <input type="text" placeholder="Search extensions..." class="bg-transparent border-none text-slate-700 focus:outline-none w-full placeholder-gray-600 text-sm" />
     </div>
 
     <div class="overflow-x-auto">
       <table class="w-full text-left border-collapse">
         <thead>
-          <tr class="bg-gray-900/50 border-b border-gray-800">
-            <th class="py-4 px-6 text-xs font-semibold text-gray-400 uppercase tracking-wider">Ext</th>
-            <th class="py-4 px-6 text-xs font-semibold text-gray-400 uppercase tracking-wider">Status</th>
-            <th class="py-4 px-6 text-xs font-semibold text-gray-400 uppercase tracking-wider">Provisioning Code</th>
-            <th class="py-4 px-6 text-xs font-semibold text-gray-400 uppercase tracking-wider text-right">Actions</th>
+          <tr class="bg-white border-b border-slate-200">
+            <th class="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Ext</th>
+            <th class="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+            <th class="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Provisioning Code</th>
+            <th class="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Actions</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-800/50 text-sm text-gray-300">
+        <tbody class="divide-y divide-gray-800/50 text-sm text-slate-700">
           {#each extensions as ext}
-            <tr class="hover:bg-gray-800/30 transition-colors group cursor-pointer">
-              <td class="p-4 font-mono text-indigo-400 font-medium">{ext.ext}</td>
+            <tr class="hover:bg-slate-100/30 transition-colors group cursor-pointer">
+              <td class="p-4 font-mono text-blue-600 font-medium">{ext.ext}</td>
               <td class="p-4">
-                <span class="px-2.5 py-1 rounded-md text-xs font-medium border {ext.status === 'Online' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-gray-500/10 text-gray-400 border-gray-500/20'}">
+                <span class="px-2.5 py-1 rounded-md text-xs font-medium border {ext.status === 'Online' ? 'bg-emerald-50 text-emerald-400 border-emerald-500/20' : 'bg-gray-500/10 text-slate-500 border-gray-500/20'}">
                   {ext.status}
                 </span>
               </td>
               <td class="p-4">
-                <span class="font-mono text-sm text-indigo-400 tracking-widest bg-indigo-500/10 px-2 py-1 rounded border border-indigo-500/20">
+                <span class="font-mono text-sm text-blue-600 tracking-widest bg-blue-50 px-2 py-1 rounded border border-blue-100">
                   {ext.code}
                 </span>
               </td>
               <td class="p-4 text-right">
-                <button title="Edit Extension" aria-label="Edit Extension" class="text-gray-500 hover:text-white transition-colors opacity-0 group-hover:opacity-100 p-1">
+                <button title="Edit Extension" aria-label="Edit Extension" class="text-slate-500 hover:text-slate-900 transition-colors opacity-0 group-hover:opacity-100 p-1">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                 </button>
               </td>
@@ -148,17 +148,17 @@
 <Modal bind:isOpen={isModalOpen} title="Provision New Extension" description="Create a new SIP extension in the PostgreSQL database. It will immediately be available to register on Kamailio/FreeSWITCH.">
   <form on:submit={handleCreateExtension} class="space-y-5">
     <div>
-      <label for="extNumber" class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Extension Number</label>
-      <input id="extNumber" type="text" bind:value={newExtNumber} required placeholder="e.g. 1005" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
+      <label for="extNumber" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Extension Number</label>
+      <input id="extNumber" type="text" bind:value={newExtNumber} required placeholder="e.g. 1005" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
     </div>
     <div>
-      <label for="extPassword" class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">SIP Password</label>
-      <input id="extPassword" type="password" bind:value={newExtPassword} required placeholder="Strong password" class="w-full bg-gray-950 border border-gray-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
+      <label for="extPassword" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">SIP Password</label>
+      <input id="extPassword" type="password" bind:value={newExtPassword} required placeholder="Strong password" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
     </div>
     
     <div class="pt-4 flex justify-end space-x-3">
       <Button variant="secondary" on:click={() => isModalOpen = false} type="button">Cancel</Button>
-      <button type="submit" disabled={isSubmitting} class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50">
+      <button type="submit" disabled={isSubmitting} class="bg-indigo-600 hover:bg-indigo-500 text-slate-900 px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50">
         {isSubmitting ? 'Provisioning...' : 'Create Extension'}
       </button>
     </div>
