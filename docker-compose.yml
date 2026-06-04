@@ -62,6 +62,7 @@ services:
     container_name: pbx_freeswitch
     volumes:
       - ./telephony-core/freeswitch.xml:/usr/local/freeswitch/conf/freeswitch.xml:ro
+      - ./telephony-core/certs:/usr/local/freeswitch/certs:ro
       - pbx_recordings:/usr/local/freeswitch/recordings
     ports:
       - "5066:5066"
