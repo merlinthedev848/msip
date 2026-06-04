@@ -30,8 +30,8 @@
                                                                  ]
                                            },
                          "qos/ratelimit/router":  {
-                                                      "max_rate":  60,
-                                                      "client_max_rate":  60,
+                                                      "max_rate":  5000,
+                                                      "client_max_rate":  5000,
                                                       "strategy":  "ip"
                                                   }
                      },
