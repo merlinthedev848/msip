@@ -23,10 +23,13 @@ services:
       - DATABASE_URL=postgres://${DB_USER:-pbxuser}:${DB_PASS:-pbxpass}@postgres:5432/${DB_NAME:-pbx}?sslmode=disable
     volumes:
       - pbx_recordings:/var/lib/pbx/recordings
+    ports:
+      - "8081:8081"
     depends_on:
       - postgres
     networks:
       - internal
+      - external
     restart: unless-stopped
 
   gateway:

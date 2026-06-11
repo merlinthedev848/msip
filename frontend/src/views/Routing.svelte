@@ -46,7 +46,7 @@
   async function handleDeleteRoute(id) {
     if(!confirm("Delete this inbound route?")) return;
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/routing/${id}`, {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/inbound-routes/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });

@@ -525,7 +525,7 @@ func main() {
             c.JSON(http.StatusOK, gin.H{"message": "deleted"})
         })
         // CRUD for routing
-        v1.PUT("/routing/:id", func(c *gin.Context) {
+        v1.PUT("/inbound-routes/:id", func(c *gin.Context) {
             id := c.Param("id")
             var record InboundRoute
             if err := DB.First(&record, "id = ?", id).Error; err != nil { c.JSON(http.StatusNotFound, gin.H{"error": "Not found"}); return }
@@ -533,7 +533,7 @@ func main() {
             DB.Save(&record)
             c.JSON(http.StatusOK, record)
         })
-        v1.DELETE("/routing/:id", func(c *gin.Context) {
+        v1.DELETE("/inbound-routes/:id", func(c *gin.Context) {
             id := c.Param("id")
             if err := DB.Delete(&InboundRoute{}, "id = ?", id).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
             c.JSON(http.StatusOK, gin.H{"message": "deleted"})
@@ -690,6 +690,20 @@ func main() {
         v1.DELETE("/fraud/:id", func(c *gin.Context) {
             id := c.Param("id")
             if err := DB.Delete(&FraudRule{}, "id = ?", id).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
+            c.JSON(http.StatusOK, gin.H{"message": "deleted"})
+        })
+        // CRUD for domains
+        v1.PUT("/domains/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            var record Tenant
+            if err := DB.First(&record, "id = ?", id).Error; err != nil { c.JSON(http.StatusNotFound, gin.H{"error": "Not found"}); return }
+            if err := c.ShouldBindJSON(&record); err != nil { c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()}); return }
+            DB.Save(&record)
+            c.JSON(http.StatusOK, record)
+        })
+        v1.DELETE("/domains/:id", func(c *gin.Context) {
+            id := c.Param("id")
+            if err := DB.Delete(&Tenant{}, "id = ?", id).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
             c.JSON(http.StatusOK, gin.H{"message": "deleted"})
         })
         // CRUD for users

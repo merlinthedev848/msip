@@ -34,7 +34,8 @@
   });
 
   function connectWebSocket() {
-    ws = new WebSocket(`ws://${window.location.hostname}:8081/api/wallboard/stream`);
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    ws = new WebSocket(`${protocol}://${window.location.hostname}:8080/api/v1/wallboard/stream`);
     ws.onopen = () => { isConnected = true; };
     ws.onmessage = (e) => {
       try {
@@ -104,7 +105,7 @@
       <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
       <p class="text-sm font-bold text-slate-500 uppercase tracking-[0.3em] mb-4">Global SLA</p>
       <div class="flex items-baseline">
-        <h2 class="text-7xl font-black {metrics.sla_percentage < 90 ? 'text-amber-500' : 'text-emerald-400'} font-mono">{(metrics.sla_percentage).toFixed(1)}</h2>
+        <h2 class="text-7xl font-black {metrics.sla_percentage < 90 ? 'text-amber-500' : 'text-emerald-600'} font-mono">{(metrics.sla_percentage).toFixed(1)}</h2>
         <span class="text-3xl font-bold text-slate-500 ml-2">%</span>
       </div>
     </div>
@@ -121,19 +122,19 @@
           <th class="p-6 text-xs font-bold text-slate-500 uppercase tracking-[0.2em] text-right">SLA %</th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-gray-800/50">
+      <tbody class="divide-y divide-slate-200/50">
         {#each queueStats as queue}
           <tr class="hover:bg-slate-100/30 transition-colors">
             <td class="p-6 font-bold text-slate-900 text-xl">{queue.name}</td>
             <td class="p-6 text-center">
-              <span class="text-3xl font-black font-mono {queue.waiting > 0 ? 'text-rose-400' : 'text-gray-600'}">{queue.waiting}</span>
+              <span class="text-3xl font-black font-mono {queue.waiting > 0 ? 'text-rose-600' : 'text-slate-600'}">{queue.waiting}</span>
             </td>
             <td class="p-6 text-center">
               <span class="text-2xl font-bold font-mono text-blue-600">{queue.agents}</span>
             </td>
             <td class="p-6 text-right">
               <div class="flex flex-col items-end">
-                <span class="text-2xl font-black font-mono {queue.sla > 95 ? 'text-emerald-400' : 'text-amber-400'}">{queue.sla.toFixed(1)}%</span>
+                <span class="text-2xl font-black font-mono {queue.sla > 95 ? 'text-emerald-600' : 'text-amber-600'}">{queue.sla.toFixed(1)}%</span>
                 <div class="w-32 h-1.5 bg-slate-100 rounded-full mt-2 overflow-hidden">
                   <div class="h-full bg-emerald-500 transition-all duration-500" style="width: {queue.sla}%"></div>
                 </div>

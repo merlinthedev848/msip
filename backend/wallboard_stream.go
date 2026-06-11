@@ -29,18 +29,25 @@ func HandleWallboardStream(c *gin.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			// Generate simulated mock data
-			metrics := gin.H{
-				"active_calls":   rand.Intn(50) + 10,
-				"agents_online":  rand.Intn(15) + 5,
-				"agents_busy":    rand.Intn(10),
-				"queue_length":   rand.Intn(20),
-				"avg_wait_time":  rand.Intn(120), // seconds
-				"sla_percentage": 85 + rand.Intn(15),
-				"timestamp":      time.Now().Unix(),
+			// Generate simulated mock data matching the frontend expectations
+			response := gin.H{
+				"metrics": gin.H{
+					"active_calls":   rand.Intn(50) + 10,
+					"agents_online":  rand.Intn(15) + 5,
+					"agents_busy":    rand.Intn(10),
+					"queue_length":   rand.Intn(20),
+					"avg_wait_time":  rand.Intn(120), // seconds
+					"sla_percentage": 85 + rand.Intn(15),
+					"timestamp":      time.Now().Unix(),
+				},
+				"queues": []gin.H{
+					{"name": "Support Tier 1", "waiting": rand.Intn(5), "agents": 8, "sla": 85 + rand.Intn(15)},
+					{"name": "Sales Global", "waiting": rand.Intn(3), "agents": 4, "sla": 90 + rand.Intn(10)},
+					{"name": "Billing", "waiting": rand.Intn(2), "agents": 2, "sla": 95 + rand.Intn(5)},
+				},
 			}
 
-			if err := ws.WriteJSON(metrics); err != nil {
+			if err := ws.WriteJSON(response); err != nil {
 				log.Printf("Wallboard client disconnected: %v", err)
 				return
 			}
