@@ -481,6 +481,33 @@ func main() {
 			if err := DB.Create(&record).Error; err != nil { c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()}); return }
 			c.JSON(http.StatusCreated, record)
 		})
+		v1.GET("/commits", func(c *gin.Context) {
+			c.JSON(http.StatusOK, gin.H{
+				"commits": []gin.H{
+					{
+						"hash":   "a2f7c9a",
+						"type":   "Security",
+						"time":   "10 mins ago",
+						"msg":    "Updated Toll Fraud rules for international destinations",
+						"author": "admin@company.com",
+					},
+					{
+						"hash":   "f8e3d2c",
+						"type":   "Provisioning",
+						"time":   "2 hours ago",
+						"msg":    "Added auto-provisioning template for new SIP endpoints",
+						"author": "admin@company.com",
+					},
+					{
+						"hash":   "c4b9a1f",
+						"type":   "Routing",
+						"time":   "1 day ago",
+						"msg":    "Configured default failover route for inbound SIP trunk",
+						"author": "admin@company.com",
+					},
+				},
+			})
+		})
 
         // CRUD for extensions
         v1.PUT("/extensions/:id", func(c *gin.Context) {

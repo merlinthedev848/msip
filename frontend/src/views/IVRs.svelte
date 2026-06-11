@@ -9,10 +9,16 @@
   let isApiConnected = true;
   
   let isModalOpen = false;
+  let isEditModalOpen = false;
   let newIvrName = '';
   let newIvrExtension = '';
   let newIvrGreeting = 'phrase:greeting';
   let isSubmitting = false;
+
+  let editIvrId = '';
+  let editIvrName = '';
+  let editIvrExtension = '';
+  let editIvrGreeting = '';
 
   async function fetchIVRs() {
     try {
@@ -66,6 +72,44 @@
     }
   }
 
+  function openEditModal(ivr) {
+    editIvrId = ivr.ID;
+    editIvrName = ivr.Name;
+    editIvrExtension = ivr.Extension;
+    editIvrGreeting = ivr.Greeting;
+    isEditModalOpen = true;
+  }
+
+  async function handleEditIVR(e) {
+    e.preventDefault();
+    isSubmitting = true;
+    try {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/ivrs/${editIvrId}`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('pbx_token')}`
+        },
+        body: JSON.stringify({
+          Name: editIvrName,
+          Extension: editIvrExtension,
+          Greeting: editIvrGreeting
+        })
+      });
+      
+      if (res.ok) {
+        isEditModalOpen = false;
+        await fetchIVRs();
+      } else {
+        alert("Failed to update IVR.");
+      }
+    } catch (err) {
+      alert("API Error updating IVR.");
+    } finally {
+      isSubmitting = false;
+    }
+  }
+
   async function handleDeleteIVR(id) {
     if(!confirm("Are you sure you want to delete this IVR menu?")) return;
     try {
@@ -108,7 +152,7 @@
           </div>
         </div>
         <div class="mt-6 pt-4 border-t border-slate-200 flex justify-end space-x-3">
-          <Button variant="secondary" className="px-4 text-xs">Edit Menu</Button>
+          <Button variant="secondary" className="px-4 text-xs" on:click={() => openEditModal(ivr)}>Edit Menu</Button>
           <Button variant="danger" className="px-4 text-xs" on:click={() => handleDeleteIVR(ivr.ID)}>Delete</Button>
         </div>
       </GlassCard>
@@ -132,11 +176,40 @@
       <label for="ivrExt" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Virtual Extension</label>
       <input id="ivrExt" type="text" bind:value={newIvrExtension} required placeholder="e.g. 8000" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none">
     </div>
+    <div>
+      <label for="ivrGreeting" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Greeting Phrase / Audio File</label>
+      <input id="ivrGreeting" type="text" bind:value={newIvrGreeting} required placeholder="phrase:greeting" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none">
+    </div>
     
     <div class="pt-4 flex justify-end space-x-3">
       <Button variant="secondary" on:click={() => isModalOpen = false} type="button">Cancel</Button>
       <button type="submit" disabled={isSubmitting} class="bg-indigo-600 hover:bg-indigo-500 text-slate-900 px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg disabled:opacity-50">
         {isSubmitting ? 'Saving...' : 'Create Menu'}
+      </button>
+    </div>
+  </form>
+</Modal>
+
+<!-- Edit IVR Modal -->
+<Modal bind:isOpen={isEditModalOpen} title="Edit Auto Attendant" description="Modify interactive voice menu configuration.">
+  <form on:submit={handleEditIVR} class="space-y-5">
+    <div>
+      <label for="editIvrName" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Menu Name</label>
+      <input id="editIvrName" type="text" bind:value={editIvrName} required placeholder="e.g. Main Menu" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none">
+    </div>
+    <div>
+      <label for="editIvrExt" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Virtual Extension</label>
+      <input id="editIvrExt" type="text" bind:value={editIvrExtension} required placeholder="e.g. 8000" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none">
+    </div>
+    <div>
+      <label for="editIvrGreeting" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Greeting Phrase / Audio File</label>
+      <input id="editIvrGreeting" type="text" bind:value={editIvrGreeting} required placeholder="phrase:greeting" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none">
+    </div>
+    
+    <div class="pt-4 flex justify-end space-x-3">
+      <Button variant="secondary" on:click={() => isEditModalOpen = false} type="button">Cancel</Button>
+      <button type="submit" disabled={isSubmitting} class="bg-indigo-600 hover:bg-indigo-500 text-slate-900 px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg disabled:opacity-50">
+        {isSubmitting ? 'Saving...' : 'Save Changes'}
       </button>
     </div>
   </form>

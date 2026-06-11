@@ -16,11 +16,7 @@
   let ws: WebSocket;
   let isConnected = false;
 
-  let queueStats = [
-    { name: 'Support Tier 1', waiting: 4, agents: 8, sla: 92 },
-    { name: 'Sales Global', waiting: 1, agents: 4, sla: 98 },
-    { name: 'Billing', waiting: 0, agents: 2, sla: 100 }
-  ];
+  let queueStats = [];
 
   let interval;
   onMount(() => {
@@ -28,7 +24,7 @@
     interval = setInterval(() => {
       // simulate real-time updates for now if websocket is down
       if (!isConnected) {
-        metrics.queue_length = Math.floor(Math.random() * 10);
+        metrics.queue_length = Math.floor(Math.random() * 5);
       }
     }, 5000);
   });
@@ -139,6 +135,12 @@
                   <div class="h-full bg-emerald-500 transition-all duration-500" style="width: {queue.sla}%"></div>
                 </div>
               </div>
+            </td>
+          </tr>
+        {:else}
+          <tr>
+            <td colspan="4" class="p-6 text-center text-slate-500">
+              {isConnected ? 'No active queues config' : 'Connecting to live statistics stream...'}
             </td>
           </tr>
         {/each}

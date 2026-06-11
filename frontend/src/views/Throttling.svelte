@@ -84,6 +84,11 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-800/50">
+        {#if rates.length === 0}
+          <tr>
+            <td colspan="5" class="p-8 text-center text-slate-500 bg-white/40">No rate rules configured.</td>
+          </tr>
+        {/if}
         {#each rates as rate}
           <tr class="hover:bg-slate-100/30 transition-colors group">
             <td class="p-6">
@@ -116,8 +121,8 @@
               </span>
             </td>
             <td class="p-6 text-right">
-              <button class="text-slate-500 hover:text-slate-900 p-2 transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></button>
-              <button class="text-rose-500 hover:text-slate-900 hover:bg-rose-500 p-2 rounded-lg transition-colors" on:click={() => handleDeleteRule(rate.id)}><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+              <button title="Settings" aria-label="Settings" class="text-slate-500 hover:text-slate-900 p-2 transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></button>
+              <button title="Delete Rule" aria-label="Delete Rule" class="text-rose-500 hover:text-slate-900 hover:bg-rose-500 p-2 rounded-lg transition-colors" on:click={() => handleDeleteRule(rate.id)}><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
             </td>
           </tr>
         {/each}
@@ -129,12 +134,12 @@
 <Modal bind:isOpen={isModalOpen} title="Add Throttling Rule">
   <form on:submit={handleCreateRule} class="space-y-4">
     <div>
-      <label class="block text-sm font-bold text-slate-500 mb-1">Target IP / CIDR</label>
-      <input type="text" bind:value={newName} required placeholder="192.168.1.50" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
+      <label for="throttle_ip" class="block text-sm font-bold text-slate-500 mb-1">Target IP / CIDR</label>
+      <input id="throttle_ip" type="text" bind:value={newName} required placeholder="192.168.1.50" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
     </div>
     <div>
-      <label class="block text-sm font-bold text-slate-500 mb-1">Max Packets/sec</label>
-      <input type="number" bind:value={newRate} required min="10" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
+      <label for="throttle_rate" class="block text-sm font-bold text-slate-500 mb-1">Max Packets/sec</label>
+      <input id="throttle_rate" type="number" bind:value={newRate} required min="10" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
     </div>
     <div class="pt-4 flex justify-end space-x-3">
       <button type="button" class="px-4 py-2 text-slate-500 hover:text-slate-900" on:click={() => isModalOpen = false}>Cancel</button>
@@ -142,6 +147,3 @@
     </div>
   </form>
 </Modal>
-
-
-

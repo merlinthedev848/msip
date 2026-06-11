@@ -72,6 +72,9 @@
   </header>
 
   <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+    {#if cameras.length === 0}
+      <div class="col-span-1 md:col-span-3 p-8 text-center text-slate-500 bg-white/40 border border-slate-200 rounded-3xl">No cameras configured.</div>
+    {/if}
     {#each cameras as cam}
       <div class="bg-white/60 rounded-[2rem] border border-slate-200 overflow-hidden shadow-2xl group hover:border-indigo-500/30 transition-colors flex flex-col">
         <!-- Video Feed Wrapper -->
@@ -106,8 +109,8 @@
 
           {:else}
             <!-- Offline State -->
-            <button class="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></button>
-          <button class="p-2 text-rose-500 hover:text-slate-900 hover:bg-rose-500 rounded-lg transition-colors" on:click={() => handleDeleteCamera(cam.id)}><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+            <button title="Settings" aria-label="Settings" class="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></button>
+            <button title="Delete Camera" aria-label="Delete Camera" class="p-2 text-rose-500 hover:text-slate-900 hover:bg-rose-500 rounded-lg transition-colors" on:click={() => handleDeleteCamera(cam.id)}><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
           {/if}
         </div>
 
@@ -116,7 +119,7 @@
           <div>
             <div class="flex items-center space-x-2 mb-1">
               <h3 class="text-lg font-bold text-slate-900">{cam.name}</h3>
-              <span class="px-2 py-0.5 rounded bg-slate-100 text-[10px] text-slate-500 font-mono border border-slate-200">{cam.id}</span>
+              <span class="px-2 py-0.5 rounded bg-slate-100 text-[10px] text-slate-500 font-mono border border-slate-200">{cam.id ? cam.id.substring(0,8) : 'N/A'}</span>
             </div>
             <p class="text-sm text-slate-500 flex items-center">
               Dial Code: <span class="font-bold font-mono text-blue-600 ml-1.5">{cam.sipCode}</span>
@@ -132,4 +135,15 @@
   </div>
 </div>
 
-
+<Modal bind:isOpen={isModalOpen} title="Create Camera Feed">
+  <form on:submit={handleCreateCamera} class="space-y-4">
+    <div>
+      <label for="cam_name" class="block text-sm font-bold text-slate-500 mb-1">Camera Name</label>
+      <input id="cam_name" type="text" bind:value={newName} required placeholder="e.g. Front Door Camera" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
+    </div>
+    <div class="pt-4 flex justify-end space-x-3">
+      <button type="button" class="px-4 py-2 text-slate-500 hover:text-slate-900" on:click={() => isModalOpen = false}>Cancel</button>
+      <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-slate-900 px-6 py-2 rounded-xl font-bold shadow-lg shadow-indigo-500/20">Create Camera</button>
+    </div>
+  </form>
+</Modal>

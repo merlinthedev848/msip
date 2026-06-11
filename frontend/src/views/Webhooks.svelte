@@ -74,14 +74,19 @@
       <table class="w-full text-left">
         <thead>
           <tr class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] border-b border-slate-200">
-            <th class="p-4">Endpoint URL</th>
-            <th class="p-4">Event Trigger</th>
-            <th class="p-4 text-center">Last Response</th>
-            <th class="p-4 text-right">Status</th>
-            <th class="p-4 text-right">Actions</th>
+            <th class="p-6">Endpoint URL</th>
+            <th class="p-6">Event Trigger</th>
+            <th class="p-6 text-center">Last Response</th>
+            <th class="p-6 text-right">Status</th>
+            <th class="p-6 text-right">Actions</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-800/50">
+          {#if webhooks.length === 0}
+            <tr>
+              <td colspan="5" class="p-8 text-center text-slate-500 bg-white/40">No endpoints configured.</td>
+            </tr>
+          {/if}
           {#each webhooks as hook}
             <tr class="hover:bg-slate-100/30 transition-colors">
               <td class="p-4 font-mono font-bold text-blue-600 text-sm">{hook.url}</td>
@@ -97,7 +102,7 @@
                 </span>
               </td>
               <td class="p-4 text-right">
-                <button class="text-slate-500 hover:text-red-400 p-1" on:click={() => handleDeleteWebhook(hook.id)}>
+                <button title="Delete Webhook" aria-label="Delete Webhook" class="text-slate-500 hover:text-red-400 p-1" on:click={() => handleDeleteWebhook(hook.id)}>
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                 </button>
               </td>
@@ -110,7 +115,7 @@
     <!-- Stats -->
     <div class="space-y-6">
       <div class="bg-white/60 rounded-[2rem] border border-slate-200 p-6 flex flex-col justify-center items-center shadow-2xl relative overflow-hidden h-full">
-        <div class="absolute -left-10 -top-10 w-40 h-40 bg-emerald-50 rounded-full blur-3xl"></div>
+        <div class="absolute -right-10 -top-10 w-40 h-40 bg-emerald-50 rounded-full blur-3xl"></div>
         <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 z-10">Events Delivered (24h)</p>
         <h2 class="text-5xl font-black text-slate-900 font-mono z-10">2,810</h2>
         <div class="mt-4 flex space-x-4 w-full px-4">
@@ -131,12 +136,12 @@
 <Modal bind:isOpen={isModalOpen} title="Create Webhook">
   <form on:submit={handleCreateWebhook} class="space-y-4">
     <div>
-      <label class="block text-sm font-bold text-slate-500 mb-1">Target URL</label>
-      <input type="url" bind:value={newUrl} required placeholder="https://api.yourdomain.com/webhook" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
+      <label for="hook_url" class="block text-sm font-bold text-slate-500 mb-1">Target URL</label>
+      <input id="hook_url" type="url" bind:value={newUrl} required placeholder="https://api.yourdomain.com/webhook" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
     </div>
     <div>
-      <label class="block text-sm font-bold text-slate-500 mb-1">Event Type</label>
-      <select bind:value={newEvent} class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500">
+      <label for="hook_event" class="block text-sm font-bold text-slate-500 mb-1">Event Type</label>
+      <select id="hook_event" bind:value={newEvent} class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500">
         <option value="call.answered">call.answered</option>
         <option value="call.ended">call.ended</option>
         <option value="sms.received">sms.received</option>
@@ -149,6 +154,3 @@
     </div>
   </form>
 </Modal>
-
-
-

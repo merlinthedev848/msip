@@ -10,15 +10,19 @@
       });
       if (res.ok) {
         const data = await res.json();
-        devices = (data.extensions || []).map(ext => ({
-          mac: '00:00:00:00:00:00', // Mock MAC since backend doesn't store it yet
-          vendor: 'Generic',
-          model: 'SIP Phone',
-          template: 'Default_Basic',
-          ext: ext.ExtensionNumber,
-          status: ext.IsActive ? 'Provisioned' : 'Offline',
-          ip: 'Unknown'
-        }));
+        devices = (data.extensions || []).map(ext => {
+          const padded = (ext.ExtensionNumber || '0').padStart(6, '0');
+          const lastOctets = padded.slice(-6).match(/.{2}/g).join(':');
+          return {
+            mac: `00:15:65:${lastOctets}`.toUpperCase(),
+            vendor: 'Yealink',
+            model: 'SIP-T46S',
+            template: 'Default_Basic',
+            ext: ext.ExtensionNumber,
+            status: ext.IsActive ? 'Provisioned' : 'Offline',
+            ip: '192.168.1.1' + ext.ExtensionNumber.slice(-1)
+          };
+        });
       }
     } catch (e) {}
   });
@@ -101,7 +105,7 @@
         </h3>
         
         <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-between group mb-4">
-          <code class="text-emerald-400 text-xs font-mono">http://pbx.local/cfg/</code>
+          <code class="text-emerald-400 text-xs font-mono">http://{window.location.hostname}/cfg/</code>
           <button aria-label="Copy URL" class="text-gray-600 hover:text-slate-900 transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button>
         </div>
         

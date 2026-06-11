@@ -122,12 +122,12 @@
 <Modal bind:isOpen={isModalOpen} title="Send SMS Message">
   <form on:submit={handleSendSMS} class="space-y-4">
     <div>
-      <label class="block text-sm font-bold text-slate-500 mb-1">Recipient Number</label>
-      <input type="text" bind:value={newSmsTo} required placeholder="+1234567890" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
+      <label for="sms_recipient" class="block text-sm font-bold text-slate-500 mb-1">Recipient Number</label>
+      <input id="sms_recipient" type="text" bind:value={newSmsTo} required placeholder="+1234567890" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
     </div>
     <div>
-      <label class="block text-sm font-bold text-slate-500 mb-1">Message Body</label>
-      <textarea bind:value={newSmsBody} required rows="3" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+      <label for="sms_body" class="block text-sm font-bold text-slate-500 mb-1">Message Body</label>
+      <textarea id="sms_body" bind:value={newSmsBody} required rows="3" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
     </div>
     <div class="pt-4 flex justify-end space-x-3">
       <button type="button" class="px-4 py-2 text-slate-500 hover:text-slate-900" on:click={() => isModalOpen = false}>Cancel</button>
@@ -181,5 +181,3 @@
     </table>
   </div>
 </div>
-
-

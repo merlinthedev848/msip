@@ -142,16 +142,16 @@
 <Modal bind:isOpen={isModalOpen} title="Create Video Room">
   <form on:submit={handleCreateRoom} class="space-y-4">
     <div>
-      <label class="block text-sm font-bold text-slate-500 mb-1">Room Name</label>
-      <input type="text" bind:value={newName} required placeholder="e.g. Daily Standup" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
+      <label for="room_name" class="block text-sm font-bold text-slate-500 mb-1">Room Name</label>
+      <input id="room_name" type="text" bind:value={newName} required placeholder="e.g. Daily Standup" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
     </div>
     <div>
-      <label class="block text-sm font-bold text-slate-500 mb-1">Room Code / PIN</label>
-      <input type="text" bind:value={newCode} required placeholder="e.g. 555222" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
+      <label for="room_code" class="block text-sm font-bold text-slate-500 mb-1">Room Code / PIN</label>
+      <input id="room_code" type="text" bind:value={newCode} required placeholder="e.g. 555222" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
     </div>
     <div>
-      <label class="block text-sm font-bold text-slate-500 mb-1">Max Users</label>
-      <input type="number" bind:value={newMaxUsers} required min="2" max="100" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
+      <label for="room_max_users" class="block text-sm font-bold text-slate-500 mb-1">Max Users</label>
+      <input id="room_max_users" type="number" bind:value={newMaxUsers} required min="2" max="100" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
     </div>
     <div class="pt-4 flex justify-end space-x-3">
       <button type="button" class="px-4 py-2 text-slate-500 hover:text-slate-900" on:click={() => isModalOpen = false}>Cancel</button>
@@ -159,6 +159,3 @@
     </div>
   </form>
 </Modal>
-
-
-

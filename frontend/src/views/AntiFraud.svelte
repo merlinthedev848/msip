@@ -14,7 +14,7 @@
       if (res.ok) {
         const data = await res.json();
         blockedDestinations = (data.fraud || []).map(r => ({
-          id: r.ID, country: r.BlockAction, code: r.Prefix, callsBlocked: 0, costSaved: '$0.00'
+          id: r.ID, prefix: r.Prefix, action: r.BlockAction, callsBlocked: 0, costSaved: '$0.00'
         }));
       }
     } catch (e) {}
@@ -72,7 +72,7 @@
       </div>
       <div>
         <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Est. Savings (30d)</p>
-        <h2 class="text-3xl font-black text-slate-900 font-mono">$2,360.90</h2>
+        <h2 class="text-3xl font-black text-slate-900 font-mono">$0.00</h2>
       </div>
     </div>
     <div class="bg-white/40 rounded-2xl border border-slate-200 p-6 flex items-center">
@@ -81,7 +81,7 @@
       </div>
       <div>
         <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Calls Blocked</p>
-        <h2 class="text-3xl font-black text-slate-900 font-mono">1,407</h2>
+        <h2 class="text-3xl font-black text-slate-900 font-mono">0</h2>
       </div>
     </div>
     <div class="bg-white/40 rounded-2xl border border-slate-200 p-6 flex items-center">
@@ -90,8 +90,8 @@
       </div>
       <div>
         <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Strict Mode</p>
-        <h2 class="text-xl font-black text-slate-900">Enabled</h2>
-        <p class="text-[10px] text-slate-500">Whitelisting US/CAN/UK only</p>
+        <h2 class="text-xl font-black text-slate-900">Disabled</h2>
+        <p class="text-[10px] text-slate-500 font-medium">Standard monitoring only</p>
       </div>
     </div>
   </div>
@@ -108,7 +108,7 @@
       <thead>
           <tr class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] border-b border-slate-200">
             <th class="p-4">Prefix / Code</th>
-            <th class="p-4">Destination</th>
+            <th class="p-4">Action</th>
             <th class="p-4 text-center">Calls Blocked</th>
             <th class="p-4 text-right">Est. Savings</th>
             <th class="p-4 text-right">Actions</th>
@@ -118,16 +118,15 @@
         {#each blockedDestinations as dest}
           <tr class="hover:bg-slate-100/30 transition-colors group">
             <td class="p-6">
-              <span class="font-bold text-slate-900 text-base">{dest.country}</span>
+              <span class="font-bold text-slate-900 text-base">{dest.prefix}</span>
             </td>
-            <td class="p-6 font-mono font-bold text-blue-600">{dest.code}</td>
+            <td class="p-6 font-mono font-bold text-blue-600">{dest.action}</td>
             <td class="p-6 text-center font-mono font-bold text-slate-500">{dest.callsBlocked}</td>
-              <td class="p-4 text-right text-emerald-400 font-bold font-mono text-sm">{dest.costSaved}</td>
-              <td class="p-4 text-right space-x-2">
-                <button class="text-slate-500 hover:text-slate-900 p-1 transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></button>
-                <button class="text-rose-500 hover:text-slate-900 hover:bg-rose-500 p-1 rounded transition-colors" on:click={() => handleDeleteRule(dest.id)}><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
-              </td>
-            </tr>
+            <td class="p-4 text-right text-emerald-600 font-bold font-mono text-sm">{dest.costSaved}</td>
+            <td class="p-4 text-right space-x-2">
+              <button title="Delete Rule" aria-label="Delete Rule" class="text-rose-500 hover:text-slate-900 hover:bg-rose-500 p-1 rounded transition-colors" on:click={() => handleDeleteRule(dest.id)}><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+            </td>
+          </tr>
         {/each}
       </tbody>
     </table>
@@ -137,12 +136,12 @@
 <Modal bind:isOpen={isModalOpen} title="Add Anti-Fraud Rule">
   <form on:submit={handleCreateRule} class="space-y-4">
     <div>
-      <label class="block text-sm font-bold text-slate-500 mb-1">Prefix / Pattern</label>
-      <input type="text" bind:value={newPrefix} required placeholder="e.g. +900" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
+      <label for="prefix" class="block text-sm font-bold text-slate-500 mb-1">Prefix / Pattern</label>
+      <input id="prefix" type="text" bind:value={newPrefix} required placeholder="e.g. +900" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
     </div>
     <div>
-      <label class="block text-sm font-bold text-slate-500 mb-1">Action</label>
-      <select bind:value={newAction} class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500">
+      <label for="action" class="block text-sm font-bold text-slate-500 mb-1">Action</label>
+      <select id="action" bind:value={newAction} class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500">
         <option value="BLOCK">Block Calls</option>
         <option value="MONITOR">Monitor Only</option>
       </select>

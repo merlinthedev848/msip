@@ -86,7 +86,7 @@
               {#if chan.unread > 0}
                 <span class="bg-rose-500 text-slate-900 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-[0_0_10px_rgba(244,63,94,0.5)]">{chan.unread}</span>
               {/if}
-              <button class="text-rose-500 hover:text-slate-900 p-1 rounded transition-colors opacity-0 group-hover:opacity-100" on:click|stopPropagation={() => handleDeleteChat(chan.id)}><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+              <button title="Delete Channel" aria-label="Delete Channel" class="text-rose-500 hover:text-slate-900 p-1 rounded transition-colors opacity-0 group-hover:opacity-100" on:click|stopPropagation={() => handleDeleteChat(chan.id)}><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
             </div>
           </div>
         {/each}
@@ -147,8 +147,8 @@
 <Modal bind:isOpen={isModalOpen} title="Create Channel">
   <form on:submit={handleCreateChat} class="space-y-4">
     <div>
-      <label class="block text-sm font-bold text-slate-500 mb-1">Channel Name</label>
-      <input type="text" bind:value={newName} required placeholder="e.g. general" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
+      <label for="chat_name" class="block text-sm font-bold text-slate-500 mb-1">Channel Name</label>
+      <input id="chat_name" type="text" bind:value={newName} required placeholder="e.g. general" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
     </div>
     <div class="pt-4 flex justify-end space-x-3">
       <button type="button" class="px-4 py-2 text-slate-500 hover:text-slate-900" on:click={() => isModalOpen = false}>Cancel</button>
@@ -156,6 +156,3 @@
     </div>
   </form>
 </Modal>
-
-
-
