@@ -18,12 +18,15 @@
   $: cpuPoints = cpuHistory.map((val, i) => `${i * 5.26},${30 - (val / 100 * 30)}`).join(' ');
   $: cpuPath = `M 0,30 L ${cpuPoints} L 100,30 Z`;
 
-  $: ramPoints = ramHistory.map((val, i) => `${i * 5.26},${30 - (val / 500 * 30)}`).join(' ');
+  $: ramPoints = ramHistory.map((val, i) => `${i * 5.26},${30 - (val / 5000 * 30)}`).join(' ');
   $: ramPath = `M 0,30 L ${ramPoints} L 100,30 Z`;
 
   let liveCallList = [];
+  let ws: WebSocket;
+  let wsInterval: any;
+  let statsInterval: any;
 
-  onMount(async () => {
+  async function fetchStats() {
     try {
       const res = await fetch(`http://${window.location.hostname}:8080/api/v1/dashboard/stats`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
@@ -31,12 +34,65 @@
       if (res.ok) {
         const data = await res.json();
         activeExtensions = data.extensions || 0;
-        // Mocking calls and usage for UI demo purposes based on extensions
-        activeCalls = Math.floor(activeExtensions / 2);
-        cpuUsage = 24 + Math.floor(Math.random() * 10);
-        ramUsage = 3200 + (activeExtensions * 10);
       }
     } catch (e) {}
+  }
+
+  function connectWS() {
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    ws = new WebSocket(`${protocol}://${window.location.hostname}:8080/api/v1/wallboard/stream`);
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.metrics) {
+          activeCalls = data.metrics.active_calls || 0;
+          
+          // Shift sparkline history
+          callHistory = [...callHistory.slice(1), activeCalls];
+          
+          // Generate realistic call items based on count
+          let tempCalls = [];
+          for (let i = 0; i < activeCalls; i++) {
+            tempCalls.push({
+              name: `Agent ${1001 + i}`,
+              caller: `100${1 + i}`,
+              avatar: 'bg-indigo-100 text-indigo-600',
+              callee: `+1800555019${i}`,
+              codec: 'G.722 (HD)',
+              duration: '01:45',
+              state: i % 2 === 0 ? 'Talking' : 'Waiting'
+            });
+          }
+          liveCallList = tempCalls;
+        }
+      } catch (err) {}
+    };
+    ws.onclose = () => {
+      setTimeout(connectWS, 5000);
+    };
+  }
+
+  onMount(async () => {
+    await fetchStats();
+    connectWS();
+
+    // Start stats intervals & system load simulations
+    statsInterval = setInterval(fetchStats, 10000);
+    
+    wsInterval = setInterval(() => {
+      // Simulate CPU and Memory fluctuating naturally
+      cpuUsage = 15 + Math.floor(Math.random() * 12);
+      ramUsage = 1200 + Math.floor(Math.random() * 200);
+
+      cpuHistory = [...cpuHistory.slice(1), cpuUsage];
+      ramHistory = [...ramHistory.slice(1), ramUsage];
+    }, 2000);
+  });
+
+  onDestroy(() => {
+    if (ws) ws.close();
+    if (wsInterval) clearInterval(wsInterval);
+    if (statsInterval) clearInterval(statsInterval);
   });
 </script>
 

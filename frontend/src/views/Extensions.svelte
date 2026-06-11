@@ -10,9 +10,18 @@
   let isApiConnected = true;
   
   let isModalOpen = false;
+  let isEditModalOpen = false;
+
   let newExtNumber = '';
   let newExtPassword = '';
   let newExtConfirm = '';
+  
+  let editExtId = '';
+  let editExtNumber = '';
+  let editExtPassword = '';
+  let editExtConfirm = '';
+  let editExtActive = true;
+
   let isSubmitting = false;
 
   async function fetchExtensions() {
@@ -28,7 +37,8 @@
           name: 'DB Endpoint',
           status: e.IsActive ? 'Online' : 'Offline',
           ip: 'Dynamic',
-          code: e.ProvisioningCode || 'N/A'
+          code: e.ProvisioningCode || 'N/A',
+          isActive: e.IsActive
         }));
         isApiConnected = true;
       } else { throw new Error("API Offline"); }
@@ -74,6 +84,52 @@
       }
     } catch (err) {
       alert("API Error: Make sure backend is running.");
+    } finally {
+      isSubmitting = false;
+    }
+  }
+
+  function openEditModal(ext) {
+    editExtId = ext.id;
+    editExtNumber = ext.ext;
+    editExtPassword = '';
+    editExtConfirm = '';
+    editExtActive = ext.isActive;
+    isEditModalOpen = true;
+  }
+
+  async function handleEditExtension(e) {
+    e.preventDefault();
+    if (editExtPassword && editExtPassword !== editExtConfirm) {
+      alert("Passwords do not match!");
+      return;
+    }
+    isSubmitting = true;
+    try {
+      const payload: any = {
+        ExtensionNumber: editExtNumber,
+        IsActive: editExtActive
+      };
+      if (editExtPassword) {
+        payload.PasswordHash = editExtPassword;
+      }
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/extensions/${editExtId}`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('pbx_token')}`
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      if (res.ok) {
+        isEditModalOpen = false;
+        await fetchExtensions();
+      } else {
+        alert("Failed to update extension.");
+      }
+    } catch (err) {
+      alert("API Error updating extension.");
     } finally {
       isSubmitting = false;
     }
@@ -145,7 +201,7 @@
                 </span>
               </td>
               <td class="p-4 text-right flex justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button title="Edit Extension" aria-label="Edit Extension" class="text-slate-500 hover:text-slate-900 transition-colors p-1">
+                <button title="Edit Extension" aria-label="Edit Extension" class="text-slate-500 hover:text-slate-900 transition-colors p-1" on:click={() => openEditModal(ext)}>
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                 </button>
                 <button title="Delete Extension" aria-label="Delete Extension" class="text-slate-500 hover:text-red-400 transition-colors p-1" on:click={() => handleDeleteExtension(ext.id)}>
@@ -184,6 +240,36 @@
     </div>
   </form>
 </Modal>
+
+<!-- Edit Extension Modal -->
+<Modal bind:isOpen={isEditModalOpen} title="Edit Extension" description="Update settings for this SIP extension.">
+  <form on:submit={handleEditExtension} class="space-y-5">
+    <div>
+      <label for="editExtNumber" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Extension Number</label>
+      <input id="editExtNumber" type="text" bind:value={editExtNumber} required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
+    </div>
+    <div>
+      <label for="editExtPassword" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">SIP Password (Leave blank to keep current)</label>
+      <input id="editExtPassword" type="password" bind:value={editExtPassword} placeholder="New password" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
+    </div>
+    <div>
+      <label for="editExtConfirm" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Confirm Password</label>
+      <input id="editExtConfirm" type="password" bind:value={editExtConfirm} placeholder="Confirm new password" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
+    </div>
+    <div class="flex items-center space-x-3">
+      <input id="editExtActive" type="checkbox" bind:checked={editExtActive} class="rounded text-indigo-600 focus:ring-indigo-500 border-slate-200">
+      <label for="editExtActive" class="text-sm text-slate-700 font-bold uppercase tracking-wider">Is Active</label>
+    </div>
+    
+    <div class="pt-4 flex justify-end space-x-3">
+      <Button variant="secondary" on:click={() => isEditModalOpen = false} type="button">Cancel</Button>
+      <button type="submit" disabled={isSubmitting} class="bg-indigo-600 hover:bg-indigo-500 text-slate-900 px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50">
+        {isSubmitting ? 'Saving...' : 'Save Changes'}
+      </button>
+    </div>
+  </form>
+</Modal>
+
 
 
 

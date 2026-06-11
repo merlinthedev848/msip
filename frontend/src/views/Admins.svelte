@@ -7,9 +7,15 @@
   let isLoading = true;
 
   let showModal = false;
+  let showEditModal = false;
   let newEmail = '';
   let newPassword = '';
   let newRole = 'viewer';
+
+  let editUserId = '';
+  let editEmail = '';
+  let editPassword = '';
+  let editRole = 'viewer';
 
   async function fetchUsers() {
     try {
@@ -38,7 +44,7 @@
         },
         body: JSON.stringify({
           Email: newEmail,
-          PasswordHash: newPassword, // Note: Handled by backend hashing
+          PasswordHash: newPassword, // Handled by backend hashing
           Role: newRole
         })
       });
@@ -47,6 +53,41 @@
         newEmail = '';
         newPassword = '';
         newRole = 'viewer';
+        fetchUsers();
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  function openEditModal(user) {
+    editUserId = user.ID;
+    editEmail = user.Email;
+    editRole = user.Role;
+    editPassword = '';
+    showEditModal = true;
+  }
+
+  async function handleEditUser(e) {
+    e.preventDefault();
+    try {
+      const payload: any = {
+        Email: editEmail,
+        Role: editRole
+      };
+      if (editPassword) {
+        payload.PasswordHash = editPassword;
+      }
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/users/${editUserId}`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('pbx_token')}`
+        },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        showEditModal = false;
         fetchUsers();
       }
     } catch (e) {
@@ -115,7 +156,7 @@
                 <td class="py-4 px-6">
                   <div class="flex items-center space-x-3">
                     <div class="w-8 h-8 rounded-full bg-indigo-500/20 text-blue-600 flex items-center justify-center font-bold text-sm">
-                      {user.Email[0].toUpperCase()}
+                      {user.Email ? user.Email[0].toUpperCase() : 'U'}
                     </div>
                     <span class="text-slate-900 font-medium">{user.Email}</span>
                   </div>
@@ -128,12 +169,14 @@
                     {user.Role.toUpperCase()}
                   </span>
                 </td>
-                  <td class="py-4 font-mono text-sm text-slate-500">Never</td>
-                  <td class="py-4 text-right">
-                    <button class="text-slate-500 hover:text-slate-900 mx-2 transition-colors">Edit</button>
-                    <button class="text-red-400 hover:text-red-300 mx-2 transition-colors" on:click={() => handleDeleteUser(user.ID)}>Revoke</button>
-                  </td>
-                </tr>
+                <td class="py-4 font-mono text-xs text-slate-500">
+                  {user.CreatedAt ? new Date(user.CreatedAt).toLocaleDateString() : 'Unknown'}
+                </td>
+                <td class="py-4 text-right">
+                  <button class="text-slate-500 hover:text-slate-900 mx-2 transition-colors" on:click={() => openEditModal(user)}>Edit</button>
+                  <button class="text-red-400 hover:text-red-300 mx-2 transition-colors" on:click={() => handleDeleteUser(user.ID)}>Revoke</button>
+                </td>
+              </tr>
             {/each}
           </tbody>
         </table>
@@ -172,6 +215,43 @@
       <div class="pt-4 flex space-x-3">
         <Button variant="secondary" type="button" className="flex-1" on:click={() => showModal = false}>Cancel</Button>
         <Button variant="primary" type="submit" className="flex-1">Send Invite</Button>
+      </div>
+    </form>
+  </div>
+</div>
+{/if}
+
+{#if showEditModal}
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+  <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+    <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-white">
+      <h3 class="text-lg font-semibold text-slate-900">Edit User</h3>
+      <button class="text-slate-500 hover:text-slate-900 transition-colors" aria-label="Close" on:click={() => showEditModal = false}>
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+    
+    <form on:submit={handleEditUser} class="p-6 space-y-4">
+      <div>
+        <label for="edit_email" class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Email Address</label>
+        <input id="edit_email" type="email" bind:value={editEmail} required class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+      </div>
+      <div>
+        <label for="edit_password" class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Password (Leave blank to keep current)</label>
+        <input id="edit_password" type="password" bind:value={editPassword} class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+      </div>
+      <div>
+        <label for="edit_role" class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Custom Role</label>
+        <select id="edit_role" bind:value={editRole} class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+          <option value="superadmin">Superadmin</option>
+          <option value="admin">Administrator (Full Access)</option>
+          <option value="viewer">Viewer (Read-Only)</option>
+        </select>
+      </div>
+      
+      <div class="pt-4 flex space-x-3">
+        <Button variant="secondary" type="button" className="flex-1" on:click={() => showEditModal = false}>Cancel</Button>
+        <Button variant="primary" type="submit" className="flex-1">Save Changes</Button>
       </div>
     </form>
   </div>

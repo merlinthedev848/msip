@@ -9,9 +9,17 @@
   let isApiConnected = true;
   
   let isModalOpen = false;
+  let isEditModalOpen = false;
+  
   let newTrunkName = '';
   let newTrunkServer = '';
   let newTrunkAuth = 'IP_ACL';
+  
+  let editTrunkId = '';
+  let editTrunkName = '';
+  let editTrunkServer = '';
+  let editTrunkAuth = 'IP_ACL';
+  
   let isSubmitting = false;
 
   async function fetchTrunks() {
@@ -66,6 +74,43 @@
     }
   }
 
+  function openEditModal(trunk) {
+    editTrunkId = trunk.ID;
+    editTrunkName = trunk.ProviderName;
+    editTrunkServer = trunk.SIPServer;
+    editTrunkAuth = trunk.AuthMethod;
+    isEditModalOpen = true;
+  }
+
+  async function handleEditTrunk(e) {
+    e.preventDefault();
+    isSubmitting = true;
+    try {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/trunks/${editTrunkId}`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('pbx_token')}`
+        },
+        body: JSON.stringify({
+          ProviderName: editTrunkName,
+          SIPServer: editTrunkServer,
+          AuthMethod: editTrunkAuth
+        })
+      });
+      if (res.ok) {
+        isEditModalOpen = false;
+        await fetchTrunks();
+      } else {
+        alert("Failed to update trunk.");
+      }
+    } catch (e) {
+      alert("API Error updating trunk.");
+    } finally {
+      isSubmitting = false;
+    }
+  }
+
   async function handleDeleteTrunk(id) {
     if(!confirm("Are you sure you want to delete this trunk?")) return;
     try {
@@ -98,27 +143,14 @@
   {/if}
 
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <!-- Static Fallback / Examples if DB is empty -->
     {#if trunks.length === 0}
-      <GlassCard>
-        <div class="flex justify-between items-start mb-6">
-          <div>
-            <h3 class="text-xl font-bold text-slate-900">Twilio Primary</h3>
-            <p class="text-sm text-slate-500">sip.twilio.com</p>
-          </div>
-          <Badge status="success" pulse={true}>Registered</Badge>
+      <div class="col-span-2 p-12 text-center flex flex-col items-center justify-center bg-white/40 border border-slate-200/60 rounded-3xl">
+        <div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4">
+          <svg class="w-8 h-8 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 8.25l-7.5 7.5-7.5-7.5"></path></svg>
         </div>
-        <div class="space-y-4">
-          <div class="flex justify-between text-sm">
-            <span class="text-slate-500">Auth Method</span>
-            <span class="text-slate-700">IP ACL</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-slate-500">Channels</span>
-            <span class="text-slate-700">Unlimited</span>
-          </div>
-        </div>
-      </GlassCard>
+        <h3 class="text-lg font-medium text-slate-900 mb-2">No SIP Trunks configured</h3>
+        <p class="text-slate-500 text-sm max-w-sm">Connect your first external carrier or proxy server by clicking "Add Trunk".</p>
+      </div>
     {/if}
 
     <!-- Dynamic Trunks from DB -->
@@ -138,11 +170,11 @@
           </div>
           <div class="flex justify-between text-sm">
             <span class="text-slate-500">Database ID</span>
-            <span class="text-slate-700 font-mono text-xs">{trunk.ID.substring(0, 8)}...</span>
+            <span class="text-slate-700 font-mono text-xs">{trunk.ID ? trunk.ID.substring(0, 8) : 'N/A'}...</span>
           </div>
         </div>
         <div class="mt-6 pt-4 border-t border-slate-200 flex justify-end space-x-3">
-          <Button variant="secondary" className="px-4 text-xs">Configure</Button>
+          <Button variant="secondary" className="px-4 text-xs" on:click={() => openEditModal(trunk)}>Configure</Button>
           <Button variant="danger" className="px-4 text-xs" on:click={() => handleDeleteTrunk(trunk.ID)}>Delete</Button>
         </div>
       </GlassCard>
@@ -177,5 +209,34 @@
     </div>
   </form>
 </Modal>
+
+<!-- Edit Trunk Modal -->
+<Modal bind:isOpen={isEditModalOpen} title="Configure SIP Trunk" description="Update settings for this external carrier connection.">
+  <form on:submit={handleEditTrunk} class="space-y-5">
+    <div>
+      <label for="editTrunkName" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Provider Name</label>
+      <input id="editTrunkName" type="text" bind:value={editTrunkName} required placeholder="e.g. Twilio, Flowroute" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
+    </div>
+    <div>
+      <label for="editTrunkServer" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">SIP Server (IP/Domain)</label>
+      <input id="editTrunkServer" type="text" bind:value={editTrunkServer} required placeholder="e.g. sip.provider.com" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
+    </div>
+    <div>
+      <label for="editTrunkAuth" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Authentication Method</label>
+      <select id="editTrunkAuth" bind:value={editTrunkAuth} class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none appearance-none">
+        <option value="IP_ACL">IP Authentication (ACL)</option>
+        <option value="USERPASS">Username / Password</option>
+      </select>
+    </div>
+    
+    <div class="pt-4 flex justify-end space-x-3">
+      <Button variant="secondary" on:click={() => isEditModalOpen = false} type="button">Cancel</Button>
+      <button type="submit" disabled={isSubmitting} class="bg-indigo-600 hover:bg-indigo-500 text-slate-900 px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50">
+        {isSubmitting ? 'Saving...' : 'Save Changes'}
+      </button>
+    </div>
+  </form>
+</Modal>
+
 
 

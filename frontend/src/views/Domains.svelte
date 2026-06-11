@@ -4,8 +4,14 @@
   
   let domains = [];
   let isModalOpen = false;
+  let isEditModalOpen = false;
+  
   let newName = '';
   let newDescription = '';
+  
+  let editDomainId = '';
+  let editName = '';
+  let editDescription = '';
   
   async function fetchDomains() {
     try {
@@ -41,6 +47,35 @@
         fetchDomains();
       }
     } catch (e) {}
+  }
+
+  function openEditModal(domain) {
+    editDomainId = domain.id;
+    editName = domain.name;
+    editDescription = domain.description;
+    isEditModalOpen = true;
+  }
+
+  async function handleEditDomain(e) {
+    e.preventDefault();
+    try {
+      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/domains/${editDomainId}`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('pbx_token')}`
+        },
+        body: JSON.stringify({ Name: editName, Domain: editDescription })
+      });
+      if (res.ok) {
+        isEditModalOpen = false;
+        fetchDomains();
+      } else {
+        alert("Failed to update domain.");
+      }
+    } catch (e) {
+      alert("Error updating domain.");
+    }
   }
 
   async function handleDeleteDomain(id) {
@@ -143,7 +178,7 @@
               </span>
             </td>
             <td class="p-6 text-right space-x-2">
-              <button aria-label="Edit Domain" class="text-slate-500 hover:text-blue-600 transition-colors p-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg></button>
+              <button aria-label="Edit Domain" class="text-slate-500 hover:text-blue-600 transition-colors p-2" on:click={() => openEditModal(domain)}><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
               <button aria-label="Delete Domain" class="text-slate-500 hover:text-red-400 transition-colors p-2" on:click={() => handleDeleteDomain(domain.id)}><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
             </td>
           </tr>
@@ -169,5 +204,23 @@
     </div>
   </form>
 </Modal>
+
+<Modal bind:isOpen={isEditModalOpen} title="Edit Domain Settings">
+  <form on:submit={handleEditDomain} class="space-y-4">
+    <div>
+      <label class="block text-sm font-bold text-slate-500 mb-1">Domain Identity</label>
+      <input type="text" bind:value={editName} required placeholder="e.g. Acme Corp" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
+    </div>
+    <div>
+      <label class="block text-sm font-bold text-slate-500 mb-1">FQDN / Hostname</label>
+      <input type="text" bind:value={editDescription} required placeholder="pbx.acmecorp.com" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
+    </div>
+    <div class="pt-4 flex justify-end space-x-3">
+      <button type="button" class="px-4 py-2 text-slate-500 hover:text-slate-900" on:click={() => isEditModalOpen = false}>Cancel</button>
+      <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-slate-900 px-6 py-2 rounded-xl font-bold shadow-lg shadow-indigo-500/20">Save Changes</button>
+    </div>
+  </form>
+</Modal>
+
 
 
