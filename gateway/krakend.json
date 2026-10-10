@@ -1371,16 +1371,33 @@
                           "method":  "DELETE"
                       },
                       {
-                          "endpoint": "/api/v1/wallboard/stream",
-                          "method": "GET",
-                          "backend": [
-                              {
-                                  "host": [
-                                      "http://pbx_backend:8081"
-                                  ],
-                                  "url_pattern": "/api/wallboard/stream"
-                              }
-                          ]
+                          "endpoint":  "/api/v1/wallboard/stream",
+                          "method":  "GET",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "url_pattern":  "/api/wallboard/stream"
+                                          }
+                                      ]
+                      },
+                      {
+                          "input_headers":  [
+                                                "Authorization",
+                                                "Content-Type",
+                                                "Accept"
+                                            ],
+                          "endpoint":  "/api/v1/commits",
+                          "backend":  [
+                                          {
+                                              "host":  [
+                                                           "http://pbx_backend:8081"
+                                                       ],
+                                              "url_pattern":  "/api/commits"
+                                          }
+                                      ],
+                          "method":  "GET"
                       }
                   ]
 }
