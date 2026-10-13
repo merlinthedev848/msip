@@ -77,13 +77,13 @@
     const nextUnsetExt = availableExts.find(e => !existingExts.has(e.ExtensionNumber));
 
     form = {
-      ExtensionNumber: nextUnsetExt ? nextUnsetExt.ExtensionNumber : availableExts[0]?.ExtensionNumber || '1001',
+      ExtensionNumber: nextUnsetExt ? nextUnsetExt.ExtensionNumber : (availableExts[0]?.ExtensionNumber || ''),
       AlwaysEnabled: false,
       AlwaysTarget: '',
       BusyEnabled: false,
       BusyTarget: '',
       NoAnswerEnabled: true,
-      NoAnswerTarget: '1001',
+      NoAnswerTarget: availableExts[0]?.ExtensionNumber || '',
       NoAnswerTimeout: 20,
       OfflineEnabled: false,
       OfflineTarget: ''

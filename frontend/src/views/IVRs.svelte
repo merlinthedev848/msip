@@ -101,12 +101,8 @@
       AnnounceOnly: false,
       MenuTimeout: 10,
       TimeoutDestination: 'End Call',
-      SoundFile: audioPrompts.length > 0 ? audioPrompts[0].Name : 'Default - Greeting Prompt',
-      Choices: [
-        { Digits: '1', Name: 'Sales & Inquiries', Action: 'transfer', Destination: 'Sales Ring Group' },
-        { Digits: '2', Name: 'Technical Support', Action: 'transfer', Destination: 'Support Queue' },
-        { Digits: '0', Name: 'Operator', Action: 'transfer', Destination: 'Ext 1001' }
-      ]
+      SoundFile: audioPrompts.length > 0 ? audioPrompts[0].Name : '',
+      Choices: []
     };
     currentView = 'edit';
   }
@@ -483,9 +479,7 @@
                     <option value={prompt.Name}>{prompt.Name}</option>
                   {/each}
                   {#if audioPrompts.length === 0}
-                    <option value="Standard Greeting">Standard Greeting</option>
-                    <option value="Main Welcome Prompt">Main Welcome Prompt</option>
-                    <option value="After Hours Greeting">After Hours Greeting</option>
+                    <option value="" disabled>No audio prompts uploaded yet</option>
                   {/if}
                 </select>
               </div>

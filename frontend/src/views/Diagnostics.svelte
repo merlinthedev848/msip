@@ -51,13 +51,19 @@
   }
 
   async function runPing() {
+    if (!pingHost.trim()) return;
     pinging = true;
     try {
-      // simulate instant accurate ICMP/UDP round-trip
-      await new Promise(r => setTimeout(r, 600));
-      const rtt = Math.floor(14 + Math.random() * 8);
+      const res = await api.post<{ target: string; latency_ms: number; status: string; success: boolean }>('/diagnostics/ping', {
+        host: pingHost.trim()
+      });
       pingResults = [
-        { target: pingHost, latency_ms: rtt, status: 'Reachable (0% Loss)' },
+        { target: res.target, latency_ms: res.latency_ms, status: res.status },
+        ...pingResults.slice(0, 4)
+      ];
+    } catch (e: any) {
+      pingResults = [
+        { target: pingHost, latency_ms: 0, status: `Error: ${e.message || 'Probe failed'}` },
         ...pingResults.slice(0, 4)
       ];
     } finally {

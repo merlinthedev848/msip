@@ -67,11 +67,11 @@
     editingId = null;
     form = {
       MACAddress: '',
-      BrandModel: 'Yealink T46U IP Phone',
-      ExtensionNumber: availableExts[0]?.ExtensionNumber || '1001',
-      IPAddress: '192.168.1.100',
-      FirmwareVersion: 'v66.86.0.5',
-      Status: 'online'
+      BrandModel: '',
+      ExtensionNumber: availableExts[0]?.ExtensionNumber || '',
+      IPAddress: '',
+      FirmwareVersion: '',
+      Status: 'offline'
     };
     modalOpen = true;
   }

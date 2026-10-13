@@ -88,17 +88,13 @@
       ID: '',
       Name: '',
       SiteID: defaultSite ? defaultSite.ID : '',
-      SiteName: defaultSite ? defaultSite.Name : 'Main Office',
+      SiteName: defaultSite ? defaultSite.Name : '',
       InternalNumber: (990 + groups.length).toString(),
       RingCadence: 'Default',
       CallerNamePrefix: '',
       NoAnswerTimeout: 15,
       NoAnswerDestination: 'Not Set',
-      Members: availableExts.slice(0, 3).map(e => ({
-        Member: e.DisplayName || `${e.FirstName || ''} ${e.LastName || ''}`.trim() || `User ${e.ExtensionNumber}`,
-        Extension: e.ExtensionNumber,
-        DelaySec: 0
-      }))
+      Members: []
     };
     currentView = 'edit';
   }
@@ -109,7 +105,7 @@
       ID: group.ID,
       Name: group.Name || '',
       SiteID: group.SiteID || '',
-      SiteName: group.SiteName || (sites.length > 0 ? sites[0].Name : 'Main Office'),
+      SiteName: group.SiteName || (sites.length > 0 ? sites[0].Name : ''),
       InternalNumber: group.InternalNumber || '990',
       RingCadence: group.RingCadence || 'Default',
       CallerNamePrefix: group.CallerNamePrefix || '',
@@ -145,7 +141,7 @@
         Name: form.Name.trim(),
         InternalNumber: form.InternalNumber.trim(),
         SiteID: form.SiteID || null,
-        SiteName: form.SiteName || 'Main Office',
+        SiteName: form.SiteName || '',
         RingCadence: form.RingCadence,
         CallerNamePrefix: form.CallerNamePrefix.trim(),
         NoAnswerTimeout: Number(form.NoAnswerTimeout),
@@ -190,8 +186,8 @@
     editingMemberIndex = -1;
     const defaultExt = availableExts.length > 0 ? availableExts[0] : null;
     memberForm = {
-      Member: defaultExt ? (defaultExt.DisplayName || `${defaultExt.FirstName || ''} ${defaultExt.LastName || ''}`.trim() || `User ${defaultExt.ExtensionNumber}`) : 'Agent',
-      Extension: defaultExt ? defaultExt.ExtensionNumber : '1001',
+      Member: defaultExt ? (defaultExt.DisplayName || `${defaultExt.FirstName || ''} ${defaultExt.LastName || ''}`.trim() || `User ${defaultExt.ExtensionNumber}`) : '',
+      Extension: defaultExt ? defaultExt.ExtensionNumber : '',
       DelaySec: 0
     };
     memberModalOpen = true;
@@ -283,7 +279,7 @@
             <tr class="hover:bg-slate-50 transition-colors">
               <td class="px-4 py-3 font-bold text-slate-900">{item.Name}</td>
               <td class="px-4 py-3 text-slate-600 font-mono font-bold">{item.InternalNumber}</td>
-              <td class="px-4 py-3 text-slate-600">{item.SiteName || 'Main Office'}</td>
+              <td class="px-4 py-3 text-slate-600">{item.SiteName || '—'}</td>
               <td class="px-4 py-3">
                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-800">
                   {(item.Members || []).length} Members
@@ -376,7 +372,7 @@
                     <option value={s.ID}>{s.Name}</option>
                   {/each}
                   {#if sites.length === 0}
-                    <option value="">Main Office</option>
+                    <option value="" disabled>No sites configured</option>
                   {/if}
                 </select>
               </div>

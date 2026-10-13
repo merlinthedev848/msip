@@ -71,11 +71,7 @@
       DeviceModel: 'Standard IP Handset (10 Keys)',
       Description: '',
       keysList: [
-        { key: 1, type: 'Line', value: '1', label: 'Line 1' },
-        { key: 2, type: 'BLF', value: '1001', label: 'Front Desk' },
-        { key: 3, type: 'SpeedDial', value: '*97', label: 'Voicemail' },
-        { key: 4, type: 'SpeedDial', value: '*8', label: 'Call Pickup' },
-        { key: 5, type: 'SpeedDial', value: '*0', label: 'Intercom' }
+        { key: 1, type: 'Line', value: '1', label: 'Line 1' }
       ]
     };
     modalOpen = true;
@@ -226,7 +222,7 @@
 
           <p class="text-xs text-slate-600 mb-4 line-clamp-2">{p.Description || 'Standard key layout for extension handsets.'}</p>
 
-          <!-- Mock Handset LCD Keys Panel -->
+          <!-- Handset LCD Keys Preview -->
           <div class="bg-slate-900 text-white p-3 rounded-lg border border-slate-800 font-mono text-[11px] space-y-1.5 shadow-inner">
             <div class="text-[10px] text-slate-400 border-b border-slate-800 pb-1 mb-1.5 flex justify-between">
               <span>LCD SCREEN PREVIEW</span>

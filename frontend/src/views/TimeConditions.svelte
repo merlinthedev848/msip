@@ -124,10 +124,10 @@
       time_start: '09:00',
       time_end: '17:00',
       days_of_week: 'mon-fri',
-      matched_dest_type: availableIvrs.length > 0 ? 'ivr' : 'extension',
-      matched_dest_val: availableIvrs[0]?.number || availableExts[0]?.number || '8000',
+      matched_dest_type: availableIvrs.length > 0 ? 'ivr' : (availableExts.length > 0 ? 'extension' : 'hangup'),
+      matched_dest_val: availableIvrs[0]?.number || availableExts[0]?.number || '',
       unmatched_dest_type: 'voicemail',
-      unmatched_dest_val: availableExts[0]?.number || '1001',
+      unmatched_dest_val: availableExts[0]?.number || '',
       is_active: true
     };
     condModalOpen = true;
@@ -190,7 +190,7 @@
       start_date: today,
       end_date: today,
       dest_type: 'voicemail',
-      dest_val: availableExts[0]?.number || '1001',
+      dest_val: availableExts[0]?.number || '',
       is_active: true
     };
     holidayModalOpen = true;

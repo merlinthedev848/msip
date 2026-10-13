@@ -44,7 +44,7 @@
     name: '',
     pattern: '00X.|011X.',
     barred_types: 'international',
-    allowed_exts: '1000, 1001',
+    allowed_exts: '',
     pin_code: '',
     is_active: true
   };

@@ -78,9 +78,9 @@
       Number: '',
       Description: '',
       DestinationType: 'extension',
-      DestinationTarget: availableExts[0]?.ExtensionNumber || '1001',
+      DestinationTarget: availableExts[0]?.ExtensionNumber || '',
       OutboundCLI: true,
-      Provider: 'Default Carrier Gateway'
+      Provider: ''
     };
     modalOpen = true;
   }

@@ -214,12 +214,7 @@
       ParkResumeMenuTimeoutSec: 15,
       ParkResumeDialTimeoutSec: 20,
       ParkConfirmation: '',
-      Members: availableExts.slice(0, 5).map(e => ({
-        Member: e.DisplayName || `${e.FirstName || ''} ${e.LastName || ''}`.trim() || `User ${e.ExtensionNumber}`,
-        Extension: e.ExtensionNumber,
-        Penalty: 0,
-        Disabled: false
-      }))
+      Members: []
     };
     currentView = 'edit';
   }
@@ -342,8 +337,8 @@
     editingMemberIndex = -1;
     const defaultExt = availableExts.length > 0 ? availableExts[0] : null;
     memberForm = {
-      Member: defaultExt ? (defaultExt.DisplayName || `${defaultExt.FirstName || ''} ${defaultExt.LastName || ''}`.trim() || `User ${defaultExt.ExtensionNumber}`) : 'Agent',
-      Extension: defaultExt ? defaultExt.ExtensionNumber : '1001',
+      Member: defaultExt ? (defaultExt.DisplayName || `${defaultExt.FirstName || ''} ${defaultExt.LastName || ''}`.trim() || `User ${defaultExt.ExtensionNumber}`) : '',
+      Extension: defaultExt ? defaultExt.ExtensionNumber : '',
       Penalty: 0,
       Disabled: false
     };
@@ -1034,30 +1029,32 @@
           Live Queues Monitor
         </div>
         <div class="p-5">
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {#each (liveQueueStats.length > 0 ? liveQueueStats : [
-              { name: 'Technical Support', waiting: 0, agents: 5, sla: 99.2 },
-              { name: 'Customer Support', waiting: 1, agents: 4, sla: 97.8 },
-              { name: 'Sales Inbound', waiting: 0, agents: 3, sla: 100 }
-            ]) as q}
-              <div class="p-4 border border-slate-200 rounded-lg bg-slate-50/50 flex flex-col justify-between">
-                <div class="flex items-center justify-between mb-3">
-                  <div class="font-bold text-xs text-slate-900">{q.name}</div>
-                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">SLA {q.sla}%</span>
-                </div>
-                <div class="grid grid-cols-2 gap-2 text-center">
-                  <div class="bg-white p-2 rounded border border-slate-200">
-                    <div class="text-[10px] text-slate-400 font-semibold uppercase">Callers Waiting</div>
-                    <div class="text-lg font-bold text-slate-800">{q.waiting}</div>
+          {#if liveQueueStats.length > 0}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {#each liveQueueStats as q}
+                <div class="p-4 border border-slate-200 rounded-lg bg-slate-50/50 flex flex-col justify-between">
+                  <div class="flex items-center justify-between mb-3">
+                    <div class="font-bold text-xs text-slate-900">{q.name}</div>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">SLA {q.sla}%</span>
                   </div>
-                  <div class="bg-white p-2 rounded border border-slate-200">
-                    <div class="text-[10px] text-slate-400 font-semibold uppercase">Logged Agents</div>
-                    <div class="text-lg font-bold text-[#0284C7]">{q.agents}</div>
+                  <div class="grid grid-cols-2 gap-2 text-center">
+                    <div class="bg-white p-2 rounded border border-slate-200">
+                      <div class="text-[10px] text-slate-400 font-semibold uppercase">Callers Waiting</div>
+                      <div class="text-lg font-bold text-slate-800">{q.waiting}</div>
+                    </div>
+                    <div class="bg-white p-2 rounded border border-slate-200">
+                      <div class="text-[10px] text-slate-400 font-semibold uppercase">Logged Agents</div>
+                      <div class="text-lg font-bold text-[#0284C7]">{q.agents}</div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            {/each}
-          </div>
+              {/each}
+            </div>
+          {:else}
+            <div class="p-8 text-center text-slate-400 text-xs">
+              No active queues currently reporting live traffic. Queues and agent metrics will appear here in real time when calls arrive.
+            </div>
+          {/if}
         </div>
       </div>
     </div>

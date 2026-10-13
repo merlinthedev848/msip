@@ -1,7 +1,11 @@
 package main
 
 import (
+	"fmt"
+	"net"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -477,14 +481,53 @@ func RegisterCallControlRoutes(v1 *gin.RouterGroup) {
 				{"name": "kamailio_proxy", "port": 5060, "proto": "sip/udp", "state": "RUNNING"},
 			},
 			"jitter_buffer": gin.H{
-				"current_ms":      12,
+				"current_ms":      0,
 				"max_ms":          60,
-				"packet_loss_pct": 0.04,
-				"rtt_ms":          18,
-				"mos_score":       4.38,
-				"quality":         "Excellent",
+				"packet_loss_pct": 0.0,
+				"rtt_ms":          0,
+				"mos_score":       4.5,
+				"quality":         "Idle / Nominal",
 			},
 			"active_codecs": []string{"OPUS", "G722", "PCMA (G.711a)", "PCMU (G.711u)"},
+		})
+	})
+
+	v1.POST("/diagnostics/ping", func(c *gin.Context) {
+		var req struct {
+			Host string `json:"host"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil || strings.TrimSpace(req.Host) == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "host is required"})
+			return
+		}
+		target := strings.TrimSpace(req.Host)
+		if !strings.Contains(target, ":") {
+			target = target + ":5060"
+		}
+		start := time.Now()
+		conn, err := net.DialTimeout("tcp", target, 2*time.Second)
+		elapsed := time.Since(start).Milliseconds()
+		if err != nil {
+			// Fallback UDP probe
+			uConn, uErr := net.DialTimeout("udp", target, 2*time.Second)
+			if uErr != nil {
+				c.JSON(http.StatusOK, gin.H{
+					"target":     req.Host,
+					"latency_ms": 0,
+					"status":     fmt.Sprintf("Unreachable (%v)", err),
+					"success":    false,
+				})
+				return
+			}
+			_ = uConn.Close()
+		} else {
+			_ = conn.Close()
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"target":     req.Host,
+			"latency_ms": elapsed,
+			"status":     fmt.Sprintf("Reachable (%dms RTT)", elapsed),
+			"success":    true,
 		})
 	})
 }

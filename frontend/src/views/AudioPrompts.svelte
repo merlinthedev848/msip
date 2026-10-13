@@ -91,7 +91,7 @@
       name: '',
       type,
       description: '',
-      file_path: type === 'moh' ? 'sounds/moh/chime.wav' : 'sounds/custom/announcement.wav',
+      file_path: '',
       is_default: false
     };
     promptModalOpen = true;
