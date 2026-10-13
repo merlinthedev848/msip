@@ -501,7 +501,7 @@
                 <input
                   type="text"
                   bind:value={form.FirstName}
-                  placeholder="e.g. 8180"
+                  placeholder="e.g. John"
                   class="w-full px-3 py-2 pr-9 bg-white border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-[#0284C7] focus:outline-none"
                 />
                 <button
@@ -520,7 +520,7 @@
               <input
                 type="text"
                 bind:value={form.LastName}
-                placeholder="e.g. Test"
+                placeholder="e.g. Smith"
                 class="w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-[#0284C7] focus:outline-none"
               />
             </div>
@@ -530,7 +530,7 @@
               <input
                 type="text"
                 bind:value={form.DisplayName}
-                placeholder="e.g. 8180 Test"
+                placeholder="e.g. John Smith"
                 class="w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-[#0284C7] focus:outline-none font-medium"
               />
             </div>
@@ -621,7 +621,7 @@
               <input
                 type="text"
                 bind:value={form.PresentationNumber}
-                placeholder="e.g. 01233220950"
+                placeholder="e.g. +18005550100"
                 class="w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-[#0284C7] focus:outline-none"
               />
             </div>

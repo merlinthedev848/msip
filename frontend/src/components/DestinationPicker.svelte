@@ -41,8 +41,8 @@
     if (!val || val === 'Not Set' || val === 'Unknown') return '?';
     if (val.toLowerCase().includes('end call') || val.toLowerCase().includes('hangup')) return '🛑';
     if (val.toLowerCase().includes('menu') || val.toLowerCase().includes('ivr')) return '≡';
-    if (val.toLowerCase().includes('group') || val.toLowerCase().includes('door') || val.toLowerCase().includes('hunt')) return '👥';
-    if (val.toLowerCase().includes('queue') || val.toLowerCase().includes('accounts')) return '⏳';
+    if (val.toLowerCase().includes('group') || val.toLowerCase().includes('hunt')) return '👥';
+    if (val.toLowerCase().includes('queue')) return '⏳';
     if (val.toLowerCase().includes('voicemail')) return '✉';
     return '📞';
   }
@@ -267,7 +267,7 @@
               <input
                 type="text"
                 bind:value={externalNumber}
-                placeholder="e.g. +447123456789 or 01233220950"
+                placeholder="e.g. +18005550199 or +442071234567"
                 class="flex-1 px-3 py-2 border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-[#0284C7] focus:outline-none"
               />
               <button

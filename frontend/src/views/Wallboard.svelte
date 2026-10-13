@@ -98,14 +98,14 @@
     MemberWrapUpDelay: 0,
     InternalNumber: '991',
     PlayMusicWhileWaiting: true,
-    Music: 'Agilico',
+    Music: 'Default',
     CallerNamePrefix: '',
     RingCadence: 'Default',
     AnnounceWaitTime: false,
     AnnouncePosition: true,
     AnnouncementInterval: 60,
     NoAnswerTimeout: 20,
-    NoAnswerDestination: 'Agilico Accounts Menu',
+    NoAnswerDestination: 'Voicemail',
     ParkEnabled: false,
     ParkTelephoneNumber: '',
     ParkResumeWhenAtPosition: 2,
@@ -197,7 +197,7 @@
       MemberWrapUpDelay: 0,
       InternalNumber: (990 + queuesList.length + 1).toString(),
       PlayMusicWhileWaiting: true,
-      Music: audioPrompts.length > 0 ? audioPrompts[0].Name : 'Agilico',
+      Music: audioPrompts.length > 0 ? audioPrompts[0].Name : 'Default',
       CallerNamePrefix: '',
       RingCadence: 'Default',
       AnnounceWaitTime: false,
@@ -237,14 +237,14 @@
       MemberWrapUpDelay: q.MemberWrapUpDelay ?? 0,
       InternalNumber: q.InternalNumber || '991',
       PlayMusicWhileWaiting: q.PlayMusicWhileWaiting !== false,
-      Music: q.Music || 'Agilico',
+      Music: q.Music || 'Default',
       CallerNamePrefix: q.CallerNamePrefix || '',
       RingCadence: q.RingCadence || 'Default',
       AnnounceWaitTime: !!q.AnnounceWaitTime,
       AnnouncePosition: q.AnnouncePosition !== false,
       AnnouncementInterval: q.AnnouncementInterval ?? 60,
       NoAnswerTimeout: q.NoAnswerTimeout ?? 20,
-      NoAnswerDestination: q.NoAnswerDestination || 'Agilico Accounts Menu',
+      NoAnswerDestination: q.NoAnswerDestination || 'Voicemail',
       ParkEnabled: !!q.ParkEnabled,
       ParkTelephoneNumber: q.ParkTelephoneNumber || '',
       ParkResumeWhenAtPosition: q.ParkResumeWhenAtPosition ?? 2,
@@ -471,7 +471,7 @@
                     {(item.Members || []).length} Agents
                   </span>
                 </td>
-                <td class="px-4 py-3 text-slate-600 truncate max-w-xs">{item.NoAnswerDestination || 'Agilico Accounts Menu'}</td>
+                <td class="px-4 py-3 text-slate-600 truncate max-w-xs">{item.NoAnswerDestination || 'Voicemail'}</td>
                 <td class="px-4 py-3 text-right">
                   <div class="inline-flex items-center space-x-2">
                     <button
@@ -537,7 +537,7 @@
                 <input
                   type="text"
                   bind:value={form.Name}
-                  placeholder="e.g. CDS - Accounts"
+                  placeholder="e.g. Customer Support Queue"
                   class="w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-[#0284C7] focus:outline-none font-medium"
                 />
               </div>
@@ -646,7 +646,6 @@
                     bind:value={form.Music}
                     class="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-[#0284C7] focus:outline-none"
                   >
-                    <option value="Agilico">Agilico</option>
                     <option value="Default">Default</option>
                     {#each audioPrompts as prompt}
                       <option value={prompt.Name}>{prompt.Name}</option>
@@ -1037,7 +1036,7 @@
         <div class="p-5">
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {#each (liveQueueStats.length > 0 ? liveQueueStats : [
-              { name: 'CDS - Accounts', waiting: 0, agents: 5, sla: 99.2 },
+              { name: 'Technical Support', waiting: 0, agents: 5, sla: 99.2 },
               { name: 'Customer Support', waiting: 1, agents: 4, sla: 97.8 },
               { name: 'Sales Inbound', waiting: 0, agents: 3, sla: 100 }
             ]) as q}
@@ -1098,7 +1097,7 @@
           <input
             type="text"
             bind:value={memberForm.Member}
-            placeholder="e.g. Lorraine Robertson"
+            placeholder="e.g. Agent Name"
             class="w-full px-3 py-2 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-[#0284C7] focus:outline-none"
           />
         </div>

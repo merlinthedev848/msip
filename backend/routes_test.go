@@ -543,16 +543,16 @@ func TestRingGroupsAndQueuesCRUD(t *testing.T) {
 
 	// 1. Ring Groups Test
 	groupPayload := `{
-		"Name": "Newcastle Support",
-		"InternalNumber": "995",
-		"SiteName": "Agilico Systems",
+		"Name": "Technical Support Group",
+		"InternalNumber": "601",
+		"SiteName": "Main Corporate HQ",
 		"RingCadence": "Default",
-		"CallerNamePrefix": "Support (9)",
+		"CallerNamePrefix": "Tech:",
 		"NoAnswerTimeout": 15,
-		"NoAnswerDestination": "Front Door Failover",
+		"NoAnswerDestination": "Voicemail Box",
 		"Members": [
-			{"Member": "Nicola Simpson", "Extension": "1001", "DelaySec": 0},
-			{"Member": "Anne Mitchell Hall", "Extension": "1002", "DelaySec": 5}
+			{"Member": "Alice Smith", "Extension": "1001", "DelaySec": 0},
+			{"Member": "Bob Jones", "Extension": "1002", "DelaySec": 5}
 		]
 	}`
 	wGrpCreate := performRequest(testRouter, "POST", "/api/ring-groups", []byte(groupPayload), adminToken)
@@ -562,19 +562,19 @@ func TestRingGroupsAndQueuesCRUD(t *testing.T) {
 
 	var createdGrp CallDistributionGroup
 	json.Unmarshal(wGrpCreate.Body.Bytes(), &createdGrp)
-	if createdGrp.Name != "Newcastle Support" || len(createdGrp.Members) != 2 {
+	if createdGrp.Name != "Technical Support Group" || len(createdGrp.Members) != 2 {
 		t.Fatalf("unexpected group content: %+v", createdGrp)
 	}
 
 	wGrpList := performRequest(testRouter, "GET", "/api/ring-groups", nil, adminToken)
-	if wGrpList.Code != http.StatusOK || !strings.Contains(wGrpList.Body.String(), "Newcastle Support") {
+	if wGrpList.Code != http.StatusOK || !strings.Contains(wGrpList.Body.String(), "Technical Support Group") {
 		t.Fatalf("expected group in list, got: %s", wGrpList.Body.String())
 	}
 
 	// 2. Call Queues Test
 	queuePayload := `{
 		"Name": "Tier 2 Helpdesk",
-		"InternalNumber": "992",
+		"InternalNumber": "801",
 		"Extension": "8002",
 		"MaxCapacity": 20,
 		"RingStrategy": "Round Robin",
@@ -582,13 +582,13 @@ func TestRingGroupsAndQueuesCRUD(t *testing.T) {
 		"MemberRetryDelay": 10,
 		"MemberWrapUpDelay": 5,
 		"PlayMusicWhileWaiting": true,
-		"Music": "Harmony",
-		"CallerNamePrefix": "Tier2",
+		"Music": "Default Telecom Harmony",
+		"CallerNamePrefix": "Tier2:",
 		"NoAnswerTimeout": 30,
 		"NoAnswerDestination": "Voicemail Box",
 		"Members": [
-			{"Member": "Sharon Collinson", "Extension": "1002", "Penalty": 0, "Disabled": false},
-			{"Member": "Julie Schubeler", "Extension": "1003", "Penalty": 1, "Disabled": true}
+			{"Member": "Alice Smith", "Extension": "1001", "Penalty": 0, "Disabled": false},
+			{"Member": "Bob Jones", "Extension": "1002", "Penalty": 1, "Disabled": true}
 		]
 	}`
 	wQCreate := performRequest(testRouter, "POST", "/api/queues", []byte(queuePayload), adminToken)

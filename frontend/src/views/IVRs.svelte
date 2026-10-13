@@ -103,8 +103,8 @@
       TimeoutDestination: 'End Call',
       SoundFile: audioPrompts.length > 0 ? audioPrompts[0].Name : 'Default - Greeting Prompt',
       Choices: [
-        { Digits: '1', Name: 'Sales & Accounts', Action: 'transfer', Destination: 'Front door newcastle' },
-        { Digits: '2', Name: 'Technical Support', Action: 'transfer', Destination: 'CDS - Accounts' },
+        { Digits: '1', Name: 'Sales & Inquiries', Action: 'transfer', Destination: 'Sales Ring Group' },
+        { Digits: '2', Name: 'Technical Support', Action: 'transfer', Destination: 'Support Queue' },
         { Digits: '0', Name: 'Operator', Action: 'transfer', Destination: 'Ext 1001' }
       ]
     };
@@ -376,7 +376,7 @@
                 <input
                   type="text"
                   bind:value={form.Name}
-                  placeholder="e.g. Agilico - Bank Hol - New"
+                  placeholder="e.g. Main Auto Attendant"
                   class="w-full px-3 py-2 pr-9 bg-white border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-[#0284C7] focus:outline-none font-medium"
                 />
                 <button
@@ -483,7 +483,7 @@
                     <option value={prompt.Name}>{prompt.Name}</option>
                   {/each}
                   {#if audioPrompts.length === 0}
-                    <option value="Agilico - Bank Hol">Agilico - Bank Hol</option>
+                    <option value="Standard Greeting">Standard Greeting</option>
                     <option value="Main Welcome Prompt">Main Welcome Prompt</option>
                     <option value="After Hours Greeting">After Hours Greeting</option>
                   {/if}

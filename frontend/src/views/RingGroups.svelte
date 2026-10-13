@@ -88,7 +88,7 @@
       ID: '',
       Name: '',
       SiteID: defaultSite ? defaultSite.ID : '',
-      SiteName: defaultSite ? defaultSite.Name : 'Agilico Systems',
+      SiteName: defaultSite ? defaultSite.Name : 'Main Office',
       InternalNumber: (990 + groups.length).toString(),
       RingCadence: 'Default',
       CallerNamePrefix: '',
@@ -109,7 +109,7 @@
       ID: group.ID,
       Name: group.Name || '',
       SiteID: group.SiteID || '',
-      SiteName: group.SiteName || (sites.length > 0 ? sites[0].Name : 'Agilico Systems'),
+      SiteName: group.SiteName || (sites.length > 0 ? sites[0].Name : 'Main Office'),
       InternalNumber: group.InternalNumber || '990',
       RingCadence: group.RingCadence || 'Default',
       CallerNamePrefix: group.CallerNamePrefix || '',
@@ -145,7 +145,7 @@
         Name: form.Name.trim(),
         InternalNumber: form.InternalNumber.trim(),
         SiteID: form.SiteID || null,
-        SiteName: form.SiteName || 'Agilico Systems',
+        SiteName: form.SiteName || 'Main Office',
         RingCadence: form.RingCadence,
         CallerNamePrefix: form.CallerNamePrefix.trim(),
         NoAnswerTimeout: Number(form.NoAnswerTimeout),
@@ -283,7 +283,7 @@
             <tr class="hover:bg-slate-50 transition-colors">
               <td class="px-4 py-3 font-bold text-slate-900">{item.Name}</td>
               <td class="px-4 py-3 text-slate-600 font-mono font-bold">{item.InternalNumber}</td>
-              <td class="px-4 py-3 text-slate-600">{item.SiteName || 'Agilico Systems'}</td>
+              <td class="px-4 py-3 text-slate-600">{item.SiteName || 'Main Office'}</td>
               <td class="px-4 py-3">
                 <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-800">
                   {(item.Members || []).length} Members
@@ -356,7 +356,7 @@
               <input
                 type="text"
                 bind:value={form.Name}
-                placeholder="e.g. Front door newcastle"
+                placeholder="e.g. Sales Ring Group"
                 class="w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-[#0284C7] focus:outline-none font-medium"
               />
             </div>
@@ -376,7 +376,7 @@
                     <option value={s.ID}>{s.Name}</option>
                   {/each}
                   {#if sites.length === 0}
-                    <option value="">Agilico Systems</option>
+                    <option value="">Main Office</option>
                   {/if}
                 </select>
               </div>
@@ -585,7 +585,7 @@
           <input
             type="text"
             bind:value={memberForm.Member}
-            placeholder="e.g. Nicola Simpson"
+            placeholder="e.g. Agent Name"
             class="w-full px-3 py-2 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-[#0284C7] focus:outline-none"
           />
         </div>
