@@ -88,6 +88,7 @@
         </div>
         <button
           type="button"
+          aria-label="Close modal"
           on:click={() => modalOpen = false}
           class="text-white/80 hover:text-white p-1 rounded hover:bg-white/10"
         >
