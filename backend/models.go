@@ -323,3 +323,81 @@ type RecordingRule struct {
 	RecordMode  string `gorm:"size:50;default:'ALWAYS'" json:"RecordMode"` // "ALWAYS", "ON_DEMAND"
 	StorageDays int    `gorm:"default:90" json:"StorageDays"`
 }
+
+// ButtonProfile defines programmable DSS/BLF line keys for desk phones
+type ButtonProfile struct {
+	Base
+	TenantRef
+	Name        string `gorm:"size:100;not null" json:"Name"`
+	DeviceModel string `gorm:"size:100;default:'Generic SIP Handset'" json:"DeviceModel"`
+	Description string `gorm:"size:255" json:"Description"`
+	Keys        string `gorm:"type:text" json:"Keys"` // JSON string of [{key: 1, type: "BLF", value: "1001", label: "Front Desk"}]
+}
+
+// Contact represents an entry in the centralized company phonebook/directory
+type Contact struct {
+	Base
+	TenantRef
+	FirstName    string `gorm:"size:100;not null" json:"FirstName"`
+	LastName     string `gorm:"size:100" json:"LastName"`
+	Company      string `gorm:"size:150" json:"Company"`
+	PhoneNumber  string `gorm:"size:50;not null" json:"PhoneNumber"`
+	MobileNumber string `gorm:"size:50" json:"MobileNumber"`
+	Email        string `gorm:"size:150" json:"Email"`
+	SpeedDial    string `gorm:"size:10" json:"SpeedDial"`
+	Group        string `gorm:"size:50;default:'General'" json:"Group"`
+}
+
+// Site represents a company branch office / physical location
+type Site struct {
+	Base
+	TenantRef
+	Name             string `gorm:"size:100;not null" json:"Name"`
+	SiteCode         string `gorm:"size:10;not null" json:"SiteCode"` // e.g. 71, 72
+	Timezone         string `gorm:"size:50;default:'UTC'" json:"Timezone"`
+	CallerIDNumber   string `gorm:"size:50" json:"CallerIDNumber"`
+	EmergencyAddress string `gorm:"size:255" json:"EmergencyAddress"`
+	IsDefault        bool   `gorm:"default:false" json:"IsDefault"`
+}
+
+// TelephoneNumber represents a phone number / DID assigned to the tenant
+type TelephoneNumber struct {
+	Base
+	TenantRef
+	Number            string     `gorm:"size:50;not null;uniqueIndex:idx_tenant_telnum" json:"Number"`
+	Description       string     `gorm:"size:100" json:"Description"`
+	DestinationType   string     `gorm:"size:50;default:'extension'" json:"DestinationType"` // extension, ivr, group, queue, voicemail
+	DestinationTarget string     `gorm:"size:100" json:"DestinationTarget"`
+	OutboundCLI       bool       `gorm:"default:true" json:"OutboundCLI"`
+	SiteID            *uuid.UUID `gorm:"type:uuid" json:"SiteID"`
+	Provider          string     `gorm:"size:100;default:'Default Carrier'" json:"Provider"`
+}
+
+// CallDivert manages call forwarding policies per extension
+type CallDivert struct {
+	Base
+	TenantRef
+	ExtensionNumber string `gorm:"size:50;not null;uniqueIndex:idx_tenant_divert_ext" json:"ExtensionNumber"`
+	AlwaysEnabled   bool   `gorm:"default:false" json:"AlwaysEnabled"`
+	AlwaysTarget    string `gorm:"size:50" json:"AlwaysTarget"`
+	BusyEnabled     bool   `gorm:"default:false" json:"BusyEnabled"`
+	BusyTarget      string `gorm:"size:50" json:"BusyTarget"`
+	NoAnswerEnabled bool   `gorm:"default:false" json:"NoAnswerEnabled"`
+	NoAnswerTarget  string `gorm:"size:50" json:"NoAnswerTarget"`
+	NoAnswerTimeout int    `gorm:"default:20" json:"NoAnswerTimeout"`
+	OfflineEnabled  bool   `gorm:"default:false" json:"OfflineEnabled"`
+	OfflineTarget   string `gorm:"size:50" json:"OfflineTarget"`
+}
+
+// Device manages hardware phones, MAC addresses, and provisioning status
+type Device struct {
+	Base
+	TenantRef
+	MACAddress      string     `gorm:"size:50;not null;uniqueIndex:idx_tenant_dev_mac" json:"MACAddress"`
+	BrandModel      string     `gorm:"size:100;not null" json:"BrandModel"`
+	ExtensionNumber string     `gorm:"size:50;not null" json:"ExtensionNumber"`
+	IPAddress       string     `gorm:"size:50" json:"IPAddress"`
+	FirmwareVersion string     `gorm:"size:50" json:"FirmwareVersion"`
+	Status          string     `gorm:"size:50;default:'online'" json:"Status"` // online, offline, provisioning
+	ProfileID       *uuid.UUID `gorm:"type:uuid" json:"ProfileID"`
+}

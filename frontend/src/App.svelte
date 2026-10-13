@@ -34,6 +34,13 @@
   import AudioPrompts from './views/AudioPrompts.svelte';
   import FeatureCodes from './views/FeatureCodes.svelte';
   import Diagnostics from './views/Diagnostics.svelte';
+
+  import ButtonProfiles from './views/ButtonProfiles.svelte';
+  import Contacts from './views/Contacts.svelte';
+  import TelephoneNumbers from './views/TelephoneNumbers.svelte';
+  import Sites from './views/Sites.svelte';
+  import Diverts from './views/Diverts.svelte';
+  import Devices from './views/Devices.svelte';
   
   import Login from './views/Login.svelte';
   import Softphone from './components/Softphone.svelte';
@@ -75,6 +82,12 @@
     { name: 'API Key Management', path: '/api-credentials', category: 'Developers' },
     { name: 'Webhooks Dispatcher', path: '/webhooks', category: 'Developers' },
     { name: 'Rate Throttling Policies', path: '/throttling', category: 'Security' },
+    { name: 'Button Profiles (BLF / DSS Keys)', path: '/button-profiles', category: 'Telephony' },
+    { name: 'Contacts & Directory', path: '/contacts', category: 'Telephony' },
+    { name: 'Telephone Numbers (DIDs)', path: '/telephone-numbers', category: 'Carrier' },
+    { name: 'Sites & Branch Offices', path: '/sites', category: 'Tenancy' },
+    { name: 'Call Diverts & Forwarding', path: '/diverts', category: 'Routing' },
+    { name: 'Devices & Hardware Handsets', path: '/devices', category: 'Hardware' },
     { name: 'Multi-Tenant Domains', path: '/domains', category: 'Tenancy' },
     { name: 'Git Version History', path: '/versioning', category: 'System' }
   ];
@@ -177,7 +190,20 @@
     '/feature-codes': FeatureCodes,
     '/codes': FeatureCodes,
     '/diagnostics': Diagnostics,
-    '/jitter': Diagnostics
+    '/jitter': Diagnostics,
+    '/button-profiles': ButtonProfiles,
+    '/buttons': ButtonProfiles,
+    '/contacts': Contacts,
+    '/directory': Contacts,
+    '/telephone-numbers': TelephoneNumbers,
+    '/numbers': TelephoneNumbers,
+    '/dids': TelephoneNumbers,
+    '/sites': Sites,
+    '/locations': Sites,
+    '/diverts': Diverts,
+    '/forwarding': Diverts,
+    '/devices': Devices,
+    '/handsets': Devices
   };
 
   $: normalizedPath = (currentPath.endsWith('/') && currentPath.length > 1) ? currentPath.slice(0, -1) : currentPath;

@@ -1590,6 +1590,7 @@ func SetupRouter() *gin.Engine {
 
 			// PBX Call Control & Voice Feature Suite
 			RegisterCallControlRoutes(v1)
+			RegisterPortalRoutes(v1)
 		}
 	}
 

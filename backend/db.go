@@ -90,6 +90,12 @@ func InitDB() {
 		&AudioPrompt{},
 		&FeatureCode{},
 		&RecordingRule{},
+		&ButtonProfile{},
+		&Contact{},
+		&Site{},
+		&TelephoneNumber{},
+		&CallDivert{},
+		&Device{},
 	)
 	if err != nil {
 		log.Fatalf("Failed to migrate database schema: %v", err)
@@ -179,5 +185,75 @@ func SeedDefaults() {
 			Description: "Default FreeSWITCH high-fidelity stereo acoustic hold music",
 		}
 		_ = DB.Create(&defaultMoH)
+
+		// Seed default Headquarters Site
+		defaultSite := Site{
+			TenantRef:        TenantRef{TenantID: defaultTenant.ID},
+			Name:             "Main Corporate HQ",
+			SiteCode:         "10",
+			Timezone:         "America/New_York",
+			CallerIDNumber:   "+18005550100",
+			EmergencyAddress: "100 Telecom Way, Suite 400, New York, NY 10001",
+			IsDefault:        true,
+		}
+		_ = DB.Create(&defaultSite)
+
+		// Seed sample company directory contact
+		defaultContact := Contact{
+			TenantRef:    TenantRef{TenantID: defaultTenant.ID},
+			FirstName:    "Telecom",
+			LastName:     "Support",
+			Company:      "Internal Operations",
+			PhoneNumber:  "1001",
+			MobileNumber: "+15550199123",
+			Email:        "support@pbx.local",
+			SpeedDial:    "01",
+			Group:        "Technical",
+		}
+		_ = DB.Create(&defaultContact)
+
+		// Seed default button profile template
+		defaultBP := ButtonProfile{
+			TenantRef:   TenantRef{TenantID: defaultTenant.ID},
+			Name:        "Executive IP Phone (10 Keys)",
+			DeviceModel: "Standard SIP Phone",
+			Description: "Default DSS/BLF layout with front desk line keys and park shortcuts",
+			Keys:        `[{"key":1,"type":"Line","value":"1","label":"Line 1"},{"key":2,"type":"BLF","value":"1001","label":"Operator"},{"key":3,"type":"SpeedDial","value":"*97","label":"Voicemail"},{"key":4,"type":"SpeedDial","value":"*8","label":"Pickup"}]`,
+		}
+		_ = DB.Create(&defaultBP)
+
+		// Seed primary Telephone Number (DID)
+		defaultTel := TelephoneNumber{
+			TenantRef:         TenantRef{TenantID: defaultTenant.ID},
+			Number:            "+18005550100",
+			Description:       "Primary Inbound Toll-Free Number",
+			DestinationType:   "extension",
+			DestinationTarget: "1001",
+			OutboundCLI:       true,
+			Provider:          "Primary Carrier Trunk",
+		}
+		_ = DB.Create(&defaultTel)
+
+		// Seed sample Device
+		defaultDev := Device{
+			TenantRef:       TenantRef{TenantID: defaultTenant.ID},
+			MACAddress:      "00:15:65:8A:2B:11",
+			BrandModel:      "Standard HD SIP Phone",
+			ExtensionNumber: "1001",
+			IPAddress:       "192.168.1.105",
+			FirmwareVersion: "v2.8.4",
+			Status:          "online",
+		}
+		_ = DB.Create(&defaultDev)
+
+		// Seed default call divert for extension 1001
+		defaultDivert := CallDivert{
+			TenantRef:       TenantRef{TenantID: defaultTenant.ID},
+			ExtensionNumber: "1001",
+			NoAnswerEnabled: true,
+			NoAnswerTarget:  "1001",
+			NoAnswerTimeout: 20,
+		}
+		_ = DB.Create(&defaultDivert)
 	}
 }
