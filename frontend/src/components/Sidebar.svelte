@@ -20,23 +20,23 @@
   let navItems: NavItem[] = [
     { name: 'Dashboard', path: '/', icon: 'dashboard' },
     { 
-      name: 'Extensions & Trunks', 
+      name: 'Phones & Lines', 
       icon: 'ext-trunk', 
       expanded: true,
       children: [
-        { name: 'Extensions', path: '/extensions' },
-        { name: 'SIP Trunks', path: '/trunks' },
-        { name: 'Auto Provisioning', path: '/provisioning' }
+        { name: 'Extensions (Handsets)', path: '/extensions' },
+        { name: 'External Phone Lines (Trunks)', path: '/trunks' },
+        { name: 'Phone Auto-Provisioning', path: '/provisioning' }
       ]
     },
     { 
-      name: 'Call Control', 
+      name: 'Call Routing', 
       icon: 'call-control', 
       expanded: true,
       children: [
-        { name: 'Inbound Routes', path: '/inbound-routes' },
-        { name: 'Outbound Routes', path: '/outbound-routes' },
-        { name: 'Call Queues & Wallboard', path: '/call-queues' }
+        { name: 'Incoming Call Rules', path: '/inbound-routes' },
+        { name: 'Outgoing Call Rules', path: '/outbound-routes' },
+        { name: 'Live Call Center Wallboard', path: '/call-queues' }
       ]
     },
     { 
@@ -44,29 +44,29 @@
       icon: 'call-features', 
       expanded: false,
       children: [
-        { name: 'IVR / Auto Attendant', path: '/digital-receptionists' },
+        { name: 'Auto Attendant (IVR)', path: '/digital-receptionists' },
         { name: 'Ring Groups', path: '/ring-groups' },
         { name: 'Voicemail Server', path: '/voicemail' },
-        { name: 'Video Rooms', path: '/video-rooms' }
+        { name: 'Video Meeting Rooms', path: '/video-rooms' }
       ]
     },
     { 
-      name: 'Reports & Records', 
+      name: 'Call Logs & Reports', 
       icon: 'reports', 
       expanded: false,
       children: [
-        { name: 'Call Detail Records', path: '/call-logs' },
+        { name: 'Call History (CDRs)', path: '/call-logs' },
         { name: 'Reports & Analytics', path: '/reports-analytics' }
       ]
     },
     { 
-      name: 'Communications', 
+      name: 'Messaging & Video', 
       icon: 'integration', 
       expanded: false,
       children: [
         { name: 'Team Chat', path: '/chat' },
         { name: 'SMS Messaging', path: '/sms' },
-        { name: 'IP Camera Feeds', path: '/cameras' }
+        { name: 'IP Security Cameras', path: '/cameras' }
       ]
     },
     { 
@@ -74,16 +74,16 @@
       icon: 'pbx-settings', 
       expanded: false,
       children: [
-        { name: 'Tenant Domains', path: '/domains' },
-        { name: 'Admins & Roles', path: '/admins' }
+        { name: 'Company Domains', path: '/domains' },
+        { name: 'Admins & Staff Accounts', path: '/admins' }
       ]
     },
     { 
-      name: 'Security & APIs', 
+      name: 'Security & Developers', 
       icon: 'security', 
       expanded: false,
       children: [
-        { name: 'Firewall & IP ACLs', path: '/firewall' },
+        { name: 'Firewall & IP Whitelist', path: '/firewall' },
         { name: 'Anti-Fraud Shield', path: '/fraud' },
         { name: 'Rate Throttling', path: '/throttling' },
         { name: 'API Credentials', path: '/api-credentials' },
@@ -91,7 +91,7 @@
       ]
     },
     { 
-      name: 'System History', 
+      name: 'System Audit History', 
       icon: 'system', 
       path: '/versioning'
     }

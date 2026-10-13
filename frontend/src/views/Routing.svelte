@@ -18,6 +18,8 @@
   }
 
   let routes: InboundRouteItem[] = [];
+  let availableExts: any[] = [];
+  let availableIvrs: any[] = [];
   let loading = true;
   let loadError = '';
   let saving = false;
@@ -39,8 +41,14 @@
     loading = true;
     loadError = '';
     try {
-      const data = await api.get<{ routes: InboundRouteItem[] }>('/inbound-routes');
-      routes = data.routes || [];
+      const [routeData, extData, ivrData] = await Promise.all([
+        api.get<{ routes: InboundRouteItem[] }>('/inbound-routes'),
+        api.get<{ extensions: any[] }>('/extensions').catch(() => ({ extensions: [] })),
+        api.get<{ ivrs: any[] }>('/ivrs').catch(() => ({ ivrs: [] }))
+      ]);
+      routes = routeData.routes || [];
+      availableExts = extData.extensions || [];
+      availableIvrs = ivrData.ivrs || [];
     } catch (e: any) {
       loadError = e.message;
     } finally {
@@ -50,7 +58,8 @@
 
   function openCreate() {
     editingId = null;
-    form = { DIDNumber: '', DestinationType: 'EXTENSION', DestinationTarget: '' };
+    const defaultTarget = availableExts.length > 0 ? availableExts[0].ExtensionNumber : '';
+    form = { DIDNumber: '', DestinationType: 'EXTENSION', DestinationTarget: defaultTarget };
     modalOpen = true;
   }
 
@@ -155,31 +164,49 @@
   {/if}
 </Card>
 
-<Modal bind:isOpen={modalOpen} title={editingId ? 'Edit Inbound Route' : 'Add Inbound Route'}>
+<Modal bind:isOpen={modalOpen} title={editingId ? 'Edit Incoming Call Rule' : 'New Incoming Call Rule'}>
   <form on:submit={save} class="space-y-4">
     <div>
-      <label for="route-did" class="label">DID Number / Pattern</label>
-      <input id="route-did" class="input mono" bind:value={form.DIDNumber} placeholder="e.g. +14155550199 or _X." required />
+      <label for="route-did" class="label">Incoming Phone Number (DID)</label>
+      <input id="route-did" class="input mono" bind:value={form.DIDNumber} placeholder="e.g. +14155550199 or 4155550199" required />
+      <span class="help">The telephone number assigned to you by your SIP Trunk carrier.</span>
     </div>
 
     <div>
-      <label for="route-type" class="label">Destination Type</label>
+      <label for="route-type" class="label">Forward Call To</label>
       <select id="route-type" class="select" bind:value={form.DestinationType}>
-        <option value="EXTENSION">Extension</option>
-        <option value="IVR">Digital Receptionist (IVR)</option>
-        <option value="QUEUE">Call Queue</option>
-        <option value="VOICEMAIL">Voicemail</option>
+        <option value="EXTENSION">Extension (Specific User Handset)</option>
+        <option value="IVR">Auto Attendant (Press 1 for Sales IVR)</option>
+        <option value="QUEUE">Call Queue / Wallboard</option>
+        <option value="VOICEMAIL">Voicemail Server</option>
       </select>
     </div>
 
     <div>
-      <label for="route-target" class="label">Target Extension / Number</label>
-      <input id="route-target" class="input mono" bind:value={form.DestinationTarget} placeholder="e.g. 1001" required />
+      <label for="route-target" class="label">Destination Target</label>
+      {#if form.DestinationType === 'EXTENSION' && availableExts.length > 0}
+        <select id="route-target" class="select" bind:value={form.DestinationTarget} required>
+          <option value="" disabled>Choose an extension...</option>
+          {#each availableExts as ext}
+            <option value={ext.ExtensionNumber}>Extension {ext.ExtensionNumber}</option>
+          {/each}
+        </select>
+      {:else if form.DestinationType === 'IVR' && availableIvrs.length > 0}
+        <select id="route-target" class="select" bind:value={form.DestinationTarget} required>
+          <option value="" disabled>Choose an Auto Attendant...</option>
+          {#each availableIvrs as ivr}
+            <option value={ivr.Name}>{ivr.Name} (Ext {ivr.Extension})</option>
+          {/each}
+        </select>
+      {:else}
+        <input id="route-target" class="input mono" bind:value={form.DestinationTarget} placeholder="e.g. 1001" required />
+      {/if}
+      <span class="help">Where the phone rings when an outside caller dials this number.</span>
     </div>
 
     <div class="flex justify-end gap-2 pt-2">
       <Button variant="secondary" on:click={() => modalOpen = false}>Cancel</Button>
-      <Button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button>
+      <Button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save Rule'}</Button>
     </div>
   </form>
 </Modal>

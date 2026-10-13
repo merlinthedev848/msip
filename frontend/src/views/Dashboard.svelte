@@ -1,399 +1,355 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
-  import { api } from '../lib/api';
+  import { onMount } from 'svelte';
+  import { api, formatDateTime } from '../lib/api';
+  import Card from '../components/ui/Card.svelte';
+  import Button from '../components/ui/Button.svelte';
+  import Badge from '../components/ui/Badge.svelte';
 
   // Live PBX Metrics from backend API
-  let activeCalls = 0;
-  let registeredExtensions = 0;
   let totalExtensions = 0;
   let activeTrunks = 0;
   let activeRoutes = 0;
   let totalCDRs = 0;
-  let cpuLoad = 2;
-  let memoryUsage = 24;
-  let diskSpace = 6;
-
+  let memoryUsage = 18;
+  let cpuLoad = 4;
   let isApiOnline = true;
-  let statsInterval: any;
-  let isConsoleExpanded = false;
-
-  let selectedResourceTab: 'activeCalls' | 'cpu' | 'ram' | 'storage' = 'cpu';
-
-  // Operator Console Logs & CLI
-  interface LogLine {
-    id: number;
-    time: string;
-    level: 'INFO' | 'EVNT' | 'WARN' | 'ERRR' | 'SYS';
-    text: string;
-  }
-
-  let consoleLogs: LogLine[] = [
-    { id: 1, time: new Date().toTimeString().split(' ')[0], level: 'INFO', text: 'FreeSWITCH Core Engine online on port 8021' },
-    { id: 2, time: new Date().toTimeString().split(' ')[0], level: 'INFO', text: 'mod_sofia: SIP profile internal bound to 0.0.0.0:5060' },
-    { id: 3, time: new Date().toTimeString().split(' ')[0], level: 'EVNT', text: 'mod_xml_curl: Dynamic dialplan bound to /fs API endpoint' }
-  ];
-
-  let selectedFilter: 'ALL' | 'INFO' | 'EVNT' | 'WARN' | 'ERRR' = 'ALL';
-  let cliInput = '';
-  let copyFeedback = false;
-  let terminalBodyElement: HTMLDivElement;
-
-  $: filteredLogs = selectedFilter === 'ALL' 
-    ? consoleLogs 
-    : consoleLogs.filter(l => l.level === selectedFilter);
+  let recentCalls: any[] = [];
+  let loading = true;
 
   function navigateTo(path: string) {
     window.history.pushState({}, '', path);
     window.dispatchEvent(new CustomEvent('app-navigate', { detail: { path } }));
   }
 
-  async function fetchLiveStats() {
+  async function loadDashboard() {
+    loading = true;
     try {
-      const data = await api.get('/dashboard/stats');
-      if (data) {
-        totalExtensions = data.extensions ?? 0;
-        registeredExtensions = data.extensions ?? 0;
-        activeTrunks = data.trunks ?? 0;
-        activeRoutes = data.routes ?? 0;
-        totalCDRs = data.cdrs ?? 0;
-        if (data.memory_mb) {
-          memoryUsage = Math.min(95, Math.max(5, Math.round((data.memory_mb / 512) * 100)));
+      const [statsData, cdrData] = await Promise.all([
+        api.get('/dashboard/stats').catch(() => null),
+        api.get('/cdr').catch(() => ({ cdr: [] }))
+      ]);
+
+      if (statsData) {
+        totalExtensions = statsData.extensions ?? 0;
+        activeTrunks = statsData.trunks ?? 0;
+        activeRoutes = statsData.routes ?? 0;
+        totalCDRs = statsData.cdrs ?? 0;
+        if (statsData.memory_mb) {
+          memoryUsage = Math.min(95, Math.max(5, Math.round((statsData.memory_mb / 512) * 100)));
         }
-        if (data.cpu_cores) {
-          cpuLoad = Math.min(100, Math.max(1, (data.goroutines || 5) % 15));
+        if (statsData.cpu_cores) {
+          cpuLoad = Math.min(100, Math.max(1, (statsData.goroutines || 5) % 15));
         }
         isApiOnline = true;
       }
+
+      recentCalls = (cdrData?.cdr || []).slice(0, 5);
     } catch (e) {
       isApiOnline = false;
+    } finally {
+      loading = false;
     }
   }
 
-  function handleCommandSubmit(e: Event) {
-    e.preventDefault();
-    const cmd = cliInput.trim();
-    if (!cmd) return;
-
-    const now = new Date().toTimeString().split(' ')[0];
-    consoleLogs = [...consoleLogs, { id: Date.now(), time: now, level: 'SYS', text: `> ${cmd}` }];
-
-    const lower = cmd.toLowerCase();
-    if (lower === 'clear' || lower === 'cls') {
-      consoleLogs = [];
-    } else if (lower === 'status') {
-      consoleLogs = [...consoleLogs, {
-        id: Date.now() + 1,
-        time: now,
-        level: 'INFO',
-        text: `FreeSWITCH Core UP | Active Extensions: ${registeredExtensions} | Active Trunks: ${activeTrunks} | Total CDRs: ${totalCDRs}`
-      }];
-    } else if (lower === 'show channels') {
-      consoleLogs = [...consoleLogs, {
-        id: Date.now() + 1,
-        time: now,
-        level: 'INFO',
-        text: `${activeCalls} active channels currently bridged.`
-      }];
-    } else if (lower === 'sofia status') {
-      consoleLogs = [...consoleLogs, {
-        id: Date.now() + 1,
-        time: now,
-        level: 'INFO',
-        text: `Profile internal: RUNNING (0.0.0.0:5060) | Gateways: ${activeTrunks} active`
-      }];
-    } else if (lower === 'reloadxml') {
-      consoleLogs = [...consoleLogs, {
-        id: Date.now() + 1,
-        time: now,
-        level: 'EVNT',
-        text: `+OK Dialplan and configuration reloaded from PostgreSQL backend.`
-      }];
-    } else {
-      consoleLogs = [...consoleLogs, {
-        id: Date.now() + 1,
-        time: now,
-        level: 'INFO',
-        text: `Executed "${cmd}". Status: OK.`
-      }];
-    }
-
-    cliInput = '';
-    if (terminalBodyElement) {
-      setTimeout(() => { terminalBodyElement.scrollTop = terminalBodyElement.scrollHeight; }, 30);
-    }
-  }
-
-  function executeQuickCommand(cmd: string) {
-    cliInput = cmd;
-    handleCommandSubmit(new Event('submit'));
-  }
-
-  function copyAllLogs() {
-    const text = consoleLogs.map(l => `[${l.time}] [${l.level}] ${l.text}`).join('\n');
-    navigator.clipboard.writeText(text);
-    copyFeedback = true;
-    setTimeout(() => copyFeedback = false, 2000);
-  }
-
-  onMount(() => {
-    fetchLiveStats();
-    statsInterval = setInterval(fetchLiveStats, 10000);
-  });
-
-  onDestroy(() => {
-    if (statsInterval) clearInterval(statsInterval);
-  });
+  onMount(loadDashboard);
 </script>
 
-<div class="space-y-5 animate-in fade-in duration-300">
-  
-  <!-- Dashboard Top Bar: Header & Information Button -->
-  <div class="flex items-center justify-between">
-    <h1 class="text-xl font-bold text-slate-800 tracking-tight">System Dashboard</h1>
-    <div class="flex items-center space-x-2">
-      <span class="inline-flex items-center px-2 py-1 rounded text-xs font-semibold {isApiOnline ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}">
-        <span class="w-2 h-2 rounded-full {isApiOnline ? 'bg-emerald-500' : 'bg-rose-500'} mr-1.5 animate-pulse"></span>
-        {isApiOnline ? 'PBX Core Online' : 'Connecting to API...'}
+<div class="space-y-6">
+
+  <!-- TOP WELCOME & SYSTEM HEALTH BANNER -->
+  <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div class="flex items-center space-x-3.5">
+      <div class="w-10 h-10 rounded-lg bg-sky-50 text-[#0284C7] flex items-center justify-center border border-sky-100 flex-shrink-0">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-base font-bold text-slate-800">Telephone System Overview</h1>
+        <p class="text-xs text-slate-500">Manage your extensions, phone lines, and incoming call routing in one simple place.</p>
+      </div>
+    </div>
+
+    <!-- Live Services Badges -->
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="inline-flex items-center space-x-1.5 px-3 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-full text-xs font-semibold">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span>SIP Engine: Ready</span>
       </span>
+      <span class="inline-flex items-center space-x-1.5 px-3 py-1 bg-sky-50 text-sky-800 border border-sky-200 rounded-full text-xs font-semibold">
+        <span class="w-2 h-2 rounded-full bg-[#0284C7]"></span>
+        <span>Port 5060 (SIP): Online</span>
+      </span>
+      <Button size="sm" variant="secondary" on:click={loadDashboard}>Refresh</Button>
     </div>
   </div>
 
-  <!-- Main Two-Column Layout (Left 8.5 cols / Right 3.5 cols) -->
-  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
-    
-    <!-- LEFT COLUMN: Resource Utilization, Metrics, Trends -->
-    <div class="lg:col-span-8 xl:col-span-9 space-y-5">
-      
-      <!-- CARD: Interactive Resource Utilization Wave Chart -->
-      <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5">
-        <!-- 4 Metric Tabs Header -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pb-4 border-b border-slate-100">
-          <!-- Active Calls Tab -->
-          <button 
-            type="button"
-            on:click={() => selectedResourceTab = 'activeCalls'}
-            class="text-left focus:outline-none transition-colors relative pb-1 {selectedResourceTab === 'activeCalls' ? 'text-[#0284C7]' : 'text-slate-600'}"
-          >
-            <div class="text-xs font-medium text-slate-500">Active Calls</div>
-            <div class="text-xl font-extrabold tracking-tight mt-0.5">{activeCalls}</div>
-            {#if selectedResourceTab === 'activeCalls'}
-              <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0284C7] -mb-4"></div>
-            {/if}
-          </button>
-
-          <!-- CPU Utilization Tab (Default Active) -->
-          <button 
-            type="button"
-            on:click={() => selectedResourceTab = 'cpu'}
-            class="text-left focus:outline-none transition-colors relative pb-1 {selectedResourceTab === 'cpu' ? 'text-[#0284C7]' : 'text-slate-600'}"
-          >
-            <div class="text-xs font-semibold {selectedResourceTab === 'cpu' ? 'text-[#0284C7]' : 'text-slate-500'}">CPU Utilization</div>
-            <div class="text-xl font-extrabold tracking-tight mt-0.5 {selectedResourceTab === 'cpu' ? 'text-[#0284C7]' : 'text-slate-800'}">{cpuLoad}%</div>
-            {#if selectedResourceTab === 'cpu'}
-              <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0284C7] -mb-4"></div>
-            {/if}
-          </button>
-
-          <!-- Memory Usage Tab -->
-          <button 
-            type="button"
-            on:click={() => selectedResourceTab = 'ram'}
-            class="text-left focus:outline-none transition-colors relative pb-1 {selectedResourceTab === 'ram' ? 'text-[#0284C7]' : 'text-slate-600'}"
-          >
-            <div class="text-xs font-medium text-slate-500">Memory Usage</div>
-            <div class="text-xl font-extrabold tracking-tight mt-0.5 text-slate-800">{memoryUsage}%</div>
-            {#if selectedResourceTab === 'ram'}
-              <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0284C7] -mb-4"></div>
-            {/if}
-          </button>
-
-          <!-- Local Storage Usage Tab -->
-          <button 
-            type="button"
-            on:click={() => selectedResourceTab = 'storage'}
-            class="text-left focus:outline-none transition-colors relative pb-1 {selectedResourceTab === 'storage' ? 'text-[#0284C7]' : 'text-slate-600'}"
-          >
-            <div class="text-xs font-medium text-slate-500">Local Storage Usage</div>
-            <div class="text-xl font-extrabold tracking-tight mt-0.5 text-slate-800">{diskSpace}%</div>
-            {#if selectedResourceTab === 'storage'}
-              <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-[#0284C7] -mb-4"></div>
-            {/if}
-          </button>
-        </div>
-
-        <!-- Telemetry Graph -->
-        <div class="w-full h-48 pt-4">
-          <svg class="w-full h-full" viewBox="0 0 650 140" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="waveGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#0284C7" stop-opacity="0.2" />
-                <stop offset="100%" stop-color="#0284C7" stop-opacity="0.01" />
-              </linearGradient>
-            </defs>
-            <g stroke="#F1F5F9" stroke-width="1">
-              <line x1="30" y1="20" x2="640" y2="20" />
-              <line x1="30" y1="60" x2="640" y2="60" />
-              <line x1="30" y1="100" x2="640" y2="100" />
-            </g>
-            <path d="M 30 110 C 120 95, 200 40, 300 70 C 400 100, 500 30, 640 50 L 640 120 L 30 120 Z" fill="url(#waveGrad)" />
-            <path d="M 30 110 C 120 95, 200 40, 300 70 C 400 100, 500 30, 640 50" fill="none" stroke="#0284C7" stroke-width="2.5" stroke-linecap="round" />
-          </svg>
-        </div>
-
-        <div class="flex items-center space-x-2 pt-2 text-xs text-slate-500 font-medium border-t border-slate-100">
-          <span class="w-3 h-0.5 bg-[#0284C7]"></span>
-          <span>Core Telemetry Trend</span>
-        </div>
-      </div>
-
-      <!-- ROW 2: 3 Metric Cards (Extensions, Trunks, Total CDRs) -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <!-- Card 1: Configured Extensions -->
-        <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 flex items-center justify-between">
-          <div>
-            <div class="text-xs font-medium text-slate-500">Configured Extensions</div>
-            <div class="text-2xl font-extrabold text-slate-900 mt-1">{totalExtensions}</div>
-          </div>
-          <button on:click={() => navigateTo('/extensions')} class="text-xs font-semibold text-sky-600 hover:underline">Manage &rarr;</button>
-        </div>
-
-        <!-- Card 2: Active SIP Trunks -->
-        <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 flex items-center justify-between">
-          <div>
-            <div class="text-xs font-medium text-slate-500">Active SIP Trunks</div>
-            <div class="text-2xl font-extrabold text-slate-900 mt-1">{activeTrunks}</div>
-          </div>
-          <button on:click={() => navigateTo('/trunks')} class="text-xs font-semibold text-sky-600 hover:underline">Manage &rarr;</button>
-        </div>
-
-        <!-- Card 3: Inbound & Outbound Routes -->
-        <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 flex items-center justify-between">
-          <div>
-            <div class="text-xs font-medium text-slate-500">Dial Routes</div>
-            <div class="text-2xl font-extrabold text-slate-900 mt-1">{activeRoutes}</div>
-          </div>
-          <button on:click={() => navigateTo('/inbound-routes')} class="text-xs font-semibold text-sky-600 hover:underline">Manage &rarr;</button>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- RIGHT COLUMN: System Status & Quick Links -->
-    <div class="lg:col-span-4 xl:col-span-3 space-y-5">
-      
-      <!-- CARD: Telephony Service -->
-      <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5">
-        <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3">Service Profile</h2>
-        <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 flex items-center justify-between text-xs font-semibold text-slate-700">
-          <span>MSIP Enterprise PBX</span>
-          <span class="text-emerald-600 font-mono text-[11px] font-bold">Active</span>
-        </div>
-      </div>
-
-      <!-- CARD: Core Interfaces -->
-      <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5">
-        <h2 class="text-xs font-bold text-slate-800 uppercase tracking-wider mb-3">Interface Health</h2>
-        <div class="divide-y divide-slate-100 text-xs">
-          <div class="py-2 flex items-center justify-between text-slate-700">
-            <span class="font-medium">SIP Signaling (5060)</span>
-            <span class="text-emerald-600 font-bold">Listening</span>
-          </div>
-          <div class="py-2 flex items-center justify-between text-slate-700">
-            <span class="font-medium">Media Gateway (RTP)</span>
-            <span class="text-emerald-600 font-bold">Active</span>
-          </div>
-          <div class="py-2 flex items-center justify-between text-slate-700">
-            <span class="font-medium">FreeSWITCH ESL</span>
-            <span class="text-emerald-600 font-bold">Connected</span>
-          </div>
-          <div class="py-2 flex items-center justify-between text-slate-700">
-            <span class="font-medium">PostgreSQL Database</span>
-            <span class="text-emerald-600 font-bold">Connected</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- CARD: Quick Shortcuts -->
-      <div class="bg-white rounded-xl border border-slate-200 shadow-xs p-5 divide-y divide-slate-100 text-xs">
-        <div class="pb-2.5 flex items-center justify-between">
-          <span class="font-medium text-slate-600">Call Logs (CDRs)</span>
-          <button on:click={() => navigateTo('/call-logs')} class="font-bold text-[#0284C7] hover:underline">{totalCDRs}</button>
-        </div>
-        <div class="py-2.5 flex items-center justify-between">
-          <span class="font-medium text-slate-600">Firewall Rules</span>
-          <button on:click={() => navigateTo('/firewall')} class="font-bold text-[#0284C7] hover:underline">Manage</button>
-        </div>
-        <div class="pt-2.5 flex items-center justify-between">
-          <span class="font-medium text-slate-600">Live Call Center Wallboard</span>
-          <button on:click={() => navigateTo('/call-queues')} class="font-bold text-[#0284C7] hover:underline">Open</button>
-        </div>
-      </div>
-
-    </div>
-
-  </div>
-
-  <!-- DOCKED OPERATOR TOOL: FreeSWITCH Core CLI & Telemetry Panel -->
-  <div class="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
-    <div class="px-5 py-3.5 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
-      <div class="flex items-center space-x-3">
-        <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
-        <span class="text-xs font-bold text-slate-800 tracking-tight">FreeSWITCH Core Engine Console</span>
-        <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-mono text-[10px] font-bold border border-emerald-300/60">
-          ESL 127.0.0.1:8021 CONNECTED
-        </span>
-      </div>
-
+  <!-- GETTING STARTED QUICK-SETUP WIZARD -->
+  <div class="bg-gradient-to-r from-sky-50 to-slate-50 rounded-xl border border-sky-100 p-5 shadow-xs">
+    <div class="flex items-center justify-between mb-3">
       <div class="flex items-center space-x-2">
-        <button on:click={() => executeQuickCommand('status')} class="px-2.5 py-1 text-[11px] font-mono font-semibold bg-white border border-slate-200 rounded text-slate-700 hover:bg-slate-100 transition-colors shadow-2xs">status</button>
-        <button on:click={() => executeQuickCommand('show channels')} class="px-2.5 py-1 text-[11px] font-mono font-semibold bg-white border border-slate-200 rounded text-slate-700 hover:bg-slate-100 transition-colors shadow-2xs">show channels</button>
-        <button on:click={() => executeQuickCommand('sofia status')} class="px-2.5 py-1 text-[11px] font-mono font-semibold bg-white border border-slate-200 rounded text-slate-700 hover:bg-slate-100 transition-colors shadow-2xs">sofia status</button>
-        <button on:click={() => executeQuickCommand('reloadxml')} class="px-2.5 py-1 text-[11px] font-mono font-semibold bg-white border border-slate-200 rounded text-slate-700 hover:bg-slate-100 transition-colors shadow-2xs">reloadxml</button>
-        <button on:click={() => isConsoleExpanded = !isConsoleExpanded} class="px-3 py-1 text-xs font-semibold bg-[#0284C7] text-white hover:bg-sky-700 rounded transition-colors shadow-2xs ml-2 flex items-center space-x-1">
-          <span>{isConsoleExpanded ? 'Collapse CLI' : 'Expand CLI'}</span>
-          <svg class="w-3.5 h-3.5 transition-transform duration-200 {isConsoleExpanded ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+        <span class="px-2 py-0.5 rounded bg-[#0284C7] text-white text-[11px] font-bold uppercase tracking-wider">Quick Setup</span>
+        <h2 class="text-xs font-bold text-slate-800">Get your office phones running in 4 easy steps</h2>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <!-- Step 1 -->
+      <div class="bg-white rounded-lg border border-slate-200 p-3.5 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center space-x-2 mb-1.5">
+            <span class="w-5 h-5 rounded-full bg-sky-100 text-[#0284C7] text-xs font-bold flex items-center justify-center">1</span>
+            <span class="text-xs font-bold text-slate-800">Add Extensions</span>
+          </div>
+          <p class="text-[11px] text-slate-500 mb-3 leading-relaxed">Create extension numbers (e.g. 1001, 1002) for each team member or desk.</p>
+        </div>
+        <button on:click={() => navigateTo('/extensions')} class="w-full py-1.5 px-2 bg-slate-50 hover:bg-sky-50 border border-slate-200 hover:border-sky-300 rounded text-xs font-semibold text-[#0284C7] transition-colors text-center">
+          + Add Extensions
+        </button>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="bg-white rounded-lg border border-slate-200 p-3.5 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center space-x-2 mb-1.5">
+            <span class="w-5 h-5 rounded-full bg-sky-100 text-[#0284C7] text-xs font-bold flex items-center justify-center">2</span>
+            <span class="text-xs font-bold text-slate-800">Connect a Phone</span>
+          </div>
+          <p class="text-[11px] text-slate-500 mb-3 leading-relaxed">Register using the built-in browser softphone, Zoiper, or a physical desk phone.</p>
+        </div>
+        <button on:click={() => navigateTo('/extensions')} class="w-full py-1.5 px-2 bg-slate-50 hover:bg-sky-50 border border-slate-200 hover:border-sky-300 rounded text-xs font-semibold text-[#0284C7] transition-colors text-center">
+          View Credentials
+        </button>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="bg-white rounded-lg border border-slate-200 p-3.5 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center space-x-2 mb-1.5">
+            <span class="w-5 h-5 rounded-full bg-sky-100 text-[#0284C7] text-xs font-bold flex items-center justify-center">3</span>
+            <span class="text-xs font-bold text-slate-800">Connect Phone Lines</span>
+          </div>
+          <p class="text-[11px] text-slate-500 mb-3 leading-relaxed">Add your SIP Trunk carrier (Twilio, Telnyx, VoIP.ms) to make external calls.</p>
+        </div>
+        <button on:click={() => navigateTo('/trunks')} class="w-full py-1.5 px-2 bg-slate-50 hover:bg-sky-50 border border-slate-200 hover:border-sky-300 rounded text-xs font-semibold text-[#0284C7] transition-colors text-center">
+          + Add Phone Line
+        </button>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="bg-white rounded-lg border border-slate-200 p-3.5 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center space-x-2 mb-1.5">
+            <span class="w-5 h-5 rounded-full bg-sky-100 text-[#0284C7] text-xs font-bold flex items-center justify-center">4</span>
+            <span class="text-xs font-bold text-slate-800">Route Incoming Calls</span>
+          </div>
+          <p class="text-[11px] text-slate-500 mb-3 leading-relaxed">Choose what happens when callers ring: ring an extension, a group, or an IVR.</p>
+        </div>
+        <button on:click={() => navigateTo('/inbound-routes')} class="w-full py-1.5 px-2 bg-slate-50 hover:bg-sky-50 border border-slate-200 hover:border-sky-300 rounded text-xs font-semibold text-[#0284C7] transition-colors text-center">
+          + Set Incoming Rule
         </button>
       </div>
     </div>
+  </div>
 
-    {#if isConsoleExpanded}
-      <div class="bg-slate-50 border-t border-slate-200 p-4 text-slate-800 font-mono text-xs">
-        <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-200">
-          <div class="flex items-center space-x-1.5">
-            <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mr-1">Filter:</span>
-            {#each ['ALL', 'INFO', 'EVNT', 'WARN', 'ERRR'] as f}
-              <button on:click={() => selectedFilter = f as any} class="px-2 py-0.5 rounded text-[10px] font-bold transition-colors {selectedFilter === f ? 'bg-[#0284C7] text-white' : 'bg-white border border-slate-200 text-slate-600 hover:text-slate-900'}">{f}</button>
-            {/each}
-          </div>
-          <div class="flex items-center space-x-2">
-            <button on:click={copyAllLogs} class="px-2.5 py-1 rounded bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-[10px] font-semibold transition-colors">{copyFeedback ? 'Copied!' : 'Copy Logs'}</button>
-            <button on:click={() => consoleLogs = []} class="px-2.5 py-1 rounded bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-[10px] font-semibold transition-colors">Clear</button>
-          </div>
+  <!-- CORE TELEPHONY METRICS -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+    <!-- Extensions Metric -->
+    <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <div>
+          <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Extensions / Phones</span>
+          <div class="text-3xl font-extrabold text-slate-800 mt-1">{totalExtensions}</div>
         </div>
-
-        <div bind:this={terminalBodyElement} class="h-60 overflow-y-auto space-y-1.5 pr-2 select-text font-mono text-[12px] leading-relaxed bg-white border border-slate-200 rounded-lg p-3">
-          {#each filteredLogs as log (log.id)}
-            <div class="flex items-start space-x-2">
-              <span class="text-slate-400 flex-shrink-0 text-[11px]">[{log.time}]</span>
-              <span class="px-1.5 py-0.2 rounded text-[10px] font-bold flex-shrink-0 border {
-                log.level === 'INFO' ? 'bg-sky-50 text-sky-800 border-sky-200' :
-                log.level === 'EVNT' ? 'bg-cyan-50 text-cyan-800 border-cyan-200' :
-                log.level === 'WARN' ? 'bg-amber-50 text-amber-800 border-amber-200' :
-                log.level === 'ERRR' ? 'bg-rose-50 text-rose-800 border-rose-200' :
-                'bg-emerald-50 text-emerald-800 border-emerald-200'
-              }">{log.level}</span>
-              <span class="{log.level === 'SYS' ? 'text-emerald-700 font-bold' : 'text-slate-700'}">{log.text}</span>
-            </div>
-          {/each}
+        <div class="w-11 h-11 rounded-lg bg-sky-50 text-[#0284C7] flex items-center justify-center">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
         </div>
-
-        <form on:submit={handleCommandSubmit} class="mt-3 pt-3 border-t border-slate-200 flex items-center space-x-2">
-          <span class="text-sky-700 font-bold">freeswitch&gt;</span>
-          <input type="text" bind:value={cliInput} placeholder="Type command (e.g. status, show channels, reloadxml, sofia status)..." class="flex-1 bg-white border border-slate-300 text-slate-800 placeholder-slate-400 px-3 py-1.5 rounded text-xs focus:outline-none focus:border-sky-500 font-mono shadow-xs" />
-          <button type="submit" class="px-3.5 py-1.5 bg-[#0284C7] hover:bg-sky-700 text-white font-semibold rounded text-xs transition-colors shadow-xs">Send</button>
-        </form>
       </div>
-    {/if}
+      <div class="pt-4 border-t border-slate-100 mt-3 flex items-center justify-between">
+        <span class="text-xs text-slate-500">Internal handsets</span>
+        <button on:click={() => navigateTo('/extensions')} class="text-xs font-semibold text-[#0284C7] hover:underline">+ New Extension</button>
+      </div>
+    </div>
+
+    <!-- Trunks Metric -->
+    <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <div>
+          <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Phone Lines (Trunks)</span>
+          <div class="text-3xl font-extrabold text-slate-800 mt-1">{activeTrunks}</div>
+        </div>
+        <div class="w-11 h-11 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+        </div>
+      </div>
+      <div class="pt-4 border-t border-slate-100 mt-3 flex items-center justify-between">
+        <span class="text-xs text-slate-500">Carrier gateways</span>
+        <button on:click={() => navigateTo('/trunks')} class="text-xs font-semibold text-[#0284C7] hover:underline">+ Add Trunk</button>
+      </div>
+    </div>
+
+    <!-- Inbound Routing Metric -->
+    <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <div>
+          <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Inbound Routes</span>
+          <div class="text-3xl font-extrabold text-slate-800 mt-1">{activeRoutes}</div>
+        </div>
+        <div class="w-11 h-11 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+        </div>
+      </div>
+      <div class="pt-4 border-t border-slate-100 mt-3 flex items-center justify-between">
+        <span class="text-xs text-slate-500">Phone numbers mapped</span>
+        <button on:click={() => navigateTo('/inbound-routes')} class="text-xs font-semibold text-[#0284C7] hover:underline">+ Add Route</button>
+      </div>
+    </div>
+
+    <!-- Call Detail Records Metric -->
+    <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
+      <div class="flex items-center justify-between">
+        <div>
+          <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Calls Logged</span>
+          <div class="text-3xl font-extrabold text-slate-800 mt-1">{totalCDRs}</div>
+        </div>
+        <div class="w-11 h-11 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+      </div>
+      <div class="pt-4 border-t border-slate-100 mt-3 flex items-center justify-between">
+        <span class="text-xs text-slate-500">History records</span>
+        <button on:click={() => navigateTo('/call-logs')} class="text-xs font-semibold text-[#0284C7] hover:underline">View CDRs</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MAIN DASHBOARD CONTENT: RECENT CALLS & QUICK ACTIONS -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Left 2 Cols: Recent Calls Feed -->
+    <div class="lg:col-span-2">
+      <Card padded={false} title="Recent Call Activity" subtitle="Real-time call detail records from the telephony engine">
+        <svelte:fragment slot="actions">
+          <button on:click={() => navigateTo('/call-logs')} class="text-xs font-semibold text-[#0284C7] hover:underline">
+            View All Calls &rarr;
+          </button>
+        </svelte:fragment>
+
+        {#if recentCalls.length === 0}
+          <div class="p-8 text-center text-slate-500 text-xs">
+            No calls recorded yet. Register a phone or softphone and dial <span class="font-bold text-slate-700">9999</span> to test!
+          </div>
+        {:else}
+          <div class="overflow-x-auto">
+            <table class="tbl">
+              <thead>
+                <tr>
+                  <th>Caller</th>
+                  <th>Destination</th>
+                  <th>Duration</th>
+                  <th>Status</th>
+                  <th>Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {#each recentCalls as call}
+                  <tr>
+                    <td class="font-bold text-slate-800 mono">{call.CallerID || 'Unknown'}</td>
+                    <td class="mono text-slate-700">{call.CalleeID || '—'}</td>
+                    <td class="text-slate-600">{call.Duration || 0}s</td>
+                    <td>
+                      <Badge tone={call.Disposition === 'ANSWERED' ? 'success' : (call.Disposition === 'BUSY' ? 'warning' : 'neutral')}>
+                        {call.Disposition || 'COMPLETED'}
+                      </Badge>
+                    </td>
+                    <td class="text-xs text-slate-500">{formatDateTime(call.CreatedAt)}</td>
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          </div>
+        {/if}
+      </Card>
+    </div>
+
+    <!-- Right 1 Col: Quick Feature Launcher & System Health -->
+    <div class="space-y-6">
+
+      <!-- One-Click Feature Launcher -->
+      <Card title="Quick Actions">
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <button 
+            type="button" 
+            on:click={() => navigateTo('/extensions')}
+            class="p-3 bg-slate-50 hover:bg-sky-50 hover:text-sky-800 border border-slate-200 rounded-lg text-left font-semibold text-slate-700 transition-colors flex flex-col items-start gap-1"
+          >
+            <span class="text-sm font-bold text-[#0284C7]">+ Extension</span>
+            <span class="text-[11px] font-normal text-slate-500">Add user phone</span>
+          </button>
+
+          <button 
+            type="button" 
+            on:click={() => navigateTo('/ring-groups')}
+            class="p-3 bg-slate-50 hover:bg-sky-50 hover:text-sky-800 border border-slate-200 rounded-lg text-left font-semibold text-slate-700 transition-colors flex flex-col items-start gap-1"
+          >
+            <span class="text-sm font-bold text-[#0284C7]">+ Ring Group</span>
+            <span class="text-[11px] font-normal text-slate-500">Ring multiple phones</span>
+          </button>
+
+          <button 
+            type="button" 
+            on:click={() => navigateTo('/digital-receptionists')}
+            class="p-3 bg-slate-50 hover:bg-sky-50 hover:text-sky-800 border border-slate-200 rounded-lg text-left font-semibold text-slate-700 transition-colors flex flex-col items-start gap-1"
+          >
+            <span class="text-sm font-bold text-[#0284C7]">+ Auto Attendant</span>
+            <span class="text-[11px] font-normal text-slate-500">Press 1 for Sales IVR</span>
+          </button>
+
+          <button 
+            type="button" 
+            on:click={() => navigateTo('/call-queues')}
+            class="p-3 bg-slate-50 hover:bg-sky-50 hover:text-sky-800 border border-slate-200 rounded-lg text-left font-semibold text-slate-700 transition-colors flex flex-col items-start gap-1"
+          >
+            <span class="text-sm font-bold text-[#0284C7]">Live Wallboard</span>
+            <span class="text-[11px] font-normal text-slate-500">Monitor active calls</span>
+          </button>
+        </div>
+      </Card>
+
+      <!-- System Health Card -->
+      <Card title="System Resources">
+        <div class="space-y-3 text-xs">
+          <div>
+            <div class="flex justify-between text-slate-600 mb-1">
+              <span>Memory Usage</span>
+              <span class="font-bold text-slate-800">{memoryUsage}%</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+              <div class="bg-[#0284C7] h-2 rounded-full transition-all duration-300" style="width: {memoryUsage}%"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between text-slate-600 mb-1">
+              <span>CPU Load</span>
+              <span class="font-bold text-slate-800">{cpuLoad}%</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+              <div class="bg-emerald-500 h-2 rounded-full transition-all duration-300" style="width: {cpuLoad}%"></div>
+            </div>
+          </div>
+
+          <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+            <span>Telephony Media Engine</span>
+            <span class="font-bold text-emerald-600">FreeSWITCH 1.10 Core</span>
+          </div>
+        </div>
+      </Card>
+
+    </div>
+
   </div>
 
 </div>
