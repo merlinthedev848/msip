@@ -256,4 +256,117 @@ func SeedDefaults() {
 		}
 		_ = DB.Create(&defaultDivert)
 	}
+
+	// Ensure realistic sample CDR records exist for drill-down reporting & tracking
+	var cdrCount int64
+	DB.Model(&CDR{}).Count(&cdrCount)
+	if cdrCount < 8 {
+		var firstTenant Tenant
+		if err := DB.First(&firstTenant).Error; err == nil {
+			now := time.Now()
+			sampleCDRs := []CDR{
+				{
+					Base:           Base{CreatedAt: now.Add(-25 * time.Minute)},
+					TenantID:       firstTenant.ID,
+					CallerIDName:   "Enterprise Partner",
+					CallerIDNumber: "+15550199456",
+					Destination:    "1001",
+					Context:        "public",
+					Duration:       245,
+					Billsec:        230,
+					HangupCause:    "NORMAL_CLEARING",
+					UUID:           "a1b2c3d4-e5f6-7890-abcd-111111111111",
+					Transcription:  "Inbound inquiry regarding telecom trunk capacity and SIP SLA parameters.",
+				},
+				{
+					Base:           Base{CreatedAt: now.Add(-1 * time.Hour - 15*time.Minute)},
+					TenantID:       firstTenant.ID,
+					CallerIDName:   "Alice Smith",
+					CallerIDNumber: "1001",
+					Destination:    "+18005550199",
+					Context:        "outbound",
+					Duration:       180,
+					Billsec:        165,
+					HangupCause:    "NORMAL_CLEARING",
+					UUID:           "a1b2c3d4-e5f6-7890-abcd-222222222222",
+				},
+				{
+					Base:           Base{CreatedAt: now.Add(-2 * time.Hour)},
+					TenantID:       firstTenant.ID,
+					CallerIDName:   "Customer VIP",
+					CallerIDNumber: "+442079460123",
+					Destination:    "1002",
+					Context:        "public",
+					Duration:       420,
+					Billsec:        405,
+					HangupCause:    "NORMAL_CLEARING",
+					UUID:           "a1b2c3d4-e5f6-7890-abcd-333333333333",
+					Transcription:  "Client confirmed invoice renewal and asked for priority routing schedule.",
+				},
+				{
+					Base:           Base{CreatedAt: now.Add(-3 * time.Hour - 40*time.Minute)},
+					TenantID:       firstTenant.ID,
+					CallerIDName:   "Unknown Caller",
+					CallerIDNumber: "+15550144321",
+					Destination:    "1001",
+					Context:        "public",
+					Duration:       25,
+					Billsec:        0,
+					HangupCause:    "NO_ANSWER",
+					UUID:           "a1b2c3d4-e5f6-7890-abcd-444444444444",
+				},
+				{
+					Base:           Base{CreatedAt: now.Add(-4 * time.Hour)},
+					TenantID:       firstTenant.ID,
+					CallerIDName:   "Bob Jones",
+					CallerIDNumber: "1002",
+					Destination:    "1001",
+					Context:        "internal",
+					Duration:       95,
+					Billsec:        90,
+					HangupCause:    "NORMAL_CLEARING",
+					UUID:           "a1b2c3d4-e5f6-7890-abcd-555555555555",
+				},
+				{
+					Base:           Base{CreatedAt: now.Add(-24 * time.Hour - 2*time.Hour)},
+					TenantID:       firstTenant.ID,
+					CallerIDName:   "Carrier NOC",
+					CallerIDNumber: "+18005550000",
+					Destination:    "600",
+					Context:        "public",
+					Duration:       310,
+					Billsec:        295,
+					HangupCause:    "NORMAL_CLEARING",
+					UUID:           "a1b2c3d4-e5f6-7890-abcd-666666666666",
+				},
+				{
+					Base:           Base{CreatedAt: now.Add(-26 * time.Hour)},
+					TenantID:       firstTenant.ID,
+					CallerIDName:   "Telephony User",
+					CallerIDNumber: "1003",
+					Destination:    "*97",
+					Context:        "internal",
+					Duration:       45,
+					Billsec:        40,
+					HangupCause:    "NORMAL_CLEARING",
+					UUID:           "a1b2c3d4-e5f6-7890-abcd-777777777777",
+				},
+				{
+					Base:           Base{CreatedAt: now.Add(-48 * time.Hour)},
+					TenantID:       firstTenant.ID,
+					CallerIDName:   "Sales Lead",
+					CallerIDNumber: "+15550122999",
+					Destination:    "1001",
+					Context:        "public",
+					Duration:       15,
+					Billsec:        0,
+					HangupCause:    "USER_BUSY",
+					UUID:           "a1b2c3d4-e5f6-7890-abcd-888888888888",
+				},
+			}
+			for _, c := range sampleCDRs {
+				_ = DB.Create(&c)
+			}
+		}
+	}
 }
