@@ -1,6 +1,7 @@
 <script lang="ts">
   import Sidebar from './components/Sidebar.svelte';
   import { onMount } from 'svelte';
+  import { layoutStyle, setLayoutStyle, type LayoutStyle } from './lib/theme';
   
   import Dashboard from './views/Dashboard.svelte';
   import CDRs from './views/CDRs.svelte';
@@ -34,6 +35,11 @@
   let currentPath = window.location.pathname;
   let token = localStorage.getItem('pbx_token');
   let user = JSON.parse(localStorage.getItem('pbx_user') || '{}');
+
+  let currentLayout: LayoutStyle = 'yeastar';
+  layoutStyle.subscribe(val => {
+    currentLayout = val;
+  });
 
   let searchQuery = '';
   let showSearchResults = false;
@@ -164,102 +170,234 @@
       <Wallboard />
     </div>
   {:else}
-    <!-- Top Bar: Deep Navy #1B2A4A, Spans Full Width -->
-    <header class="h-[52px] bg-[#1B2A4A] border-b border-[#24355A] flex items-center justify-between px-4 z-30 flex-shrink-0">
-      <!-- Left: Logo & Brand Name -->
-      <button type="button" class="flex items-center space-x-2.5 w-60 flex-shrink-0 cursor-pointer text-left focus:outline-none" on:click={() => handleNavigate('/')}>
-        <div class="w-7 h-7 rounded-full bg-cyan-600/30 border border-cyan-400/40 flex items-center justify-center text-cyan-400">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
-          </svg>
-        </div>
-        <span class="text-white font-semibold text-sm tracking-tight">CommuniGate PBX</span>
-      </button>
+    <!-- ============================================================== -->
+    <!-- TOP NAVIGATION BAR                                             -->
+    <!-- ============================================================== -->
+    {#if currentLayout === 'yeastar'}
+      <!-- YEASTAR TOP BAR (White background, matching reference image) -->
+      <header class="h-[50px] bg-white border-b border-slate-200 flex items-center justify-between px-4 z-30 flex-shrink-0 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
+        <!-- Left: Hamburger Menu & Theme Switcher Pill -->
+        <div class="flex items-center space-x-3">
+          <button type="button" class="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded transition-colors" title="Toggle Navigation">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
 
-      <!-- Center: Global Search Input -->
-      <div class="flex-1 max-w-md mx-4 relative hidden sm:block">
-        <div class="relative">
+          <!-- Layout Switcher Segmented Control -->
+          <div class="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs">
+            <button 
+              type="button"
+              on:click={() => setLayoutStyle('yeastar')}
+              class="px-2.5 py-1 rounded-md font-semibold text-[11px] transition-all bg-[#0284C7] text-white shadow-xs"
+            >
+              Yeastar PBX
+            </button>
+            <button 
+              type="button"
+              on:click={() => setLayoutStyle('communigate')}
+              class="px-2.5 py-1 rounded-md font-semibold text-[11px] transition-all text-slate-600 hover:text-slate-900"
+            >
+              CommuniGate
+            </button>
+          </div>
+        </div>
+
+        <!-- Center: Quick Global Search -->
+        <div class="flex-1 max-w-sm mx-4 relative hidden md:block">
           <input 
             type="text" 
             bind:value={searchQuery}
             on:focus={() => showSearchResults = true}
             on:blur={() => setTimeout(() => showSearchResults = false, 200)}
-            placeholder="Global search" 
-            class="w-full bg-[#273B58] border border-[#384C6B] text-slate-100 placeholder-slate-400 text-xs rounded-md pl-3 pr-9 py-1.5 focus:outline-none focus:border-cyan-400 focus:bg-[#2F4466] transition-colors"
+            placeholder="Search extensions, routes, settings..." 
+            class="w-full bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 text-xs rounded-md pl-3 pr-8 py-1.5 focus:outline-none focus:border-sky-500 focus:bg-white transition-colors"
           />
-          <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+          <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none text-slate-400">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
+
+          <!-- Autocomplete results -->
+          {#if showSearchResults && filteredSearch.length > 0}
+            <div class="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-xl z-50 overflow-hidden divide-y divide-slate-100 max-h-72 overflow-y-auto">
+              {#each filteredSearch as item}
+                <button 
+                  type="button"
+                  on:click={() => handleNavigate(item.path)}
+                  class="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-slate-50 transition-colors"
+                >
+                  <span class="font-semibold text-slate-700">{item.name}</span>
+                  <span class="text-[10px] uppercase font-bold text-slate-400">{item.category}</span>
+                </button>
+              {/each}
+            </div>
+          {/if}
         </div>
 
-        <!-- Global Search Autocomplete Popup -->
-        {#if showSearchResults && filteredSearch.length > 0}
-          <div class="absolute top-full left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-lg shadow-xl z-50 overflow-hidden divide-y divide-slate-100 max-h-80 overflow-y-auto">
-            {#each filteredSearch as item}
-              <button 
-                type="button"
-                on:click={() => handleNavigate(item.path)}
-                class="w-full px-3.5 py-2.5 text-left text-xs flex items-center justify-between hover:bg-slate-50 transition-colors group"
-              >
-                <div class="flex items-center space-x-2">
-                  <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
-                  <span class="font-semibold text-slate-800 group-hover:text-blue-600">{item.name}</span>
-                </div>
-                <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">{item.category}</span>
-              </button>
-            {/each}
-          </div>
-        {/if}
-      </div>
+        <!-- Right: Yeastar Utility Icons & User Menu -->
+        <div class="flex items-center space-x-3 text-slate-600">
+          <!-- Help / Handshake -->
+          <button class="p-1.5 hover:text-slate-900 hover:bg-slate-100 rounded text-slate-500" title="Community / Support">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017a2 2 0 01-1.789-1.106l-3.5-7A2 2 0 017.746 10H12m2-4a2 2 0 100-4 2 2 0 000 4zm-4 4V4"/></svg>
+          </button>
 
-      <!-- Right: User Avatar, Name, Dot, Gear, Logout -->
-      <div class="flex items-center space-x-3">
-        <!-- User Profile Pill -->
-        <div class="flex items-center space-x-2 text-xs">
-          <div class="w-6 h-6 rounded-full bg-[#2563EB] text-white flex items-center justify-center text-[11px] font-bold shadow-sm">
-            {user.email ? user.email[0].toUpperCase() : 'D'}
+          <!-- Question Help -->
+          <button class="p-1.5 hover:text-slate-900 hover:bg-slate-100 rounded text-slate-500" title="Documentation">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-width="1.8"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3m.08 4h.01"/></svg>
+          </button>
+
+          <!-- Bell Notification Badge "New" -->
+          <div class="relative">
+            <button class="p-1.5 hover:text-slate-900 hover:bg-slate-100 rounded text-slate-500" title="Notifications">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+            </button>
+            <span class="absolute -top-1 -right-1 px-1 py-0.2 bg-[#0284C7] text-white text-[9px] font-black rounded-full">New</span>
           </div>
-          <span class="text-xs font-semibold text-slate-100 hidden md:inline">
-            {user.email ? (user.email.split('@')[0].charAt(0).toUpperCase() + user.email.split('@')[0].slice(1)) : 'David K.'}
-          </span>
-          <span class="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" title="Online"></span>
-          <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-          </svg>
+
+          <!-- Lock / Bag -->
+          <button class="p-1.5 hover:text-slate-900 hover:bg-slate-100 rounded text-slate-500" title="Store / Licensing">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+          </button>
+
+          <div class="h-4 w-px bg-slate-200"></div>
+
+          <!-- User Profile: Round Blue Avatar + "admin" + Chevron -->
+          <div class="flex items-center space-x-1.5 cursor-pointer">
+            <div class="w-6 h-6 rounded-full bg-[#0284C7] text-white flex items-center justify-center text-[11px] font-bold">
+              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
+            </div>
+            <span class="text-xs font-semibold text-slate-700">admin</span>
+            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </div>
+
+          <button 
+            type="button" 
+            on:click={handleLogout} 
+            class="text-[11px] font-medium text-slate-400 hover:text-rose-600 px-1.5 py-0.5 rounded transition-colors"
+          >
+            Logout
+          </button>
+        </div>
+      </header>
+
+    {:else}
+      <!-- COMMUNIGATE TOP BAR (Deep Navy #1B2A4A, Spans Full Width) -->
+      <header class="h-[52px] bg-[#1B2A4A] border-b border-[#24355A] flex items-center justify-between px-4 z-30 flex-shrink-0">
+        <!-- Left: Logo & Brand Name -->
+        <button type="button" class="flex items-center space-x-2.5 w-60 flex-shrink-0 cursor-pointer text-left focus:outline-none" on:click={() => handleNavigate('/')}>
+          <div class="w-7 h-7 rounded-full bg-cyan-600/30 border border-cyan-400/40 flex items-center justify-center text-cyan-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+            </svg>
+          </div>
+          <span class="text-white font-semibold text-sm tracking-tight">CommuniGate PBX</span>
+        </button>
+
+        <!-- Center: Global Search Input -->
+        <div class="flex-1 max-w-md mx-4 relative hidden sm:block">
+          <div class="relative">
+            <input 
+              type="text" 
+              bind:value={searchQuery}
+              on:focus={() => showSearchResults = true}
+              on:blur={() => setTimeout(() => showSearchResults = false, 200)}
+              placeholder="Global search" 
+              class="w-full bg-[#273B58] border border-[#384C6B] text-slate-100 placeholder-slate-400 text-xs rounded-md pl-3 pr-9 py-1.5 focus:outline-none focus:border-cyan-400 focus:bg-[#2F4466] transition-colors"
+            />
+            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Global Search Autocomplete Popup -->
+          {#if showSearchResults && filteredSearch.length > 0}
+            <div class="absolute top-full left-0 right-0 mt-1.5 bg-white border border-slate-200 rounded-lg shadow-xl z-50 overflow-hidden divide-y divide-slate-100 max-h-80 overflow-y-auto">
+              {#each filteredSearch as item}
+                <button 
+                  type="button"
+                  on:click={() => handleNavigate(item.path)}
+                  class="w-full px-3.5 py-2.5 text-left text-xs flex items-center justify-between hover:bg-slate-50 transition-colors group"
+                >
+                  <div class="flex items-center space-x-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-blue-600"></span>
+                    <span class="font-semibold text-slate-800 group-hover:text-blue-600">{item.name}</span>
+                  </div>
+                  <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">{item.category}</span>
+                </button>
+              {/each}
+            </div>
+          {/if}
         </div>
 
-        <!-- Settings Gear Icon -->
-        <button 
-          on:click={() => handleNavigate('/system-settings')}
-          class="p-1.5 text-slate-300 hover:text-white hover:bg-[#253655] rounded-md transition-colors" 
-          title="System Settings"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-        </button>
+        <!-- Right: Layout Switcher, User Avatar, Settings & Logout -->
+        <div class="flex items-center space-x-3">
+          <!-- Layout Switcher Segmented Control -->
+          <div class="flex items-center bg-[#131D33] p-0.5 rounded-lg border border-[#2D3E63] text-xs">
+            <button 
+              type="button"
+              on:click={() => setLayoutStyle('yeastar')}
+              class="px-2.5 py-1 rounded-md font-semibold text-[11px] transition-all text-slate-400 hover:text-white"
+            >
+              Yeastar
+            </button>
+            <button 
+              type="button"
+              on:click={() => setLayoutStyle('communigate')}
+              class="px-2.5 py-1 rounded-md font-semibold text-[11px] transition-all bg-[#2563EB] text-white shadow-xs"
+            >
+              CommuniGate
+            </button>
+          </div>
 
-        <!-- Sign Out Button -->
-        <button 
-          on:click={handleLogout} 
-          class="text-[11px] font-semibold text-slate-400 hover:text-rose-300 px-2 py-1 hover:bg-[#253655] rounded-md transition-colors"
-        >
-          Logout
-        </button>
-      </div>
-    </header>
+          <!-- User Profile Pill -->
+          <div class="flex items-center space-x-2 text-xs">
+            <div class="w-6 h-6 rounded-full bg-[#2563EB] text-white flex items-center justify-center text-[11px] font-bold shadow-sm">
+              {user.email ? user.email[0].toUpperCase() : 'D'}
+            </div>
+            <span class="text-xs font-semibold text-slate-100 hidden md:inline">
+              {user.email ? (user.email.split('@')[0].charAt(0).toUpperCase() + user.email.split('@')[0].slice(1)) : 'David K.'}
+            </span>
+            <span class="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" title="Online"></span>
+            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+
+          <!-- Settings Gear Icon -->
+          <button 
+            on:click={() => handleNavigate('/system-settings')}
+            class="p-1.5 text-slate-300 hover:text-white hover:bg-[#253655] rounded-md transition-colors" 
+            title="System Settings"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </button>
+
+          <!-- Sign Out Button -->
+          <button 
+            on:click={handleLogout} 
+            class="text-[11px] font-semibold text-slate-400 hover:text-rose-300 px-2 py-1 hover:bg-[#253655] rounded-md transition-colors"
+          >
+            Logout
+          </button>
+        </div>
+      </header>
+    {/if}
 
     <!-- Main Workspace Layout -->
     <div class="flex-1 flex overflow-hidden">
-      <!-- Sidebar (White, matching reference) -->
+      <!-- Sidebar (Dual Mode: Yeastar / CommuniGate) -->
       <Sidebar />
 
       <!-- Main Canvas -->
       <main class="flex-1 overflow-y-auto {isDashboard ? 'bg-[#EEF2F6] text-slate-800' : 'bg-[#0E1320] text-slate-100'} p-5 md:p-6 transition-colors">
-        <div class="max-w-[1400px] mx-auto pb-20">
+        <div class="max-w-[1440px] mx-auto pb-20">
           {#if ActiveComponent}
             <svelte:component this={ActiveComponent} />
           {:else}
