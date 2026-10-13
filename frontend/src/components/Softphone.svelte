@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import { UserAgent, Registerer } from 'sip.js';
+  import { UserAgent, Registerer, Inviter, SessionState } from 'sip.js';
 
   let isOpen = false;
   let showConfig = false;
@@ -18,6 +18,12 @@
   let sipPass = localStorage.getItem('pbx_softphone_pass') || "";
   let isRegistered = false;
   let registrationStatus = "Not configured";
+
+  function formatTime(seconds: number) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
 
   function saveConfig() {
     localStorage.setItem('pbx_softphone_ext', sipExt.trim());
@@ -70,6 +76,7 @@
             session = invitation;
             activeCall = 'ringing';
             currentNumber = invitation.remoteIdentity.uri.user || 'Unknown';
+            registrationStatus = `Incoming Call: ${currentNumber}`;
           }
         }
       });
@@ -95,14 +102,101 @@
     }
   };
 
+  const makeCall = async () => {
+    if (!currentNumber.trim()) {
+      registrationStatus = "Enter an extension or phone number";
+      return;
+    }
+    if (!userAgent || !isRegistered) {
+      registrationStatus = "Please register softphone first";
+      showConfig = true;
+      return;
+    }
+
+    try {
+      registrationStatus = `Dialing ${currentNumber.trim()}...`;
+      activeCall = 'calling';
+      const targetUri = UserAgent.makeURI(`sip:${currentNumber.trim()}@${window.location.hostname}`);
+      if (!targetUri) {
+        registrationStatus = "Invalid number format";
+        activeCall = null;
+        return;
+      }
+
+      const inviter = new Inviter(userAgent, targetUri);
+      session = inviter;
+
+      inviter.stateChange.addListener((state) => {
+        if (state === SessionState.Establishing) {
+          activeCall = 'ringing';
+          registrationStatus = 'Ringing...';
+        } else if (state === SessionState.Established) {
+          activeCall = 'connected';
+          registrationStatus = `Connected (${currentNumber})`;
+          clearInterval(callTimer);
+          callDuration = 0;
+          callTimer = setInterval(() => { callDuration++; }, 1000);
+          setupRemoteMedia(inviter);
+        } else if (state === SessionState.Terminated) {
+          hangupCall();
+        }
+      });
+
+      await inviter.invite();
+    } catch (e: any) {
+      activeCall = null;
+      registrationStatus = e.message || 'Call failed';
+    }
+  };
+
+  const answerCall = async () => {
+    if (session && activeCall === 'ringing') {
+      try {
+        await session.accept();
+        activeCall = 'connected';
+        registrationStatus = `Connected (${currentNumber})`;
+        clearInterval(callTimer);
+        callDuration = 0;
+        callTimer = setInterval(() => { callDuration++; }, 1000);
+        setupRemoteMedia(session);
+      } catch (e: any) {
+        hangupCall();
+      }
+    }
+  };
+
+  function setupRemoteMedia(sessionInstance: any) {
+    try {
+      const sdh = sessionInstance.sessionDescriptionHandler;
+      if (sdh && sdh.peerConnection && remoteAudio) {
+        sdh.peerConnection.getReceivers().forEach((receiver: any) => {
+          if (receiver.track && receiver.track.kind === 'audio') {
+            const stream = new MediaStream([receiver.track]);
+            remoteAudio.srcObject = stream;
+            remoteAudio.play().catch(() => {});
+          }
+        });
+      }
+    } catch (e) {}
+  }
+
   const hangupCall = () => {
     if (session) {
-      session.bye();
+      try {
+        if (session.state === SessionState.Established) {
+          session.bye();
+        } else if (session.reject) {
+          session.reject();
+        }
+      } catch (e) {}
       session = null;
     }
     activeCall = null;
     clearInterval(callTimer);
     callDuration = 0;
+    if (isRegistered) {
+      registrationStatus = `Registered (Ext ${sipExt})`;
+    }
   };
 
   onMount(() => {
@@ -210,18 +304,36 @@
 
         <!-- Call Actions -->
         <div class="pt-2">
-          {#if activeCall}
+          {#if activeCall === 'ringing'}
+            <div class="grid grid-cols-2 gap-2">
+              <button 
+                type="button"
+                on:click={answerCall}
+                class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md text-xs transition-colors"
+              >
+                Answer
+              </button>
+              <button 
+                type="button"
+                on:click={hangupCall}
+                class="w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-md text-xs transition-colors"
+              >
+                Decline
+              </button>
+            </div>
+          {:else if activeCall}
             <button 
               type="button"
               on:click={hangupCall}
-              class="w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-md flex items-center justify-center space-x-2 text-xs"
+              class="w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-md flex items-center justify-center space-x-2 text-xs transition-colors"
             >
-              <span>Hang Up</span>
+              <span>Hang Up {activeCall === 'connected' ? `(${formatTime(callDuration)})` : '(Calling...)'}</span>
             </button>
           {:else}
             <button 
               type="button"
-              class="w-full py-2.5 bg-[#0284C7] hover:bg-sky-700 text-white font-bold rounded-xl shadow-md flex items-center justify-center space-x-2 text-xs"
+              on:click={makeCall}
+              class="w-full py-2.5 bg-[#0284C7] hover:bg-sky-700 text-white font-bold rounded-xl shadow-md flex items-center justify-center space-x-2 text-xs transition-colors"
             >
               <span>Call</span>
             </button>

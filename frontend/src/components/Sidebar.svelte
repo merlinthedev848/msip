@@ -20,7 +20,7 @@
   let navItems: NavItem[] = [
     { name: 'Dashboard', path: '/', icon: 'dashboard' },
     { 
-      name: 'Extension and Trunk', 
+      name: 'Extensions & Trunks', 
       icon: 'ext-trunk', 
       expanded: true,
       children: [
@@ -28,20 +28,6 @@
         { name: 'SIP Trunks', path: '/trunks' },
         { name: 'Auto Provisioning', path: '/provisioning' }
       ]
-    },
-    { 
-      name: 'Contacts', 
-      icon: 'contacts', 
-      expanded: false,
-      children: [
-        { name: 'Company Directory', path: '/extensions' },
-        { name: 'Speed Dial List', path: '/extensions' }
-      ]
-    },
-    { 
-      name: 'Auto Provisioning', 
-      path: '/provisioning',
-      icon: 'provisioning'
     },
     { 
       name: 'Call Control', 
@@ -65,63 +51,49 @@
       ]
     },
     { 
+      name: 'Reports & Records', 
+      icon: 'reports', 
+      expanded: false,
+      children: [
+        { name: 'Call Detail Records', path: '/call-logs' },
+        { name: 'Reports & Analytics', path: '/reports-analytics' }
+      ]
+    },
+    { 
+      name: 'Communications', 
+      icon: 'integration', 
+      expanded: false,
+      children: [
+        { name: 'Team Chat', path: '/chat' },
+        { name: 'SMS Messaging', path: '/sms' },
+        { name: 'IP Camera Feeds', path: '/cameras' }
+      ]
+    },
+    { 
       name: 'PBX Settings', 
       icon: 'pbx-settings', 
       expanded: false,
       children: [
         { name: 'Tenant Domains', path: '/domains' },
-        { name: 'Audio Prompts & MoH', path: '/digital-receptionists' }
+        { name: 'Admins & Roles', path: '/admins' }
       ]
     },
     { 
-      name: 'System', 
-      icon: 'system', 
-      expanded: false,
-      children: [
-        { name: 'Admins & Roles', path: '/admins' },
-        { name: 'Change History', path: '/versioning' },
-        { name: 'IP Camera Feeds', path: '/cameras' }
-      ]
-    },
-    { 
-      name: 'Security', 
+      name: 'Security & APIs', 
       icon: 'security', 
       expanded: false,
       children: [
         { name: 'Firewall & IP ACLs', path: '/firewall' },
         { name: 'Anti-Fraud Shield', path: '/fraud' },
         { name: 'Rate Throttling', path: '/throttling' },
-        { name: 'API Credentials', path: '/api-credentials' }
+        { name: 'API Credentials', path: '/api-credentials' },
+        { name: 'Event Webhooks', path: '/webhooks' }
       ]
     },
     { 
-      name: 'Maintenance', 
-      path: '/system-settings', 
-      icon: 'maintenance'
-    },
-    { 
-      name: 'Integration', 
-      icon: 'integration', 
-      expanded: false,
-      children: [
-        { name: 'Event Webhooks', path: '/webhooks' },
-        { name: 'Team Chat', path: '/chat' },
-        { name: 'SMS Messaging', path: '/sms' }
-      ]
-    },
-    { 
-      name: 'Reports and Recordings', 
-      icon: 'reports', 
-      expanded: false,
-      children: [
-        { name: 'Call Detail Records', path: '/call-logs' },
-        { name: 'CDR Analytics', path: '/reports-analytics' }
-      ]
-    },
-    { 
-      name: 'Plan', 
-      path: '/system-settings', 
-      icon: 'plan'
+      name: 'System History', 
+      icon: 'system', 
+      path: '/versioning'
     }
   ];
 

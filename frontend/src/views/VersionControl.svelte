@@ -24,7 +24,13 @@
     loadError = '';
     try {
       const data = await api.get<{ commits: CommitItem[] }>('/commits');
-      commits = data.commits || [];
+      commits = (data.commits || []).map(c => ({
+        ...c,
+        msg: (c.msg || '')
+          .replace(/yeastar/gi, 'Telephony')
+          .replace(/communigate/gi, 'Enterprise')
+          .replace(/linkus/gi, 'Softphone')
+      }));
     } catch (e: any) {
       loadError = e.message;
     } finally {

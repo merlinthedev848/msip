@@ -357,40 +357,40 @@
     </div>
 
     {#if isConsoleExpanded}
-      <div class="bg-[#090D16] p-4 text-slate-200 font-mono text-xs">
-        <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
+      <div class="bg-slate-50 border-t border-slate-200 p-4 text-slate-800 font-mono text-xs">
+        <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-200">
           <div class="flex items-center space-x-1.5">
-            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mr-1">Filter:</span>
+            <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mr-1">Filter:</span>
             {#each ['ALL', 'INFO', 'EVNT', 'WARN', 'ERRR'] as f}
-              <button on:click={() => selectedFilter = f as any} class="px-2 py-0.5 rounded text-[10px] font-bold transition-colors {selectedFilter === f ? 'bg-[#0284C7] text-white' : 'bg-slate-800/80 text-slate-400 hover:text-white'}">{f}</button>
+              <button on:click={() => selectedFilter = f as any} class="px-2 py-0.5 rounded text-[10px] font-bold transition-colors {selectedFilter === f ? 'bg-[#0284C7] text-white' : 'bg-white border border-slate-200 text-slate-600 hover:text-slate-900'}">{f}</button>
             {/each}
           </div>
           <div class="flex items-center space-x-2">
-            <button on:click={copyAllLogs} class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-semibold transition-colors">{copyFeedback ? 'Copied!' : 'Copy Logs'}</button>
-            <button on:click={() => consoleLogs = []} class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-semibold transition-colors">Clear</button>
+            <button on:click={copyAllLogs} class="px-2.5 py-1 rounded bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-[10px] font-semibold transition-colors">{copyFeedback ? 'Copied!' : 'Copy Logs'}</button>
+            <button on:click={() => consoleLogs = []} class="px-2.5 py-1 rounded bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-[10px] font-semibold transition-colors">Clear</button>
           </div>
         </div>
 
-        <div bind:this={terminalBodyElement} class="h-60 overflow-y-auto space-y-1 pr-2 select-text font-mono text-[12px] leading-relaxed">
+        <div bind:this={terminalBodyElement} class="h-60 overflow-y-auto space-y-1.5 pr-2 select-text font-mono text-[12px] leading-relaxed bg-white border border-slate-200 rounded-lg p-3">
           {#each filteredLogs as log (log.id)}
             <div class="flex items-start space-x-2">
-              <span class="text-slate-500 flex-shrink-0">[{log.time}]</span>
-              <span class="px-1.5 py-0.2 rounded text-[10px] font-bold flex-shrink-0 {
-                log.level === 'INFO' ? 'bg-blue-950 text-blue-400' :
-                log.level === 'EVNT' ? 'bg-cyan-950 text-cyan-400' :
-                log.level === 'WARN' ? 'bg-amber-950 text-amber-400' :
-                log.level === 'ERRR' ? 'bg-rose-950 text-rose-400' :
-                'bg-emerald-950 text-emerald-400'
+              <span class="text-slate-400 flex-shrink-0 text-[11px]">[{log.time}]</span>
+              <span class="px-1.5 py-0.2 rounded text-[10px] font-bold flex-shrink-0 border {
+                log.level === 'INFO' ? 'bg-sky-50 text-sky-800 border-sky-200' :
+                log.level === 'EVNT' ? 'bg-cyan-50 text-cyan-800 border-cyan-200' :
+                log.level === 'WARN' ? 'bg-amber-50 text-amber-800 border-amber-200' :
+                log.level === 'ERRR' ? 'bg-rose-50 text-rose-800 border-rose-200' :
+                'bg-emerald-50 text-emerald-800 border-emerald-200'
               }">{log.level}</span>
-              <span class="{log.level === 'SYS' ? 'text-emerald-300 font-bold' : 'text-slate-300'}">{log.text}</span>
+              <span class="{log.level === 'SYS' ? 'text-emerald-700 font-bold' : 'text-slate-700'}">{log.text}</span>
             </div>
           {/each}
         </div>
 
-        <form on:submit={handleCommandSubmit} class="mt-3 pt-3 border-t border-slate-800 flex items-center space-x-2">
-          <span class="text-emerald-400 font-bold">freeswitch&gt;</span>
-          <input type="text" bind:value={cliInput} placeholder="Type command (e.g. status, show channels, reloadxml, sofia status)..." class="flex-1 bg-slate-900 border border-slate-800 text-slate-100 placeholder-slate-500 px-3 py-1.5 rounded text-xs focus:outline-none focus:border-cyan-500 font-mono" />
-          <button type="submit" class="px-3 py-1.5 bg-[#0284C7] hover:bg-sky-600 text-white font-semibold rounded text-xs transition-colors">Send</button>
+        <form on:submit={handleCommandSubmit} class="mt-3 pt-3 border-t border-slate-200 flex items-center space-x-2">
+          <span class="text-sky-700 font-bold">freeswitch&gt;</span>
+          <input type="text" bind:value={cliInput} placeholder="Type command (e.g. status, show channels, reloadxml, sofia status)..." class="flex-1 bg-white border border-slate-300 text-slate-800 placeholder-slate-400 px-3 py-1.5 rounded text-xs focus:outline-none focus:border-sky-500 font-mono shadow-xs" />
+          <button type="submit" class="px-3.5 py-1.5 bg-[#0284C7] hover:bg-sky-700 text-white font-semibold rounded text-xs transition-colors shadow-xs">Send</button>
         </form>
       </div>
     {/if}

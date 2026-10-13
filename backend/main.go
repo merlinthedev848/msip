@@ -1518,11 +1518,18 @@ func SetupRouter() *gin.Engine {
 					for _, line := range lines {
 						parts := strings.Split(line, "|")
 						if len(parts) >= 4 {
+							msg := parts[1]
+							msg = strings.ReplaceAll(msg, "Yeastar PBX theme", "Standard Telecom theme")
+							msg = strings.ReplaceAll(msg, "Yeastar", "Telephony")
+							msg = strings.ReplaceAll(msg, "yeastar", "telephony")
+							msg = strings.ReplaceAll(msg, "CommuniGate PBX", "Enterprise Telephony")
+							msg = strings.ReplaceAll(msg, "CommuniGate", "Enterprise PBX")
+							msg = strings.ReplaceAll(msg, "Linkus", "WebRTC Softphone")
 							commits = append(commits, gin.H{
 								"hash":   parts[0],
 								"type":   "Commit",
 								"time":   parts[2],
-								"msg":    parts[1],
+								"msg":    msg,
 								"author": parts[3],
 							})
 						}
