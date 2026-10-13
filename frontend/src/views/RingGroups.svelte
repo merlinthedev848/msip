@@ -2,214 +2,621 @@
   import { onMount } from 'svelte';
   import { api } from '../lib/api';
   import { toast, toastError } from '../lib/toast';
-  import PageHeader from '../components/ui/PageHeader.svelte';
-  import Card from '../components/ui/Card.svelte';
-  import Button from '../components/ui/Button.svelte';
-  import Modal from '../components/ui/Modal.svelte';
-  import Badge from '../components/ui/Badge.svelte';
-  import EmptyState from '../components/ui/EmptyState.svelte';
+  import DestinationPicker from '../components/DestinationPicker.svelte';
 
-  interface RingGroup {
+  interface GroupMemberItem {
+    ID?: string;
+    Member: string;
+    Extension: string;
+    DelaySec: number;
+  }
+
+  interface CallGroupItem {
     ID: string;
     Name: string;
-    Extension: string;
-    Strategy: string;
-    Members: string[];
+    SiteID?: string;
+    SiteName: string;
+    InternalNumber: string;
+    RingCadence: string;
+    CallerNamePrefix: string;
+    NoAnswerTimeout: number;
+    NoAnswerDestination: string;
+    Members: GroupMemberItem[];
+    CreatedAt: string;
   }
 
-  interface ExtensionItem {
-    ID: string;
-    ExtensionNumber: string;
-  }
-
-  let groups: RingGroup[] = [];
-  let availableExts: ExtensionItem[] = [];
+  let groups: CallGroupItem[] = [];
+  let availableExts: any[] = [];
+  let sites: any[] = [];
   let loading = true;
   let loadError = '';
   let saving = false;
   let search = '';
 
-  let modalOpen = false;
-  let editingId: string | null = null;
-  let form = {
-    Name: '',
+  // View state: 'list' or 'edit'
+  let currentView: 'list' | 'edit' = 'list';
+  let editingGroup: CallGroupItem | null = null;
+
+  // Member Modal State
+  let memberModalOpen = false;
+  let editingMemberIndex = -1;
+  let memberForm = {
+    Member: '',
     Extension: '',
-    Strategy: 'simultaneous',
-    MembersText: ''
+    DelaySec: 0
   };
 
-  $: filtered = groups.filter(g => 
-    !search.trim() || `${g.Name} ${g.Extension}`.toLowerCase().includes(search.trim().toLowerCase())
-  );
+  // Main Form Data matching Screenshot 4
+  let form = {
+    ID: '',
+    Name: '',
+    SiteID: '',
+    SiteName: '',
+    InternalNumber: '990',
+    RingCadence: 'Default',
+    CallerNamePrefix: '',
+    NoAnswerTimeout: 15,
+    NoAnswerDestination: 'Not Set',
+    Members: [] as GroupMemberItem[]
+  };
 
-  async function load() {
+  async function loadData() {
     loading = true;
     loadError = '';
     try {
-      const [ivrsData, extsData] = await Promise.all([
-        api.get<{ ivrs: any[] }>('/ivrs'),
-        api.get<{ extensions: ExtensionItem[] }>('/extensions')
+      const [rgRes, extRes, siteRes] = await Promise.all([
+        api.get<{ ring_groups: CallGroupItem[] }>('/ring-groups'),
+        api.get<{ extensions: any[] }>('/extensions').catch(() => ({ extensions: [] })),
+        api.get<{ sites: any[] }>('/sites').catch(() => ({ sites: [] }))
       ]);
-      availableExts = extsData.extensions || [];
-      // Ring groups use IVRMenu model with prefix "RG:"
-      const allIvrs = ivrsData.ivrs || [];
-      groups = allIvrs
-        .filter(i => i.Name.startsWith('Ring Group:') || i.Greeting === 'ring_group')
-        .map(i => ({
-          ID: i.ID,
-          Name: i.Name.replace('Ring Group:', '').trim() || i.Name,
-          Extension: i.Extension,
-          Strategy: 'Simultaneous Ring',
-          Members: (i.Choices || []).map((c: any) => c.Destination)
-        }));
+      groups = rgRes.ring_groups || [];
+      availableExts = extRes.extensions || [];
+      sites = siteRes.sites || [];
     } catch (e: any) {
-      loadError = e.message;
+      loadError = e.message || 'Failed to load call distribution groups';
     } finally {
       loading = false;
     }
   }
 
+  onMount(loadData);
+
   function openCreate() {
-    editingId = null;
+    editingGroup = null;
+    const defaultSite = sites.length > 0 ? sites[0] : null;
     form = {
+      ID: '',
       Name: '',
-      Extension: '600',
-      Strategy: 'simultaneous',
-      MembersText: availableExts.map(e => e.ExtensionNumber).slice(0, 3).join(', ')
+      SiteID: defaultSite ? defaultSite.ID : '',
+      SiteName: defaultSite ? defaultSite.Name : 'Agilico Systems',
+      InternalNumber: (990 + groups.length).toString(),
+      RingCadence: 'Default',
+      CallerNamePrefix: '',
+      NoAnswerTimeout: 15,
+      NoAnswerDestination: 'Not Set',
+      Members: availableExts.slice(0, 3).map(e => ({
+        Member: e.DisplayName || `${e.FirstName || ''} ${e.LastName || ''}`.trim() || `User ${e.ExtensionNumber}`,
+        Extension: e.ExtensionNumber,
+        DelaySec: 0
+      }))
     };
-    modalOpen = true;
+    currentView = 'edit';
   }
 
-  async function save(e: Event) {
-    e.preventDefault();
-    if (!form.Name.trim()) return toast.error('Ring group name is required');
-    if (!form.Extension.trim()) return toast.error('Extension is required');
+  function openEdit(group: CallGroupItem) {
+    editingGroup = group;
+    form = {
+      ID: group.ID,
+      Name: group.Name || '',
+      SiteID: group.SiteID || '',
+      SiteName: group.SiteName || (sites.length > 0 ? sites[0].Name : 'Agilico Systems'),
+      InternalNumber: group.InternalNumber || '990',
+      RingCadence: group.RingCadence || 'Default',
+      CallerNamePrefix: group.CallerNamePrefix || '',
+      NoAnswerTimeout: group.NoAnswerTimeout || 15,
+      NoAnswerDestination: group.NoAnswerDestination || 'Not Set',
+      Members: (group.Members || []).map(m => ({
+        Member: m.Member,
+        Extension: m.Extension || '',
+        DelaySec: m.DelaySec ?? 0
+      }))
+    };
+    currentView = 'edit';
+  }
 
-    const members = form.MembersText.split(',').map(m => m.trim()).filter(Boolean);
-    if (members.length === 0) return toast.error('Please enter at least one member extension');
+  function backToList() {
+    currentView = 'list';
+    editingGroup = null;
+  }
+
+  async function handleSave() {
+    if (!form.Name.trim()) return toast.error('Group Name is required');
+    if (!form.InternalNumber.trim()) return toast.error('Internal Number is required');
+
+    // Find site name if site ID chosen
+    if (form.SiteID) {
+      const matched = sites.find(s => s.ID === form.SiteID);
+      if (matched) form.SiteName = matched.Name;
+    }
 
     saving = true;
     try {
-      const payload = {
-        Name: `Ring Group: ${form.Name.trim()}`,
-        Extension: form.Extension.trim(),
-        Greeting: 'ring_group',
-        Timeout: 30000,
-        Choices: members.map((m, idx) => ({
-          Digits: String(idx + 1),
-          Action: 'bridge',
-          Destination: m
+      const payload: any = {
+        Name: form.Name.trim(),
+        InternalNumber: form.InternalNumber.trim(),
+        SiteID: form.SiteID || null,
+        SiteName: form.SiteName || 'Agilico Systems',
+        RingCadence: form.RingCadence,
+        CallerNamePrefix: form.CallerNamePrefix.trim(),
+        NoAnswerTimeout: Number(form.NoAnswerTimeout),
+        NoAnswerDestination: form.NoAnswerDestination,
+        Members: form.Members.map(m => ({
+          Member: m.Member,
+          Extension: m.Extension,
+          DelaySec: Number(m.DelaySec)
         }))
       };
 
-      if (editingId) {
-        await api.put(`/ivrs/${editingId}`, payload);
-        toast.success('Ring Group updated');
+      if (editingGroup) {
+        await api.put(`/ring-groups/${editingGroup.ID}`, payload);
+        toast.success(`Group '${form.Name}' updated`);
       } else {
-        await api.post('/ivrs', payload);
-        toast.success('Ring Group created');
+        await api.post('/ring-groups', payload);
+        toast.success(`Group '${form.Name}' created`);
       }
-      modalOpen = false;
-      await load();
-    } catch (err) {
-      toastError(err);
+
+      await loadData();
+      currentView = 'list';
+    } catch (e: any) {
+      toastError(e, 'Failed to save call distribution group');
     } finally {
       saving = false;
     }
   }
 
-  async function remove(g: RingGroup) {
-    if (!confirm(`Delete ring group "${g.Name}"?`)) return;
+  async function deleteGroup(group: CallGroupItem) {
+    if (!confirm(`Are you sure you want to delete call distribution group '${group.Name}'?`)) return;
     try {
-      await api.del(`/ivrs/${g.ID}`);
-      toast.success('Ring group deleted');
-      await load();
-    } catch (e) {
-      toastError(e);
+      await api.delete(`/ring-groups/${group.ID}`);
+      toast.success(`Group '${group.Name}' deleted`);
+      loadData();
+    } catch (e: any) {
+      toastError(e, 'Failed to delete group');
     }
   }
 
-  onMount(load);
+  // Member CRUD
+  function openAddMember() {
+    editingMemberIndex = -1;
+    const defaultExt = availableExts.length > 0 ? availableExts[0] : null;
+    memberForm = {
+      Member: defaultExt ? (defaultExt.DisplayName || `${defaultExt.FirstName || ''} ${defaultExt.LastName || ''}`.trim() || `User ${defaultExt.ExtensionNumber}`) : 'Agent',
+      Extension: defaultExt ? defaultExt.ExtensionNumber : '1001',
+      DelaySec: 0
+    };
+    memberModalOpen = true;
+  }
+
+  function editMember(index: number) {
+    editingMemberIndex = index;
+    memberForm = { ...form.Members[index] };
+    memberModalOpen = true;
+  }
+
+  function saveMember() {
+    if (!memberForm.Member.trim()) return toast.error('Member name is required');
+    if (editingMemberIndex >= 0) {
+      form.Members[editingMemberIndex] = { ...memberForm };
+    } else {
+      form.Members = [...form.Members, { ...memberForm }];
+    }
+    memberModalOpen = false;
+  }
+
+  function removeMember(index: number) {
+    form.Members = form.Members.filter((_, i) => i !== index);
+  }
+
+  $: filteredList = groups.filter(g =>
+    !search.trim() ||
+    `${g.Name} ${g.InternalNumber} ${g.SiteName}`.toLowerCase().includes(search.trim().toLowerCase())
+  );
 </script>
 
-<PageHeader title="Ring Groups" description="Ring multiple extensions simultaneously or sequentially when a virtual extension is dialed.">
-  <Button on:click={openCreate}>+ New Ring Group</Button>
-</PageHeader>
+<div class="p-6 bg-[#EEF2F6] min-h-screen text-slate-800">
+  {#if currentView === 'list'}
+    <!-- LIST VIEW -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-5 mb-5 border-b border-slate-200 gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-lg bg-sky-100 text-[#0284C7] flex items-center justify-center font-bold shadow-sm">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold text-slate-900 tracking-tight">Call Distribution Groups (Ring Groups)</h1>
+          <p class="text-xs text-slate-500">Configure hunt groups, staggered delay member ringing, and failover routing</p>
+        </div>
+      </div>
 
-<Card padded={false} title="Active Ring Groups" subtitle="{groups.length} groups configured">
-  <svelte:fragment slot="actions">
-    <input class="input !py-1.5 !text-xs w-56" placeholder="Search ring group…" bind:value={search} aria-label="Search ring groups" />
-  </svelte:fragment>
+      <div class="flex items-center space-x-3">
+        <div class="relative">
+          <input
+            type="text"
+            bind:value={search}
+            placeholder="Search groups..."
+            class="pl-9 pr-3 py-1.5 bg-white border border-slate-300 rounded-md text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-[#0284C7] w-52 shadow-sm"
+          />
+          <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        <button
+          type="button"
+          on:click={openCreate}
+          class="px-4 py-2 bg-[#0284C7] hover:bg-[#0369A1] text-white text-xs font-bold rounded-md shadow-sm transition-colors flex items-center space-x-2"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H8" />
+          </svg>
+          <span>Add Group</span>
+        </button>
+      </div>
+    </div>
 
-  {#if loading || loadError || filtered.length === 0}
-    <EmptyState
-      {loading}
-      error={loadError}
-      title={search ? 'No ring groups match your search' : 'No ring groups configured'}
-      message={search ? '' : 'Create a ring group (e.g. Sales or Support) to ring multiple extensions when called.'}
-    >
-      {#if !search}<Button size="sm" on:click={openCreate}>Create first ring group</Button>{/if}
-      <svelte:fragment slot="retry"><Button size="sm" variant="secondary" on:click={load}>Retry</Button></svelte:fragment>
-    </EmptyState>
-  {:else}
-    <div class="overflow-x-auto">
-      <table class="tbl">
-        <thead>
+    <!-- Table -->
+    <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+      <table class="w-full text-left text-xs text-slate-700">
+        <thead class="bg-[#2B527A] text-white font-semibold">
           <tr>
-            <th>Group Name</th>
-            <th>Extension</th>
-            <th>Strategy</th>
-            <th>Destination Members</th>
-            <th class="text-right">Actions</th>
+            <th class="px-4 py-3">Group Name</th>
+            <th class="px-4 py-3">Internal Ext</th>
+            <th class="px-4 py-3">Office Site</th>
+            <th class="px-4 py-3">Members</th>
+            <th class="px-4 py-3">Timeout (s)</th>
+            <th class="px-4 py-3">No Answer Destination</th>
+            <th class="px-4 py-3 text-right">Options</th>
           </tr>
         </thead>
-        <tbody>
-          {#each filtered as g (g.ID)}
-            <tr>
-              <td class="font-bold text-slate-800 text-sm">{g.Name}</td>
-              <td class="mono font-semibold text-sky-700 text-xs">{g.Extension}</td>
-              <td><Badge tone="info">{g.Strategy}</Badge></td>
-              <td>
-                <div class="flex flex-wrap gap-1">
-                  {#each g.Members as m}
-                    <span class="mono px-2 py-0.5 bg-slate-100 rounded text-xs text-slate-700 border border-slate-200">
-                      Ext {m}
-                    </span>
-                  {/each}
-                </div>
+        <tbody class="divide-y divide-slate-100">
+          {#each filteredList as item}
+            <tr class="hover:bg-slate-50 transition-colors">
+              <td class="px-4 py-3 font-bold text-slate-900">{item.Name}</td>
+              <td class="px-4 py-3 text-slate-600 font-mono font-bold">{item.InternalNumber}</td>
+              <td class="px-4 py-3 text-slate-600">{item.SiteName || 'Agilico Systems'}</td>
+              <td class="px-4 py-3">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-800">
+                  {(item.Members || []).length} Members
+                </span>
               </td>
-              <td class="text-right space-x-3 whitespace-nowrap">
-                <button type="button" class="link-danger" on:click={() => remove(g)}>Delete</button>
+              <td class="px-4 py-3 text-slate-600">{item.NoAnswerTimeout}s</td>
+              <td class="px-4 py-3 text-slate-600 truncate max-w-xs">{item.NoAnswerDestination || 'Not Set'}</td>
+              <td class="px-4 py-3 text-right">
+                <div class="inline-flex items-center space-x-2">
+                  <button
+                    type="button"
+                    on:click={() => openEdit(item)}
+                    title="Edit Group"
+                    class="p-1 text-slate-600 hover:text-[#0284C7] hover:bg-sky-50 rounded"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    on:click={() => deleteGroup(item)}
+                    title="Delete Group"
+                    class="p-1 text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
               </td>
             </tr>
           {/each}
+          {#if filteredList.length === 0}
+            <tr>
+              <td colspan="7" class="px-4 py-8 text-center text-slate-400">
+                No call distribution groups found. Click "Add Group" to create one.
+              </td>
+            </tr>
+          {/if}
         </tbody>
       </table>
     </div>
+
+  {:else}
+    <!-- EDIT VIEW MATCHING SCREENSHOT 4 -->
+    <!-- Top Bar with group title -->
+    <div class="flex items-center space-x-2.5 pb-4 mb-4 border-b border-slate-300">
+      <div class="text-[#0284C7] flex items-center space-x-1 font-bold text-xs">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      </div>
+      <h1 class="text-sm font-bold text-slate-900 tracking-tight">
+        {editingGroup ? `Editing call distribution group '${form.Name}'` : 'Create Call Distribution Group'}
+      </h1>
+    </div>
+
+    <form on:submit|preventDefault={handleSave} class="space-y-4">
+      <!-- CARD 1: Group Details (2-Column Layout matching Screenshot 4) -->
+      <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+        <div class="px-5 py-3 border-b border-slate-100 font-bold text-xs text-slate-800">
+          Group Details
+        </div>
+        <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Column 1 -->
+          <div class="space-y-3.5">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Group Name</label>
+              <input
+                type="text"
+                bind:value={form.Name}
+                placeholder="e.g. Front door newcastle"
+                class="w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-[#0284C7] focus:outline-none font-medium"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Site</label>
+              <div class="relative">
+                <span class="absolute left-3 top-2.5 text-slate-400">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/></svg>
+                </span>
+                <select
+                  bind:value={form.SiteID}
+                  class="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-[#0284C7] focus:outline-none"
+                >
+                  <option value="">Please select</option>
+                  {#each sites as s}
+                    <option value={s.ID}>{s.Name}</option>
+                  {/each}
+                  {#if sites.length === 0}
+                    <option value="">Agilico Systems</option>
+                  {/if}
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Internal Number</label>
+              <div class="relative">
+                <span class="absolute left-3 top-2.5 text-slate-400">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                </span>
+                <input
+                  type="text"
+                  bind:value={form.InternalNumber}
+                  placeholder="e.g. 990"
+                  class="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-[#0284C7] focus:outline-none font-bold"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Ring Cadence</label>
+              <div class="relative">
+                <span class="absolute left-3 top-2.5 text-slate-400">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                </span>
+                <select
+                  bind:value={form.RingCadence}
+                  class="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-[#0284C7] focus:outline-none"
+                >
+                  <option value="Default">Default</option>
+                  <option value="Standard">Standard</option>
+                  <option value="Ring-Ring">Ring-Ring</option>
+                  <option value="Short-Short">Short-Short</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column 2 -->
+          <div class="space-y-3.5">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Caller Name Prefix</label>
+              <div class="relative">
+                <span class="absolute left-3 top-2.5 text-slate-400 font-bold text-xs">“</span>
+                <input
+                  type="text"
+                  bind:value={form.CallerNamePrefix}
+                  placeholder="e.g. Front Door (9)"
+                  class="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-[#0284C7] focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">No Answer Timeout</label>
+              <div class="relative">
+                <span class="absolute left-3 top-2.5 text-slate-400">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-width="2"/><path stroke-width="2" stroke-linecap="round" d="M12 7v5l3 3"/></svg>
+                </span>
+                <input
+                  type="number"
+                  bind:value={form.NoAnswerTimeout}
+                  min="1"
+                  max="300"
+                  class="w-full pl-9 pr-3 py-2 bg-white border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-[#0284C7] focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <DestinationPicker
+                label="No Answer Destination"
+                bind:value={form.NoAnswerDestination}
+                on:change={(e) => form.NoAnswerDestination = e.detail}
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons (Save disk icon + Back) -->
+        <div class="px-5 py-3 bg-slate-50 border-t border-slate-200 flex items-center space-x-2">
+          <button
+            type="submit"
+            disabled={saving}
+            class="px-3.5 py-1.5 bg-[#0284C7] hover:bg-[#0369A1] text-white text-xs font-bold rounded shadow-sm transition-colors flex items-center space-x-1.5"
+          >
+            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l6-6a1 1 0 00-1.414-1.414H11V4a1 1 0 10-2 0v6.586l-1.293-1.293z" />
+            </svg>
+            <span>{saving ? 'Saving...' : 'Save'}</span>
+          </button>
+          <button
+            type="button"
+            on:click={backToList}
+            class="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded shadow-sm transition-colors flex items-center space-x-1"
+          >
+            <span>↶</span>
+            <span>Back</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- CARD 2: Members (Matching Screenshot 4 Bottom Card) -->
+      <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+        <div class="px-5 py-3 border-b border-slate-100 font-bold text-xs text-slate-800">
+          Members
+        </div>
+        <div class="p-5">
+          <!-- Top + Add Button -->
+          <div class="mb-4">
+            <button
+              type="button"
+              on:click={openAddMember}
+              class="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded shadow-sm transition-colors flex items-center space-x-1"
+            >
+              <span>+ Add</span>
+            </button>
+          </div>
+
+          <!-- Table with Navy Header matching Screenshot 4 -->
+          <div class="border border-slate-200 rounded overflow-hidden">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-[#2B527A] text-white font-semibold">
+                <tr>
+                  <th class="px-4 py-2.5">Member</th>
+                  <th class="px-4 py-2.5">Delay (s)</th>
+                  <th class="px-4 py-2.5 text-right">Options</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 bg-white">
+                {#each form.Members as mem, idx}
+                  <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-4 py-2.5 font-medium text-slate-800">
+                      {mem.Member} {mem.Extension ? `(${mem.Extension})` : ''}
+                    </td>
+                    <td class="px-4 py-2.5 text-slate-600 font-mono">{mem.DelaySec}</td>
+                    <td class="px-4 py-2.5 text-right">
+                      <div class="inline-flex items-center space-x-2">
+                        <button
+                          type="button"
+                          on:click={() => editMember(idx)}
+                          class="p-1 text-slate-500 hover:text-[#0284C7]"
+                          title="Edit Member"
+                        >
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                        </button>
+                        <button
+                          type="button"
+                          on:click={() => removeMember(idx)}
+                          class="p-1 text-slate-500 hover:text-rose-600"
+                          title="Remove Member"
+                        >
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                {/each}
+                {#if form.Members.length === 0}
+                  <tr>
+                    <td colspan="3" class="px-4 py-6 text-center text-slate-400 bg-slate-50/50">
+                      No members added to this distribution group. Click "+ Add" to add extensions.
+                    </td>
+                  </tr>
+                {/if}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </form>
   {/if}
-</Card>
+</div>
 
-<Modal bind:isOpen={modalOpen} title={editingId ? 'Edit Ring Group' : 'Create Ring Group'}>
-  <form on:submit={save} class="space-y-4">
-    <div>
-      <label for="rg-name" class="label">Group Name</label>
-      <input id="rg-name" class="input" bind:value={form.Name} placeholder="e.g. Sales Team or Tech Support" required />
+<!-- Modal: Ring Group Member Editor -->
+{#if memberModalOpen}
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-[2px]">
+    <div class="bg-white rounded-lg shadow-xl border border-slate-200 w-full max-w-md overflow-hidden">
+      <div class="px-5 py-3.5 bg-[#2B527A] text-white font-bold text-xs flex justify-between items-center">
+        <span>{editingMemberIndex >= 0 ? 'Edit Group Member' : 'Add Group Member'}</span>
+        <button type="button" on:click={() => memberModalOpen = false} class="text-white/80 hover:text-white">✕</button>
+      </div>
+      <div class="p-5 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Select User / Extension</label>
+          <select
+            bind:value={memberForm.Extension}
+            on:change={(e) => {
+              const ext = availableExts.find(x => x.ExtensionNumber === e.currentTarget.value);
+              if (ext) {
+                memberForm.Member = ext.DisplayName || `${ext.FirstName || ''} ${ext.LastName || ''}`.trim() || `User ${ext.ExtensionNumber}`;
+              }
+            }}
+            class="w-full px-3 py-2 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-[#0284C7] focus:outline-none"
+          >
+            {#each availableExts as ext}
+              <option value={ext.ExtensionNumber}>
+                {ext.ExtensionNumber} - {ext.DisplayName || `${ext.FirstName || ''} ${ext.LastName || ''}`.trim() || 'Internal User'}
+              </option>
+            {/each}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Member Display Name</label>
+          <input
+            type="text"
+            bind:value={memberForm.Member}
+            placeholder="e.g. Nicola Simpson"
+            class="w-full px-3 py-2 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-[#0284C7] focus:outline-none"
+          />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">Delay Before Ringing (Seconds)</label>
+          <input
+            type="number"
+            bind:value={memberForm.DelaySec}
+            min="0"
+            max="120"
+            class="w-full px-3 py-2 border border-slate-300 rounded text-xs focus:ring-1 focus:ring-[#0284C7] focus:outline-none"
+          />
+          <p class="text-[11px] text-slate-400 mt-1">Set to 0 for immediate ringing alongside the group.</p>
+        </div>
+      </div>
+      <div class="px-5 py-3 bg-slate-50 border-t border-slate-200 flex justify-end space-x-2">
+        <button
+          type="button"
+          on:click={() => memberModalOpen = false}
+          class="px-3 py-1.5 bg-white border border-slate-300 text-slate-700 font-semibold text-xs rounded hover:bg-slate-50"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          on:click={saveMember}
+          class="px-4 py-1.5 bg-[#0284C7] hover:bg-[#0369A1] text-white font-bold text-xs rounded shadow-sm"
+        >
+          Save Member
+        </button>
+      </div>
     </div>
-
-    <div>
-      <label for="rg-ext" class="label">Group Virtual Extension</label>
-      <input id="rg-ext" class="input mono" bind:value={form.Extension} placeholder="e.g. 600" required />
-    </div>
-
-    <div>
-      <label for="rg-members" class="label">Member Extensions (comma-separated)</label>
-      <input id="rg-members" class="input mono" bind:value={form.MembersText} placeholder="e.g. 1001, 1002, 1003" required />
-      <p class="help">Enter extension numbers to ring when this group is called.</p>
-    </div>
-
-    <div class="flex justify-end gap-2 pt-2">
-      <Button variant="secondary" on:click={() => modalOpen = false}>Cancel</Button>
-      <Button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button>
-    </div>
-  </form>
-</Modal>
+  </div>
+{/if}

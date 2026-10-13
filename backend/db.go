@@ -96,6 +96,10 @@ func InitDB() {
 		&TelephoneNumber{},
 		&CallDivert{},
 		&Device{},
+		&CallQueue{},
+		&QueueMember{},
+		&CallDistributionGroup{},
+		&GroupMember{},
 	)
 	if err != nil {
 		log.Fatalf("Failed to migrate database schema: %v", err)
@@ -255,6 +259,72 @@ func SeedDefaults() {
 			NoAnswerTimeout: 20,
 		}
 		_ = DB.Create(&defaultDivert)
+
+		// Seed sample Call Distribution Group matching Screenshot 4
+		defaultGroup := CallDistributionGroup{
+			TenantRef:           TenantRef{TenantID: defaultTenant.ID},
+			Name:                "Front door newcastle",
+			SiteName:            "Agilico Systems",
+			InternalNumber:      "990",
+			RingCadence:         "Default",
+			CallerNamePrefix:    "Front Door (9)",
+			NoAnswerTimeout:     15,
+			NoAnswerDestination: "Front Door Failover newcastle",
+		}
+		if err := DB.Create(&defaultGroup).Error; err == nil {
+			sampleMembers := []GroupMember{
+				{GroupID: defaultGroup.ID, Member: "Nicola Simpson", Extension: "1001", DelaySec: 0},
+				{GroupID: defaultGroup.ID, Member: "Anne Mitchell Hall", Extension: "1002", DelaySec: 0},
+				{GroupID: defaultGroup.ID, Member: "Michelle Boomer", Extension: "1003", DelaySec: 0},
+				{GroupID: defaultGroup.ID, Member: "spare7985", Extension: "7985", DelaySec: 0},
+				{GroupID: defaultGroup.ID, Member: "Michela Walsh", Extension: "1004", DelaySec: 0},
+				{GroupID: defaultGroup.ID, Member: "Caitlin Redhead", Extension: "1005", DelaySec: 0},
+			}
+			for _, m := range sampleMembers {
+				_ = DB.Create(&m)
+			}
+		}
+
+		// Seed sample Call Queue matching Screenshot 3
+		defaultQueue := CallQueue{
+			TenantRef:                  TenantRef{TenantID: defaultTenant.ID},
+			Name:                       "CDS - Accounts",
+			Extension:                  "8001",
+			MaxCapacity:                10,
+			RingStrategy:               "Ring All",
+			MemberRingTimeout:          20,
+			MemberRetryDelay:           10,
+			MemberWrapUpDelay:          0,
+			InternalNumber:             "991",
+			PlayMusicWhileWaiting:      true,
+			Music:                      "Default",
+			CallerNamePrefix:           "Accounts",
+			RingCadence:                "Default",
+			AnnounceWaitTime:           false,
+			AnnouncePosition:           true,
+			AnnouncementInterval:       60,
+			NoAnswerTimeout:            20,
+			NoAnswerDestination:        "Agilico Accounts Menu",
+			ParkEnabled:                false,
+			ParkResumeWhenAtPosition:   2,
+			ParkAllowedMinPosition:     2,
+			ParkResumeRetryIntervalMin: 1,
+			ParkResumeMaxAttempts:      3,
+			ParkResumeMenuTimeoutSec:   15,
+			ParkResumeDialTimeoutSec:   20,
+		}
+		if err := DB.Create(&defaultQueue).Error; err == nil {
+			queueMembers := []QueueMember{
+				{QueueID: defaultQueue.ID, Member: "Lorraine Robertson", Extension: "1002", Penalty: 0, Disabled: false},
+				{QueueID: defaultQueue.ID, Member: "Sharon Collinson", Extension: "1003", Penalty: 0, Disabled: false},
+				{QueueID: defaultQueue.ID, Member: "Julie Schubeler", Extension: "1004", Penalty: 0, Disabled: false},
+				{QueueID: defaultQueue.ID, Member: "Amy Wood", Extension: "1005", Penalty: 0, Disabled: false},
+				{QueueID: defaultQueue.ID, Member: "Channelle Brown", Extension: "1006", Penalty: 0, Disabled: false},
+			}
+			for _, qm := range queueMembers {
+				_ = DB.Create(&qm)
+			}
+		}
 	}
 
 	// Ensure realistic sample CDR records exist for drill-down reporting & tracking

@@ -410,7 +410,15 @@ func TestExtensionsCRUD(t *testing.T) {
 		t.Fatalf("expected 201, got %d: %s", wCreate.Code, wCreate.Body.String())
 	}
 	var created Extension
-	json.Unmarshal(wCreate.Body.Bytes(), &created)
+	var createResp struct {
+		Extension Extension `json:"extension"`
+	}
+	_ = json.Unmarshal(wCreate.Body.Bytes(), &createResp)
+	if createResp.Extension.ID != uuid.Nil {
+		created = createResp.Extension
+	} else {
+		_ = json.Unmarshal(wCreate.Body.Bytes(), &created)
+	}
 	if created.PasswordHash != "" {
 		t.Fatalf("expected password hash to be sanitized from response")
 	}
@@ -527,5 +535,85 @@ func TestCommitsEndpoint(t *testing.T) {
 	}
 	if !strings.Contains(w.Body.String(), "commits") {
 		t.Fatalf("expected commits list in body, got: %s", w.Body.String())
+	}
+}
+
+func TestRingGroupsAndQueuesCRUD(t *testing.T) {
+	setupTestEnvironment(t)
+
+	// 1. Ring Groups Test
+	groupPayload := `{
+		"Name": "Newcastle Support",
+		"InternalNumber": "995",
+		"SiteName": "Agilico Systems",
+		"RingCadence": "Default",
+		"CallerNamePrefix": "Support (9)",
+		"NoAnswerTimeout": 15,
+		"NoAnswerDestination": "Front Door Failover",
+		"Members": [
+			{"Member": "Nicola Simpson", "Extension": "1001", "DelaySec": 0},
+			{"Member": "Anne Mitchell Hall", "Extension": "1002", "DelaySec": 5}
+		]
+	}`
+	wGrpCreate := performRequest(testRouter, "POST", "/api/ring-groups", []byte(groupPayload), adminToken)
+	if wGrpCreate.Code != http.StatusCreated {
+		t.Fatalf("expected 201 for ring group create, got %d: %s", wGrpCreate.Code, wGrpCreate.Body.String())
+	}
+
+	var createdGrp CallDistributionGroup
+	json.Unmarshal(wGrpCreate.Body.Bytes(), &createdGrp)
+	if createdGrp.Name != "Newcastle Support" || len(createdGrp.Members) != 2 {
+		t.Fatalf("unexpected group content: %+v", createdGrp)
+	}
+
+	wGrpList := performRequest(testRouter, "GET", "/api/ring-groups", nil, adminToken)
+	if wGrpList.Code != http.StatusOK || !strings.Contains(wGrpList.Body.String(), "Newcastle Support") {
+		t.Fatalf("expected group in list, got: %s", wGrpList.Body.String())
+	}
+
+	// 2. Call Queues Test
+	queuePayload := `{
+		"Name": "Tier 2 Helpdesk",
+		"InternalNumber": "992",
+		"Extension": "8002",
+		"MaxCapacity": 20,
+		"RingStrategy": "Round Robin",
+		"MemberRingTimeout": 25,
+		"MemberRetryDelay": 10,
+		"MemberWrapUpDelay": 5,
+		"PlayMusicWhileWaiting": true,
+		"Music": "Harmony",
+		"CallerNamePrefix": "Tier2",
+		"NoAnswerTimeout": 30,
+		"NoAnswerDestination": "Voicemail Box",
+		"Members": [
+			{"Member": "Sharon Collinson", "Extension": "1002", "Penalty": 0, "Disabled": false},
+			{"Member": "Julie Schubeler", "Extension": "1003", "Penalty": 1, "Disabled": true}
+		]
+	}`
+	wQCreate := performRequest(testRouter, "POST", "/api/queues", []byte(queuePayload), adminToken)
+	if wQCreate.Code != http.StatusCreated {
+		t.Fatalf("expected 201 for queue create, got %d: %s", wQCreate.Code, wQCreate.Body.String())
+	}
+
+	var createdQ CallQueue
+	json.Unmarshal(wQCreate.Body.Bytes(), &createdQ)
+	if createdQ.Name != "Tier 2 Helpdesk" || len(createdQ.Members) != 2 {
+		t.Fatalf("unexpected queue content: %+v", createdQ)
+	}
+
+	wQList := performRequest(testRouter, "GET", "/api/queues", nil, adminToken)
+	if wQList.Code != http.StatusOK || !strings.Contains(wQList.Body.String(), "Tier 2 Helpdesk") {
+		t.Fatalf("expected queue in list, got: %s", wQList.Body.String())
+	}
+
+	// Clean up
+	wDelGrp := performRequest(testRouter, "DELETE", "/api/ring-groups/"+createdGrp.ID.String(), nil, adminToken)
+	if wDelGrp.Code != http.StatusOK {
+		t.Fatalf("expected 200 deleting ring group, got %d", wDelGrp.Code)
+	}
+	wDelQ := performRequest(testRouter, "DELETE", "/api/queues/"+createdQ.ID.String(), nil, adminToken)
+	if wDelQ.Code != http.StatusOK {
+		t.Fatalf("expected 200 deleting queue, got %d", wDelQ.Code)
 	}
 }

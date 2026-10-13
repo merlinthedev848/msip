@@ -75,25 +75,55 @@ type Extension struct {
 	ProvisioningCode string `gorm:"size:8;uniqueIndex" json:"ProvisioningCode"`
 
 	// User Profile
-	FirstName string `gorm:"size:100" json:"FirstName"`
-	LastName  string `gorm:"size:100" json:"LastName"`
-	Email     string `gorm:"size:255" json:"Email"`
-	Department string `gorm:"size:100" json:"Department"`
+	FirstName   string `gorm:"size:100" json:"FirstName"`
+	LastName    string `gorm:"size:100" json:"LastName"`
+	DisplayName string `gorm:"size:150" json:"DisplayName"`
+	Email       string `gorm:"size:255" json:"Email"`
+	Department  string `gorm:"size:100" json:"Department"`
+	HomeNumber  string `gorm:"size:50" json:"HomeNumber"`
 
-	// Telephony & Caller ID
-	CallerIDName   string `gorm:"size:100" json:"CallerIDName"`
-	CallerIDNumber string `gorm:"size:50" json:"CallerIDNumber"`
-	OutboundDID    string `gorm:"size:50" json:"OutboundDID"`
+	// Telephony & Numbers
+	CallerIDName          string     `gorm:"size:100" json:"CallerIDName"`
+	CallerIDNumber        string     `gorm:"size:50" json:"CallerIDNumber"`
+	OutboundDID           string     `gorm:"size:50" json:"OutboundDID"`
+	DirectNumber          string     `gorm:"size:50" json:"DirectNumber"`
+	PresentationNumber    string     `gorm:"size:50" json:"PresentationNumber"`
+	SiteID                *uuid.UUID `gorm:"type:uuid" json:"SiteID"`
+	ButtonProfileID       *uuid.UUID `gorm:"type:uuid" json:"ButtonProfileID"`
+	VoicemailNotification string     `gorm:"size:50;default:'Off'" json:"VoicemailNotification"`
 
-	// Forwarding & Mobile
-	MobileNumber          string `gorm:"size:50" json:"MobileNumber"`
-	ForwardAlwaysEnabled  bool   `gorm:"default:false" json:"ForwardAlwaysEnabled"`
-	ForwardAlwaysTarget   string `gorm:"size:100" json:"ForwardAlwaysTarget"`
-	ForwardBusyEnabled    bool   `gorm:"default:false" json:"ForwardBusyEnabled"`
-	ForwardBusyTarget     string `gorm:"size:100" json:"ForwardBusyTarget"`
-	ForwardNoAnswerEnabled bool  `gorm:"default:false" json:"ForwardNoAnswerEnabled"`
+	// Forwarding & Presence
+	MobileNumber           string `gorm:"size:50" json:"MobileNumber"`
+	CallWaiting            bool   `gorm:"default:false" json:"CallWaiting"`
+	DoNotDisturb           bool   `gorm:"default:false" json:"DoNotDisturb"`
+	Forwarding             bool   `gorm:"default:false" json:"Forwarding"`
+	ForwardInternalTarget  string `gorm:"size:100" json:"ForwardInternalTarget"`
+	ForwardExternalTarget  string `gorm:"size:100" json:"ForwardExternalTarget"`
+	MobileTwinning         bool   `gorm:"default:false" json:"MobileTwinning"`
+	ForwardAlwaysEnabled   bool   `gorm:"default:false" json:"ForwardAlwaysEnabled"`
+	ForwardAlwaysTarget    string `gorm:"size:100" json:"ForwardAlwaysTarget"`
+	ForwardBusyEnabled     bool   `gorm:"default:false" json:"ForwardBusyEnabled"`
+	ForwardBusyTarget      string `gorm:"size:100" json:"ForwardBusyTarget"`
+	ForwardNoAnswerEnabled bool   `gorm:"default:false" json:"ForwardNoAnswerEnabled"`
 	ForwardNoAnswerTarget  string `gorm:"size:100" json:"ForwardNoAnswerTarget"`
-	RingTimeoutSeconds    int    `gorm:"default:20" json:"RingTimeoutSeconds"`
+	RingTimeoutSeconds     int    `gorm:"default:20" json:"RingTimeoutSeconds"`
+
+	// Internal Call Settings
+	InternalNoAnswerTimeout int    `gorm:"default:3" json:"InternalNoAnswerTimeout"`
+	InternalNoAnswerAction  string `gorm:"size:50;default:'Not Set'" json:"InternalNoAnswerAction"`
+	InternalNoAnswerTarget  string `gorm:"size:100" json:"InternalNoAnswerTarget"`
+	InternalOnBusyAction    string `gorm:"size:50;default:'Unknown'" json:"InternalOnBusyAction"`
+	InternalOnBusyTarget    string `gorm:"size:100" json:"InternalOnBusyTarget"`
+
+	// External Call Settings
+	ExternalNoAnswerTimeout int    `gorm:"default:0" json:"ExternalNoAnswerTimeout"`
+	ExternalNoAnswerAction  string `gorm:"size:50;default:'Not Set'" json:"ExternalNoAnswerAction"`
+	ExternalNoAnswerTarget  string `gorm:"size:100" json:"ExternalNoAnswerTarget"`
+	ExternalOnBusyAction    string `gorm:"size:50;default:'Unknown'" json:"ExternalOnBusyAction"`
+	ExternalOnBusyTarget    string `gorm:"size:100" json:"ExternalOnBusyTarget"`
+
+	// Handset Programmable Buttons (JSON string)
+	HandsetButtons string `gorm:"type:text;default:'[]'" json:"HandsetButtons"`
 
 	// Voicemail Preferences
 	VoicemailEnabled bool   `gorm:"default:true" json:"VoicemailEnabled"`
@@ -170,17 +200,22 @@ type CDR struct {
 type IVRMenu struct {
 	Base
 	TenantRef
-	Name              string      `gorm:"size:100;not null" json:"Name"`
-	Extension         string      `gorm:"size:50;not null;uniqueIndex:idx_tenant_ivr_ext" json:"Extension"`
-	Greeting          string      `gorm:"size:255;not null" json:"Greeting"` // Path to wav or text for TTS
-	Timeout           int         `gorm:"default:10000" json:"Timeout"`     // Milliseconds
-	MaxFailures       int         `gorm:"default:3" json:"MaxFailures"`
-	TimeoutDestType   string      `gorm:"size:50" json:"TimeoutDestType"`
-	TimeoutDestTarget string      `gorm:"size:100" json:"TimeoutDestTarget"`
-	InvalidDestType   string      `gorm:"size:50" json:"InvalidDestType"`
-	InvalidDestTarget string      `gorm:"size:100" json:"InvalidDestTarget"`
-	AllowDirectDial   bool        `gorm:"default:true" json:"AllowDirectDial"`
-	Choices           []IVRChoice `gorm:"foreignKey:MenuID" json:"Choices"`
+	Name               string      `gorm:"size:100;not null" json:"Name"`
+	Extension          string      `gorm:"size:50;not null;uniqueIndex:idx_tenant_ivr_ext" json:"Extension"`
+	Greeting           string      `gorm:"size:255;not null" json:"Greeting"` // Path to wav or text for TTS
+	Timeout            int         `gorm:"default:10000" json:"Timeout"`     // Milliseconds
+	MaxFailures        int         `gorm:"default:3" json:"MaxFailures"`
+	TimeoutDestType    string      `gorm:"size:50" json:"TimeoutDestType"`
+	TimeoutDestTarget  string      `gorm:"size:100" json:"TimeoutDestTarget"`
+	InvalidDestType    string      `gorm:"size:50" json:"InvalidDestType"`
+	InvalidDestTarget  string      `gorm:"size:100" json:"InvalidDestTarget"`
+	AllowDirectDial    bool        `gorm:"default:true" json:"AllowDirectDial"`
+	PinCode            string      `gorm:"size:50" json:"PinCode"`
+	SiteID             *uuid.UUID  `gorm:"type:uuid" json:"SiteID"`
+	AnnounceOnly       bool        `gorm:"default:false" json:"AnnounceOnly"`
+	TimeoutDestination string      `gorm:"size:150;default:'End Call'" json:"TimeoutDestination"`
+	SoundFile          string      `gorm:"size:255" json:"SoundFile"`
+	Choices            []IVRChoice `gorm:"foreignKey:MenuID" json:"Choices"`
 }
 
 // IVRChoice defines digit mapping for a menu
@@ -188,8 +223,76 @@ type IVRChoice struct {
 	Base
 	MenuID      uuid.UUID `gorm:"type:uuid;not null;index" json:"MenuID"`
 	Digits      string    `gorm:"size:10;not null" json:"Digits"`
+	Name        string    `gorm:"size:100" json:"Name"`
 	Action      string    `gorm:"size:50;not null" json:"Action"`
 	Destination string    `gorm:"size:255;not null" json:"Destination"`
+}
+
+// CallQueue defines ACD queue matching enterprise portal layout
+type CallQueue struct {
+	Base
+	TenantRef
+	Name                       string        `gorm:"size:100;not null" json:"Name"`
+	Extension                  string        `gorm:"size:50;not null;uniqueIndex:idx_tenant_queue_ext" json:"Extension"`
+	MaxCapacity                int           `gorm:"default:10" json:"MaxCapacity"`
+	RingStrategy               string        `gorm:"size:50;default:'Ring All'" json:"RingStrategy"` // Ring All, Round Robin, Least Recent
+	MemberRingTimeout          int           `gorm:"default:20" json:"MemberRingTimeout"`
+	MemberRetryDelay           int           `gorm:"default:10" json:"MemberRetryDelay"`
+	MemberWrapUpDelay          int           `gorm:"default:0" json:"MemberWrapUpDelay"`
+	InternalNumber             string        `gorm:"size:50" json:"InternalNumber"`
+	PlayMusicWhileWaiting      bool          `gorm:"default:true" json:"PlayMusicWhileWaiting"`
+	Music                      string        `gorm:"size:100;default:'Default'" json:"Music"`
+	CallerNamePrefix           string        `gorm:"size:100" json:"CallerNamePrefix"`
+	RingCadence                string        `gorm:"size:50;default:'Default'" json:"RingCadence"`
+	AnnounceWaitTime           bool          `gorm:"default:false" json:"AnnounceWaitTime"`
+	AnnouncePosition           bool          `gorm:"default:true" json:"AnnouncePosition"`
+	AnnouncementInterval       int           `gorm:"default:60" json:"AnnouncementInterval"`
+	NoAnswerTimeout            int           `gorm:"default:20" json:"NoAnswerTimeout"`
+	NoAnswerDestination        string        `gorm:"size:150" json:"NoAnswerDestination"`
+	ParkEnabled                bool          `gorm:"default:false" json:"ParkEnabled"`
+	ParkTelephoneNumber        string        `gorm:"size:50" json:"ParkTelephoneNumber"`
+	ParkResumeWhenAtPosition   int           `gorm:"default:2" json:"ParkResumeWhenAtPosition"`
+	ParkAllowedMinPosition     int           `gorm:"default:2" json:"ParkAllowedMinPosition"`
+	ParkResumeRetryIntervalMin int           `gorm:"default:1" json:"ParkResumeRetryIntervalMin"`
+	ParkResumeMaxAttempts      int           `gorm:"default:3" json:"ParkResumeMaxAttempts"`
+	ParkResumeMenuTimeoutSec   int           `gorm:"default:15" json:"ParkResumeMenuTimeoutSec"`
+	ParkResumeDialTimeoutSec   int           `gorm:"default:20" json:"ParkResumeDialTimeoutSec"`
+	ParkConfirmation           string        `gorm:"size:100" json:"ParkConfirmation"`
+	Members                    []QueueMember `gorm:"foreignKey:QueueID" json:"Members"`
+}
+
+// QueueMember defines an assigned agent for a CallQueue
+type QueueMember struct {
+	Base
+	QueueID   uuid.UUID `gorm:"type:uuid;not null;index" json:"QueueID"`
+	Member    string    `gorm:"size:100;not null" json:"Member"` // Display Name / Agent Name
+	Extension string    `gorm:"size:50" json:"Extension"`
+	Penalty   int       `gorm:"default:0" json:"Penalty"`
+	Disabled  bool      `gorm:"default:false" json:"Disabled"`
+}
+
+// CallDistributionGroup defines a Ring Group / Hunt Group matching enterprise portal
+type CallDistributionGroup struct {
+	Base
+	TenantRef
+	Name                string        `gorm:"size:100;not null" json:"Name"`
+	SiteID              *uuid.UUID    `gorm:"type:uuid" json:"SiteID"`
+	SiteName            string        `gorm:"size:100" json:"SiteName"`
+	InternalNumber      string        `gorm:"size:50;not null;uniqueIndex:idx_tenant_group_ext" json:"InternalNumber"`
+	RingCadence         string        `gorm:"size:50;default:'Default'" json:"RingCadence"`
+	CallerNamePrefix    string        `gorm:"size:100" json:"CallerNamePrefix"`
+	NoAnswerTimeout     int           `gorm:"default:15" json:"NoAnswerTimeout"`
+	NoAnswerDestination string        `gorm:"size:150" json:"NoAnswerDestination"`
+	Members             []GroupMember `gorm:"foreignKey:GroupID" json:"Members"`
+}
+
+// GroupMember defines an extension in a CallDistributionGroup with ringing delay
+type GroupMember struct {
+	Base
+	GroupID   uuid.UUID `gorm:"type:uuid;not null;index" json:"GroupID"`
+	Member    string    `gorm:"size:100;not null" json:"Member"` // Display Name / Extension
+	Extension string    `gorm:"size:50" json:"Extension"`
+	DelaySec  int       `gorm:"default:0" json:"DelaySec"`
 }
 
 // Voicemail stores recorded messages

@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 // RegisterPortalRoutes registers the core portal features shown in user management portals
@@ -390,5 +393,241 @@ func RegisterPortalRoutes(v1 *gin.RouterGroup) {
 			"status":  "reboot_signal_dispatched",
 			"message": fmt.Sprintf("SIP check-sync reboot dispatched to MAC %s (Ext %s)", dev.MACAddress, dev.ExtensionNumber),
 		})
+	})
+
+	// ==========================================
+	// CALL DISTRIBUTION GROUPS (Ring Groups)
+	// ==========================================
+	v1.GET("/ring-groups", func(c *gin.Context) {
+		var groups []CallDistributionGroup
+		scopedDB(c).Preload("Members").Find(&groups)
+		c.JSON(http.StatusOK, gin.H{"ring_groups": groups, "groups": groups})
+	})
+
+	v1.GET("/ring-groups/:id", func(c *gin.Context) {
+		id := c.Param("id")
+		var record CallDistributionGroup
+		if err := scopedDB(c).Preload("Members").First(&record, "id = ?", id).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Call distribution group not found"})
+			return
+		}
+		c.JSON(http.StatusOK, record)
+	})
+
+	v1.POST("/ring-groups", func(c *gin.Context) {
+		var item CallDistributionGroup
+		if err := c.ShouldBindJSON(&item); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		item.Name = strings.TrimSpace(item.Name)
+		item.InternalNumber = strings.TrimSpace(item.InternalNumber)
+		if item.Name == "" || item.InternalNumber == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Group Name and Internal Number are required"})
+			return
+		}
+		item.TenantID = getTenantID(c)
+
+		if err := DB.Create(&item).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		scopedDB(c).Preload("Members").First(&item, "id = ?", item.ID)
+		c.JSON(http.StatusCreated, item)
+	})
+
+	v1.PUT("/ring-groups/:id", func(c *gin.Context) {
+		id := c.Param("id")
+		var record CallDistributionGroup
+		if err := scopedDB(c).First(&record, "id = ?", id).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Call distribution group not found"})
+			return
+		}
+		var input CallDistributionGroup
+		if err := c.ShouldBindJSON(&input); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		if input.Name != "" {
+			record.Name = input.Name
+		}
+		if input.InternalNumber != "" {
+			record.InternalNumber = input.InternalNumber
+		}
+		record.SiteID = input.SiteID
+		record.SiteName = input.SiteName
+		record.RingCadence = input.RingCadence
+		record.CallerNamePrefix = input.CallerNamePrefix
+		record.NoAnswerTimeout = input.NoAnswerTimeout
+		record.NoAnswerDestination = input.NoAnswerDestination
+
+		err := DB.Transaction(func(tx *gorm.DB) error {
+			if err := tx.Save(&record).Error; err != nil {
+				return err
+			}
+			if input.Members != nil {
+				tx.Where("group_id = ?", record.ID).Delete(&GroupMember{})
+				for _, m := range input.Members {
+					m.GroupID = record.ID
+					m.ID = uuid.New()
+					tx.Create(&m)
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		scopedDB(c).Preload("Members").First(&record, "id = ?", record.ID)
+		c.JSON(http.StatusOK, record)
+	})
+
+	v1.DELETE("/ring-groups/:id", func(c *gin.Context) {
+		id := c.Param("id")
+		var record CallDistributionGroup
+		if err := scopedDB(c).First(&record, "id = ?", id).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Call distribution group not found"})
+			return
+		}
+		err := DB.Transaction(func(tx *gorm.DB) error {
+			tx.Where("group_id = ?", record.ID).Delete(&GroupMember{})
+			return tx.Delete(&record).Error
+		})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"status": "deleted"})
+	})
+
+	// ==========================================
+	// CALL QUEUES (ACD Queues)
+	// ==========================================
+	v1.GET("/queues", func(c *gin.Context) {
+		var queues []CallQueue
+		scopedDB(c).Preload("Members").Find(&queues)
+		c.JSON(http.StatusOK, gin.H{"queues": queues})
+	})
+
+	v1.GET("/queues/:id", func(c *gin.Context) {
+		id := c.Param("id")
+		var record CallQueue
+		if err := scopedDB(c).Preload("Members").First(&record, "id = ?", id).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Queue not found"})
+			return
+		}
+		c.JSON(http.StatusOK, record)
+	})
+
+	v1.POST("/queues", func(c *gin.Context) {
+		var item CallQueue
+		if err := c.ShouldBindJSON(&item); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		item.Name = strings.TrimSpace(item.Name)
+		item.Extension = strings.TrimSpace(item.Extension)
+		if item.Name == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Queue Name is required"})
+			return
+		}
+		if item.Extension == "" {
+			item.Extension = item.InternalNumber
+		}
+		if item.Extension == "" {
+			item.Extension = fmt.Sprintf("8%03d", time.Now().Unix()%1000)
+		}
+		item.TenantID = getTenantID(c)
+
+		if err := DB.Create(&item).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		scopedDB(c).Preload("Members").First(&item, "id = ?", item.ID)
+		c.JSON(http.StatusCreated, item)
+	})
+
+	v1.PUT("/queues/:id", func(c *gin.Context) {
+		id := c.Param("id")
+		var record CallQueue
+		if err := scopedDB(c).First(&record, "id = ?", id).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Queue not found"})
+			return
+		}
+		var input CallQueue
+		if err := c.ShouldBindJSON(&input); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		if input.Name != "" {
+			record.Name = input.Name
+		}
+		if input.Extension != "" {
+			record.Extension = input.Extension
+		}
+		record.MaxCapacity = input.MaxCapacity
+		record.RingStrategy = input.RingStrategy
+		record.MemberRingTimeout = input.MemberRingTimeout
+		record.MemberRetryDelay = input.MemberRetryDelay
+		record.MemberWrapUpDelay = input.MemberWrapUpDelay
+		record.InternalNumber = input.InternalNumber
+		record.PlayMusicWhileWaiting = input.PlayMusicWhileWaiting
+		record.Music = input.Music
+		record.CallerNamePrefix = input.CallerNamePrefix
+		record.RingCadence = input.RingCadence
+		record.AnnounceWaitTime = input.AnnounceWaitTime
+		record.AnnouncePosition = input.AnnouncePosition
+		record.AnnouncementInterval = input.AnnouncementInterval
+		record.NoAnswerTimeout = input.NoAnswerTimeout
+		record.NoAnswerDestination = input.NoAnswerDestination
+		record.ParkEnabled = input.ParkEnabled
+		record.ParkTelephoneNumber = input.ParkTelephoneNumber
+		record.ParkResumeWhenAtPosition = input.ParkResumeWhenAtPosition
+		record.ParkAllowedMinPosition = input.ParkAllowedMinPosition
+		record.ParkResumeRetryIntervalMin = input.ParkResumeRetryIntervalMin
+		record.ParkResumeMaxAttempts = input.ParkResumeMaxAttempts
+		record.ParkResumeMenuTimeoutSec = input.ParkResumeMenuTimeoutSec
+		record.ParkResumeDialTimeoutSec = input.ParkResumeDialTimeoutSec
+		record.ParkConfirmation = input.ParkConfirmation
+
+		err := DB.Transaction(func(tx *gorm.DB) error {
+			if err := tx.Save(&record).Error; err != nil {
+				return err
+			}
+			if input.Members != nil {
+				tx.Where("queue_id = ?", record.ID).Delete(&QueueMember{})
+				for _, m := range input.Members {
+					m.QueueID = record.ID
+					m.ID = uuid.New()
+					tx.Create(&m)
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		scopedDB(c).Preload("Members").First(&record, "id = ?", record.ID)
+		c.JSON(http.StatusOK, record)
+	})
+
+	v1.DELETE("/queues/:id", func(c *gin.Context) {
+		id := c.Param("id")
+		var record CallQueue
+		if err := scopedDB(c).First(&record, "id = ?", id).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Queue not found"})
+			return
+		}
+		err := DB.Transaction(func(tx *gorm.DB) error {
+			tx.Where("queue_id = ?", record.ID).Delete(&QueueMember{})
+			return tx.Delete(&record).Error
+		})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"status": "deleted"})
 	})
 }

@@ -415,12 +415,25 @@ func SetupRouter() *gin.Engine {
 				record.IsActive = input.IsActive
 				record.FirstName = input.FirstName
 				record.LastName = input.LastName
+				record.DisplayName = input.DisplayName
 				record.Email = input.Email
 				record.Department = input.Department
+				record.HomeNumber = input.HomeNumber
 				record.CallerIDName = input.CallerIDName
 				record.CallerIDNumber = input.CallerIDNumber
 				record.OutboundDID = input.OutboundDID
+				record.DirectNumber = input.DirectNumber
+				record.PresentationNumber = input.PresentationNumber
+				record.SiteID = input.SiteID
+				record.ButtonProfileID = input.ButtonProfileID
+				record.VoicemailNotification = input.VoicemailNotification
 				record.MobileNumber = input.MobileNumber
+				record.CallWaiting = input.CallWaiting
+				record.DoNotDisturb = input.DoNotDisturb
+				record.Forwarding = input.Forwarding
+				record.ForwardInternalTarget = input.ForwardInternalTarget
+				record.ForwardExternalTarget = input.ForwardExternalTarget
+				record.MobileTwinning = input.MobileTwinning
 				record.ForwardAlwaysEnabled = input.ForwardAlwaysEnabled
 				record.ForwardAlwaysTarget = input.ForwardAlwaysTarget
 				record.ForwardBusyEnabled = input.ForwardBusyEnabled
@@ -428,6 +441,19 @@ func SetupRouter() *gin.Engine {
 				record.ForwardNoAnswerEnabled = input.ForwardNoAnswerEnabled
 				record.ForwardNoAnswerTarget = input.ForwardNoAnswerTarget
 				record.RingTimeoutSeconds = input.RingTimeoutSeconds
+				record.InternalNoAnswerTimeout = input.InternalNoAnswerTimeout
+				record.InternalNoAnswerAction = input.InternalNoAnswerAction
+				record.InternalNoAnswerTarget = input.InternalNoAnswerTarget
+				record.InternalOnBusyAction = input.InternalOnBusyAction
+				record.InternalOnBusyTarget = input.InternalOnBusyTarget
+				record.ExternalNoAnswerTimeout = input.ExternalNoAnswerTimeout
+				record.ExternalNoAnswerAction = input.ExternalNoAnswerAction
+				record.ExternalNoAnswerTarget = input.ExternalNoAnswerTarget
+				record.ExternalOnBusyAction = input.ExternalOnBusyAction
+				record.ExternalOnBusyTarget = input.ExternalOnBusyTarget
+				if input.HandsetButtons != "" {
+					record.HandsetButtons = input.HandsetButtons
+				}
 				record.VoicemailEnabled = input.VoicemailEnabled
 				record.VoicemailPIN = input.VoicemailPIN
 				record.VoicemailToEmail = input.VoicemailToEmail
@@ -655,7 +681,27 @@ func SetupRouter() *gin.Engine {
 				record.InvalidDestType = input.InvalidDestType
 				record.InvalidDestTarget = input.InvalidDestTarget
 				record.AllowDirectDial = input.AllowDirectDial
-				DB.Save(&record)
+				record.PinCode = input.PinCode
+				record.SiteID = input.SiteID
+				record.AnnounceOnly = input.AnnounceOnly
+				record.TimeoutDestination = input.TimeoutDestination
+				record.SoundFile = input.SoundFile
+
+				_ = DB.Transaction(func(tx *gorm.DB) error {
+					if err := tx.Save(&record).Error; err != nil {
+						return err
+					}
+					if input.Choices != nil {
+						tx.Where("menu_id = ?", record.ID).Delete(&IVRChoice{})
+						for _, ch := range input.Choices {
+							ch.MenuID = record.ID
+							ch.ID = uuid.New()
+							tx.Create(&ch)
+						}
+					}
+					return nil
+				})
+				scopedDB(c).Preload("Choices").First(&record, "id = ?", record.ID)
 				c.JSON(http.StatusOK, record)
 			})
 
