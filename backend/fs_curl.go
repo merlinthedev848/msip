@@ -261,8 +261,31 @@ func handleDialplan(c *gin.Context) {
 `, xmlEscape(vr.Name), xmlEscape(vr.RoomCode), xmlEscape(vr.RoomCode), xmlEscape(vr.RoomCode)))
 		}
 
-		// Dynamic IVR Menus
+		// Dynamic IVR Menus & Ring Groups
 		for _, ivr := range ivrs {
+			if ivr.Greeting == "ring_group" || strings.HasPrefix(ivr.Name, "Ring Group:") {
+				var targets []string
+				for _, choice := range ivr.Choices {
+					if choice.Destination != "" {
+						targets = append(targets, fmt.Sprintf("user/%s@${domain_name}", choice.Destination))
+					}
+				}
+				if len(targets) > 0 {
+					bridgeTargets := strings.Join(targets, ",")
+					sb.WriteString(fmt.Sprintf(`
+      <!-- Ring Group Route: %s -->
+      <extension name="ring_group_%s">
+        <condition field="destination_number" expression="^%s$">
+          <action application="set" data="hangup_after_bridge=true"/>
+          <action application="set" data="call_timeout=30"/>
+          <action application="bridge" data="%s"/>
+        </condition>
+      </extension>
+`, xmlEscape(ivr.Name), xmlEscape(ivr.Extension), xmlEscape(ivr.Extension), xmlEscape(bridgeTargets)))
+					continue
+				}
+			}
+
 			sb.WriteString(fmt.Sprintf(`
       <!-- IVR Route: %s -->
       <extension name="ivr_%s">

@@ -42,7 +42,7 @@
   }
 
   function copyUrl() {
-    const url = `http://${window.location.hostname}:8081/api/v1/provisioning/`;
+    const url = `${window.location.origin}/api/v1/provisioning/`;
     navigator.clipboard.writeText(url);
     copyFeedback = true;
     setTimeout(() => copyFeedback = false, 2000);
@@ -109,7 +109,7 @@
 
         <div class="bg-slate-50 border border-slate-200 rounded-md p-2.5 flex items-center justify-between">
           <code class="text-xs text-sky-700 font-mono truncate">
-            http://{window.location.hostname}:8081/api/v1/provisioning/&lt;code&gt;
+            {window.location.origin}/api/v1/provisioning/&lt;code&gt;
           </code>
           <button 
             type="button" 

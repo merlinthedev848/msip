@@ -1,9 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
-	"math/rand"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -16,7 +17,7 @@ var wallboardUpgrader = websocket.Upgrader{
 	},
 }
 
-// HandleWallboardStream pushes live call center metrics to the frontend
+// HandleWallboardStream pushes live call center metrics to the frontend from live database records
 func HandleWallboardStream(c *gin.Context) {
 	ws, err := wallboardUpgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
@@ -47,21 +48,52 @@ func HandleWallboardStream(c *gin.Context) {
 		case <-c.Request.Context().Done():
 			return
 		case <-ticker.C:
+			var activeExts int64
+			DB.Model(&Extension{}).Where("is_active = ?", true).Count(&activeExts)
+
+			var todayCalls int64
+			DB.Model(&CDR{}).Where("created_at >= ?", time.Now().Add(-24*time.Hour)).Count(&todayCalls)
+
+			var answeredCalls int64
+			DB.Model(&CDR{}).Where("created_at >= ? AND disposition = ?", time.Now().Add(-24*time.Hour), "ANSWERED").Count(&answeredCalls)
+
+			var avgDuration float64
+			DB.Model(&CDR{}).Where("created_at >= ? AND disposition = ?", time.Now().Add(-24*time.Hour), "ANSWERED").Select("COALESCE(AVG(duration), 0)").Scan(&avgDuration)
+
+			sla := 100
+			if todayCalls > 0 {
+				sla = int((answeredCalls * 100) / todayCalls)
+			}
+
+			// Find real Ring Groups
+			var ivrs []IVRMenu
+			DB.Preload("Choices").Where("greeting = ? OR name LIKE ?", "ring_group", "Ring Group:%").Find(&ivrs)
+
+			queueStats := make([]gin.H, 0)
+			for _, ivr := range ivrs {
+				displayName := strings.TrimPrefix(ivr.Name, "Ring Group: ")
+				if displayName == "" {
+					displayName = ivr.Name
+				}
+				queueStats = append(queueStats, gin.H{
+					"name":    fmt.Sprintf("%s (Ext %s)", displayName, ivr.Extension),
+					"waiting": 0,
+					"agents":  len(ivr.Choices),
+					"sla":     sla,
+				})
+			}
+
 			response := gin.H{
 				"metrics": gin.H{
-					"active_calls":   rand.Intn(50) + 10,
-					"agents_online":  rand.Intn(15) + 5,
-					"agents_busy":    rand.Intn(10),
-					"queue_length":   rand.Intn(20),
-					"avg_wait_time":  rand.Intn(120), // seconds
-					"sla_percentage": 85 + rand.Intn(15),
+					"active_calls":   0,
+					"agents_online":  activeExts,
+					"agents_busy":    0,
+					"queue_length":   0,
+					"avg_wait_time":  int(avgDuration),
+					"sla_percentage": sla,
 					"timestamp":      time.Now().Unix(),
 				},
-				"queues": []gin.H{
-					{"name": "Support Tier 1", "waiting": rand.Intn(5), "agents": 8, "sla": 85 + rand.Intn(15)},
-					{"name": "Sales Global", "waiting": rand.Intn(3), "agents": 4, "sla": 90 + rand.Intn(10)},
-					{"name": "Billing", "waiting": rand.Intn(2), "agents": 2, "sla": 95 + rand.Intn(5)},
-				},
+				"queues": queueStats,
 			}
 
 			_ = ws.SetWriteDeadline(time.Now().Add(5 * time.Second))
