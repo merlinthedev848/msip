@@ -1,242 +1,220 @@
 <script lang="ts">
-  import GlassCard from '../components/ui/GlassCard.svelte';
-  import Badge from '../components/ui/Badge.svelte';
+  import { onMount } from 'svelte';
+  import { api } from '../lib/api';
+  import { toast, toastError } from '../lib/toast';
+  import PageHeader from '../components/ui/PageHeader.svelte';
+  import Card from '../components/ui/Card.svelte';
   import Button from '../components/ui/Button.svelte';
   import Modal from '../components/ui/Modal.svelte';
-  import { onMount } from 'svelte';
+  import Badge from '../components/ui/Badge.svelte';
+  import EmptyState from '../components/ui/EmptyState.svelte';
 
-  let trunks = [];
-  let isApiConnected = true;
-  
-  let isModalOpen = false;
-  let isEditModalOpen = false;
-  
-  let newTrunkName = '';
-  let newTrunkServer = '';
-  let newTrunkAuth = 'IP_ACL';
-  
-  let editTrunkId = '';
-  let editTrunkName = '';
-  let editTrunkServer = '';
-  let editTrunkAuth = 'IP_ACL';
-  
-  let isSubmitting = false;
+  interface TrunkItem {
+    ID: string;
+    ProviderName: string;
+    SIPServer: string;
+    AuthMethod: string;
+    Username: string;
+    Register: boolean;
+  }
 
-  async function fetchTrunks() {
+  let trunks: TrunkItem[] = [];
+  let loading = true;
+  let loadError = '';
+  let saving = false;
+  let search = '';
+
+  let modalOpen = false;
+  let editingId: string | null = null;
+  let form = {
+    ProviderName: '',
+    SIPServer: '',
+    AuthMethod: 'IP_ACL',
+    Username: '',
+    Password: '',
+    Register: false
+  };
+
+  $: filtered = trunks.filter(t => 
+    !search.trim() || `${t.ProviderName} ${t.SIPServer} ${t.Username}`.toLowerCase().includes(search.trim().toLowerCase())
+  );
+
+  async function load() {
+    loading = true;
+    loadError = '';
     try {
-      const res = await fetch(`/api/v1/trunks`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        trunks = data.trunks || [];
-        isApiConnected = true;
-      } else { throw new Error("API Offline"); }
-    } catch (e) {
-      isApiConnected = false;
-      trunks = [];
+      const data = await api.get<{ trunks: TrunkItem[] }>('/trunks');
+      trunks = data.trunks || [];
+    } catch (e: any) {
+      loadError = e.message;
+    } finally {
+      loading = false;
     }
   }
 
-  onMount(() => {
-    fetchTrunks();
-  });
+  function openCreate() {
+    editingId = null;
+    form = { ProviderName: '', SIPServer: '', AuthMethod: 'IP_ACL', Username: '', Password: '', Register: false };
+    modalOpen = true;
+  }
 
-  async function handleCreateTrunk(e) {
+  function openEdit(t: TrunkItem) {
+    editingId = t.ID;
+    form = {
+      ProviderName: t.ProviderName,
+      SIPServer: t.SIPServer,
+      AuthMethod: t.AuthMethod || 'IP_ACL',
+      Username: t.Username || '',
+      Password: '',
+      Register: t.Register ?? false
+    };
+    modalOpen = true;
+  }
+
+  async function save(e: Event) {
     e.preventDefault();
-    isSubmitting = true;
+    if (!form.ProviderName.trim()) return toast.error('Provider name is required');
+    if (!form.SIPServer.trim()) return toast.error('SIP Server is required');
+
+    saving = true;
     try {
-      const res = await fetch(`/api/v1/trunks`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('pbx_token')}`
-        },
-        body: JSON.stringify({
-          ProviderName: newTrunkName,
-          SIPServer: newTrunkServer,
-          AuthMethod: newTrunkAuth
-        })
-      });
-      
-      if (res.ok) {
-        isModalOpen = false;
-        newTrunkName = '';
-        newTrunkServer = '';
-        await fetchTrunks();
-      } else {
-        alert("Failed to create trunk.");
+      const payload: any = {
+        ProviderName: form.ProviderName.trim(),
+        SIPServer: form.SIPServer.trim(),
+        AuthMethod: form.AuthMethod,
+        Username: form.Username.trim(),
+        Register: form.Register
+      };
+      if (form.Password) {
+        payload.Password = form.Password;
       }
+
+      if (editingId) {
+        await api.put(`/trunks/${editingId}`, payload);
+        toast.success('Trunk updated');
+      } else {
+        await api.post('/trunks', payload);
+        toast.success('Trunk created');
+      }
+      modalOpen = false;
+      await load();
     } catch (err) {
-      alert("API Error: Make sure backend is running.");
+      toastError(err);
     } finally {
-      isSubmitting = false;
+      saving = false;
     }
   }
 
-  function openEditModal(trunk) {
-    editTrunkId = trunk.ID;
-    editTrunkName = trunk.ProviderName;
-    editTrunkServer = trunk.SIPServer;
-    editTrunkAuth = trunk.AuthMethod;
-    isEditModalOpen = true;
-  }
-
-  async function handleEditTrunk(e) {
-    e.preventDefault();
-    isSubmitting = true;
+  async function remove(t: TrunkItem) {
+    if (!confirm(`Delete SIP trunk ${t.ProviderName}?`)) return;
     try {
-      const res = await fetch(`/api/v1/trunks/${editTrunkId}`, {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('pbx_token')}`
-        },
-        body: JSON.stringify({
-          ProviderName: editTrunkName,
-          SIPServer: editTrunkServer,
-          AuthMethod: editTrunkAuth
-        })
-      });
-      if (res.ok) {
-        isEditModalOpen = false;
-        await fetchTrunks();
-      } else {
-        alert("Failed to update trunk.");
-      }
+      await api.del(`/trunks/${t.ID}`);
+      toast.success('Trunk deleted');
+      await load();
     } catch (e) {
-      alert("API Error updating trunk.");
-    } finally {
-      isSubmitting = false;
+      toastError(e);
     }
   }
 
-  async function handleDeleteTrunk(id) {
-    if(!confirm("Are you sure you want to delete this trunk?")) return;
-    try {
-      const res = await fetch(`/api/v1/trunks/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
-      });
-      if (res.ok) fetchTrunks();
-    } catch (e) {}
-  }
+  onMount(load);
 </script>
 
-<div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">
-  <header class="flex justify-between items-end mb-8">
-    <div>
-      <h1 class="text-3xl font-bold tracking-tight text-white mb-1">SIP Trunks</h1>
-      <p class="text-slate-500 text-sm">Manage external carrier connections.</p>
-    </div>
-    <Button variant="primary" on:click={() => isModalOpen = true}>Add Trunk</Button>
-  </header>
+<PageHeader title="SIP Trunks" description="Manage carrier gateways and external VoIP interconnects.">
+  <Button on:click={openCreate}>+ New Trunk</Button>
+</PageHeader>
 
-  {#if !isApiConnected}
-  <div class="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg flex items-start space-x-3 text-yellow-500 text-sm">
-    <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-    <div>
-      <p class="font-bold">Backend API Offline</p>
-      <p class="opacity-80 mt-1">The Go backend (port 8081) is not responding.</p>
+<Card padded={false} title="Configured Gateways" subtitle="{trunks.length} trunks">
+  <svelte:fragment slot="actions">
+    <input class="input !py-1.5 !text-xs w-56" placeholder="Search trunk…" bind:value={search} aria-label="Search trunks" />
+  </svelte:fragment>
+
+  {#if loading || loadError || filtered.length === 0}
+    <EmptyState
+      {loading}
+      error={loadError}
+      title={search ? 'No trunks match your search' : 'No SIP trunks configured'}
+      message={search ? '' : 'Add an outbound/inbound SIP trunk to route PSTN calls through your carrier.'}
+    >
+      {#if !search}<Button size="sm" on:click={openCreate}>Add first trunk</Button>{/if}
+      <svelte:fragment slot="retry"><Button size="sm" variant="secondary" on:click={load}>Retry</Button></svelte:fragment>
+    </EmptyState>
+  {:else}
+    <div class="overflow-x-auto">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Provider</th>
+            <th>SIP Server</th>
+            <th>Auth Method</th>
+            <th>Username</th>
+            <th>Registration</th>
+            <th class="text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {#each filtered as t (t.ID)}
+            <tr>
+              <td class="font-bold text-slate-800 text-sm">{t.ProviderName}</td>
+              <td class="mono text-xs text-slate-700">{t.SIPServer}</td>
+              <td><Badge tone="info">{t.AuthMethod}</Badge></td>
+              <td class="mono text-xs text-slate-600">{t.Username || '—'}</td>
+              <td>
+                <Badge tone={t.Register ? 'success' : 'neutral'}>
+                  {t.Register ? 'Registered' : 'IP-Auth'}
+                </Badge>
+              </td>
+              <td class="text-right space-x-3 whitespace-nowrap">
+                <button type="button" class="link-action" on:click={() => openEdit(t)}>Edit</button>
+                <button type="button" class="link-danger" on:click={() => remove(t)}>Delete</button>
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
     </div>
-  </div>
   {/if}
+</Card>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    {#if trunks.length === 0}
-      <div class="col-span-2 p-12 text-center flex flex-col items-center justify-center bg-[#121622] border border-[#202738] rounded-xl">
-        <div class="w-14 h-14 bg-[#182030] border border-[#26334A] rounded-xl flex items-center justify-center mb-4">
-          <svg class="w-7 h-7 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 8.25l-7.5 7.5-7.5-7.5"></path></svg>
-        </div>
-        <h3 class="text-base font-bold text-white mb-1 font-mono">No SIP Trunks Configured</h3>
-        <p class="text-slate-400 text-xs max-w-sm font-mono">Connect your first external carrier gateway or proxy by clicking "Add Trunk".</p>
+<Modal bind:isOpen={modalOpen} title={editingId ? 'Edit Trunk' : 'Add SIP Trunk'}>
+  <form on:submit={save} class="space-y-4">
+    <div>
+      <label for="trunk-name" class="label">Provider Name</label>
+      <input id="trunk-name" class="input" bind:value={form.ProviderName} placeholder="e.g. Twilio Elastic SIP" required />
+    </div>
+
+    <div>
+      <label for="trunk-server" class="label">SIP Server / Host</label>
+      <input id="trunk-server" class="input mono" bind:value={form.SIPServer} placeholder="e.g. sip.carrier.com" required />
+    </div>
+
+    <div>
+      <label for="trunk-auth" class="label">Authentication Method</label>
+      <select id="trunk-auth" class="select" bind:value={form.AuthMethod}>
+        <option value="IP_ACL">IP ACL / Whitelist</option>
+        <option value="USERPASS">Username & Password</option>
+      </select>
+    </div>
+
+    {#if form.AuthMethod === 'USERPASS'}
+      <div>
+        <label for="trunk-user" class="label">Username</label>
+        <input id="trunk-user" class="input mono" bind:value={form.Username} placeholder="SIP Username" />
+      </div>
+
+      <div>
+        <label for="trunk-pass" class="label">Password {editingId ? '(leave blank to keep current)' : ''}</label>
+        <input id="trunk-pass" type="password" class="input mono" bind:value={form.Password} placeholder="SIP Password" />
+      </div>
+
+      <div class="flex items-center space-x-2 pt-1">
+        <input id="trunk-reg" type="checkbox" bind:checked={form.Register} class="rounded border-slate-300 text-sky-600 focus:ring-sky-500" />
+        <label for="trunk-reg" class="text-xs font-medium text-slate-700">Send SIP REGISTER packets to gateway</label>
       </div>
     {/if}
 
-    <!-- Dynamic Trunks from DB -->
-    {#each trunks as trunk}
-      <GlassCard>
-        <div class="flex justify-between items-start mb-6">
-          <div>
-            <h3 class="text-xl font-bold text-white">{trunk.ProviderName}</h3>
-            <p class="text-sm text-slate-500">{trunk.SIPServer}</p>
-          </div>
-          <Badge status="success" pulse={true}>Registered</Badge>
-        </div>
-        <div class="space-y-4">
-          <div class="flex justify-between text-sm">
-            <span class="text-slate-500">Auth Method</span>
-            <span class="text-slate-700">{trunk.AuthMethod}</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-slate-500">Database ID</span>
-            <span class="text-slate-700 font-mono text-xs">{trunk.ID ? trunk.ID.substring(0, 8) : 'N/A'}...</span>
-          </div>
-        </div>
-        <div class="mt-6 pt-4 border-t border-slate-800 flex justify-end space-x-3">
-          <Button variant="secondary" className="px-4 text-xs" on:click={() => openEditModal(trunk)}>Configure</Button>
-          <Button variant="danger" className="px-4 text-xs" on:click={() => handleDeleteTrunk(trunk.ID)}>Delete</Button>
-        </div>
-      </GlassCard>
-    {/each}
-  </div>
-</div>
-
-<!-- Add Trunk Modal -->
-<Modal bind:isOpen={isModalOpen} title="Add SIP Trunk" description="Connect to an external carrier or upstream PBX.">
-  <form on:submit={handleCreateTrunk} class="space-y-5">
-    <div>
-      <label for="trunkName" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Provider Name</label>
-      <input id="trunkName" type="text" bind:value={newTrunkName} required placeholder="e.g. Twilio, Flowroute" class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
-    </div>
-    <div>
-      <label for="trunkServer" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">SIP Server (IP/Domain)</label>
-      <input id="trunkServer" type="text" bind:value={newTrunkServer} required placeholder="e.g. sip.provider.com" class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
-    </div>
-    <div>
-      <label for="trunkAuth" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Authentication Method</label>
-      <select id="trunkAuth" bind:value={newTrunkAuth} class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none appearance-none">
-        <option value="IP_ACL">IP Authentication (ACL)</option>
-        <option value="USERPASS">Username / Password</option>
-      </select>
-    </div>
-    
-    <div class="pt-4 flex justify-end space-x-3">
-      <Button variant="secondary" on:click={() => isModalOpen = false} type="button">Cancel</Button>
-      <button type="submit" disabled={isSubmitting} class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50">
-        {isSubmitting ? 'Saving...' : 'Add Trunk'}
-      </button>
+    <div class="flex justify-end gap-2 pt-2">
+      <Button variant="secondary" on:click={() => modalOpen = false}>Cancel</Button>
+      <Button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button>
     </div>
   </form>
 </Modal>
-
-<!-- Edit Trunk Modal -->
-<Modal bind:isOpen={isEditModalOpen} title="Configure SIP Trunk" description="Update settings for this external carrier connection.">
-  <form on:submit={handleEditTrunk} class="space-y-5">
-    <div>
-      <label for="editTrunkName" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Provider Name</label>
-      <input id="editTrunkName" type="text" bind:value={editTrunkName} required placeholder="e.g. Twilio, Flowroute" class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
-    </div>
-    <div>
-      <label for="editTrunkServer" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">SIP Server (IP/Domain)</label>
-      <input id="editTrunkServer" type="text" bind:value={editTrunkServer} required placeholder="e.g. sip.provider.com" class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
-    </div>
-    <div>
-      <label for="editTrunkAuth" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Authentication Method</label>
-      <select id="editTrunkAuth" bind:value={editTrunkAuth} class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none appearance-none">
-        <option value="IP_ACL">IP Authentication (ACL)</option>
-        <option value="USERPASS">Username / Password</option>
-      </select>
-    </div>
-    
-    <div class="pt-4 flex justify-end space-x-3">
-      <Button variant="secondary" on:click={() => isEditModalOpen = false} type="button">Cancel</Button>
-      <button type="submit" disabled={isSubmitting} class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50">
-        {isSubmitting ? 'Saving...' : 'Save Changes'}
-      </button>
-    </div>
-  </form>
-</Modal>
-
-
-

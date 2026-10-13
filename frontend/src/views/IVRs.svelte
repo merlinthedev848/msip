@@ -1,217 +1,243 @@
 <script lang="ts">
-  import GlassCard from '../components/ui/GlassCard.svelte';
-  import Badge from '../components/ui/Badge.svelte';
+  import { onMount } from 'svelte';
+  import { api } from '../lib/api';
+  import { toast, toastError } from '../lib/toast';
+  import PageHeader from '../components/ui/PageHeader.svelte';
+  import Card from '../components/ui/Card.svelte';
   import Button from '../components/ui/Button.svelte';
   import Modal from '../components/ui/Modal.svelte';
-  import { onMount } from 'svelte';
+  import EmptyState from '../components/ui/EmptyState.svelte';
 
-  let ivrs = [];
-  let isApiConnected = true;
-  
-  let isModalOpen = false;
-  let isEditModalOpen = false;
-  let newIvrName = '';
-  let newIvrExtension = '';
-  let newIvrGreeting = 'phrase:greeting';
-  let isSubmitting = false;
+  interface Choice {
+    Digits: string;
+    Action: string;
+    Destination: string;
+  }
 
-  let editIvrId = '';
-  let editIvrName = '';
-  let editIvrExtension = '';
-  let editIvrGreeting = '';
+  interface IVRItem {
+    ID: string;
+    Name: string;
+    Extension: string;
+    Greeting: string;
+    Timeout: number;
+    Choices: Choice[];
+    CreatedAt: string;
+  }
 
-  async function fetchIVRs() {
+  let ivrs: IVRItem[] = [];
+  let loading = true;
+  let loadError = '';
+  let saving = false;
+  let search = '';
+
+  let modalOpen = false;
+  let editingId: string | null = null;
+  let form = {
+    Name: '',
+    Extension: '',
+    Greeting: '',
+    Timeout: 10000,
+    Choices: [] as Choice[]
+  };
+
+  $: filtered = ivrs.filter(i => 
+    !search.trim() || `${i.Name} ${i.Extension}`.toLowerCase().includes(search.trim().toLowerCase())
+  );
+
+  async function load() {
+    loading = true;
+    loadError = '';
     try {
-      const res = await fetch(`/api/v1/ivrs`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        ivrs = data.ivrs || [];
-        isApiConnected = true;
-      } else { throw new Error("API Offline"); }
+      const data = await api.get<{ ivrs: IVRItem[] }>('/ivrs');
+      ivrs = data.ivrs || [];
+    } catch (e: any) {
+      loadError = e.message;
+    } finally {
+      loading = false;
+    }
+  }
+
+  function openCreate() {
+    editingId = null;
+    form = {
+      Name: '',
+      Extension: '',
+      Greeting: 'welcome.wav',
+      Timeout: 10000,
+      Choices: [{ Digits: '1', Action: 'transfer', Destination: '1001' }]
+    };
+    modalOpen = true;
+  }
+
+  function openEdit(ivr: IVRItem) {
+    editingId = ivr.ID;
+    form = {
+      Name: ivr.Name,
+      Extension: ivr.Extension,
+      Greeting: ivr.Greeting,
+      Timeout: ivr.Timeout || 10000,
+      Choices: (ivr.Choices && ivr.Choices.length > 0) ? JSON.parse(JSON.stringify(ivr.Choices)) : [{ Digits: '1', Action: 'transfer', Destination: '1001' }]
+    };
+    modalOpen = true;
+  }
+
+  function addChoice() {
+    form.Choices = [...form.Choices, { Digits: '', Action: 'transfer', Destination: '' }];
+  }
+
+  function removeChoice(idx: number) {
+    form.Choices = form.Choices.filter((_, i) => i !== idx);
+  }
+
+  async function save(e: Event) {
+    e.preventDefault();
+    if (!form.Name.trim()) return toast.error('Name is required');
+    if (!form.Extension.trim()) return toast.error('Extension is required');
+
+    saving = true;
+    try {
+      const payload = {
+        Name: form.Name.trim(),
+        Extension: form.Extension.trim(),
+        Greeting: form.Greeting.trim(),
+        Timeout: Number(form.Timeout) || 10000,
+        Choices: form.Choices.filter(c => c.Digits.trim() && c.Destination.trim())
+      };
+
+      if (editingId) {
+        await api.put(`/ivrs/${editingId}`, payload);
+        toast.success('IVR Menu updated');
+      } else {
+        await api.post('/ivrs', payload);
+        toast.success('IVR Menu created');
+      }
+      modalOpen = false;
+      await load();
+    } catch (err) {
+      toastError(err);
+    } finally {
+      saving = false;
+    }
+  }
+
+  async function remove(ivr: IVRItem) {
+    if (!confirm(`Delete IVR menu "${ivr.Name}"?`)) return;
+    try {
+      await api.del(`/ivrs/${ivr.ID}`);
+      toast.success('IVR menu deleted');
+      await load();
     } catch (e) {
-      isApiConnected = false;
-      ivrs = [];
+      toastError(e);
     }
   }
 
-  onMount(() => {
-    fetchIVRs();
-  });
-
-  async function handleCreateIVR(e) {
-    e.preventDefault();
-    isSubmitting = true;
-    try {
-      const res = await fetch(`/api/v1/ivrs`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('pbx_token')}`
-        },
-        body: JSON.stringify({
-          Name: newIvrName,
-          Extension: newIvrExtension,
-          Greeting: newIvrGreeting
-        })
-      });
-      
-      if (res.ok) {
-        isModalOpen = false;
-        newIvrName = '';
-        newIvrExtension = '';
-        await fetchIVRs();
-      } else {
-        alert("Failed to create IVR.");
-      }
-    } catch (err) {
-      alert("API Error");
-    } finally {
-      isSubmitting = false;
-    }
-  }
-
-  function openEditModal(ivr) {
-    editIvrId = ivr.ID;
-    editIvrName = ivr.Name;
-    editIvrExtension = ivr.Extension;
-    editIvrGreeting = ivr.Greeting;
-    isEditModalOpen = true;
-  }
-
-  async function handleEditIVR(e) {
-    e.preventDefault();
-    isSubmitting = true;
-    try {
-      const res = await fetch(`/api/v1/ivrs/${editIvrId}`, {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('pbx_token')}`
-        },
-        body: JSON.stringify({
-          Name: editIvrName,
-          Extension: editIvrExtension,
-          Greeting: editIvrGreeting
-        })
-      });
-      
-      if (res.ok) {
-        isEditModalOpen = false;
-        await fetchIVRs();
-      } else {
-        alert("Failed to update IVR.");
-      }
-    } catch (err) {
-      alert("API Error updating IVR.");
-    } finally {
-      isSubmitting = false;
-    }
-  }
-
-  async function handleDeleteIVR(id) {
-    if(!confirm("Are you sure you want to delete this IVR menu?")) return;
-    try {
-      const res = await fetch(`/api/v1/ivrs/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
-      });
-      if (res.ok) fetchIVRs();
-    } catch (e) {}
-  }
+  onMount(load);
 </script>
 
-<div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">
-  <header class="flex justify-between items-end mb-8">
-    <div>
-      <h1 class="text-3xl font-bold tracking-tight text-white mb-1">Auto Attendants (IVR)</h1>
-      <p class="text-slate-500 text-sm">Configure voice menus and digit routing.</p>
-    </div>
-    <Button variant="primary" on:click={() => isModalOpen = true}>New Menu</Button>
-  </header>
+<PageHeader title="Digital Receptionists (IVR)" description="Interactive auto attendants and keypress menu trees.">
+  <Button on:click={openCreate}>+ New IVR Menu</Button>
+</PageHeader>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    {#each ivrs as ivr}
-      <GlassCard>
-        <div class="flex justify-between items-start mb-6">
-          <div>
-            <h3 class="text-xl font-bold text-white">{ivr.Name}</h3>
-            <p class="text-sm font-mono text-blue-600">Ext: {ivr.Extension}</p>
-          </div>
-          <Badge status="success">Active</Badge>
-        </div>
-        <div class="space-y-4">
-          <div class="flex justify-between text-sm">
-            <span class="text-slate-500">Greeting</span>
-            <span class="text-slate-700 font-mono text-xs">{ivr.Greeting}</span>
-          </div>
-          <div class="flex justify-between text-sm">
-            <span class="text-slate-500">Configured Choices</span>
-            <span class="text-slate-700">{ivr.Choices ? ivr.Choices.length : 0} options</span>
-          </div>
-        </div>
-        <div class="mt-6 pt-4 border-t border-slate-800 flex justify-end space-x-3">
-          <Button variant="secondary" className="px-4 text-xs" on:click={() => openEditModal(ivr)}>Edit Menu</Button>
-          <Button variant="danger" className="px-4 text-xs" on:click={() => handleDeleteIVR(ivr.ID)}>Delete</Button>
-        </div>
-      </GlassCard>
-    {/each}
-    {#if ivrs.length === 0}
-      <div class="col-span-full p-8 text-center text-slate-500 border border-dashed border-slate-800 rounded-2xl">
-        No IVR Menus configured. Click "New Menu" to get started.
+<Card padded={false} title="Configured Auto Attendants" subtitle="{ivrs.length} menus">
+  <svelte:fragment slot="actions">
+    <input class="input !py-1.5 !text-xs w-56" placeholder="Search menu…" bind:value={search} aria-label="Search menus" />
+  </svelte:fragment>
+
+  {#if loading || loadError || filtered.length === 0}
+    <EmptyState
+      {loading}
+      error={loadError}
+      title={search ? 'No IVR menus match your search' : 'No IVR menus configured'}
+      message={search ? '' : 'Create an IVR menu to greet incoming callers and route by DTMF keypresses.'}
+    >
+      {#if !search}<Button size="sm" on:click={openCreate}>Add first IVR</Button>{/if}
+      <svelte:fragment slot="retry"><Button size="sm" variant="secondary" on:click={load}>Retry</Button></svelte:fragment>
+    </EmptyState>
+  {:else}
+    <div class="overflow-x-auto">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Extension</th>
+            <th>Audio Prompt</th>
+            <th>Keypress Options</th>
+            <th class="text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {#each filtered as ivr (ivr.ID)}
+            <tr>
+              <td class="font-bold text-slate-800 text-sm">{ivr.Name}</td>
+              <td class="mono font-semibold text-sky-700 text-xs">{ivr.Extension}</td>
+              <td class="mono text-xs text-slate-600">{ivr.Greeting}</td>
+              <td>
+                <div class="flex flex-wrap gap-1">
+                  {#each (ivr.Choices || []) as c}
+                    <span class="mono px-1.5 py-0.5 bg-slate-100 rounded text-[11px] text-slate-700 border border-slate-200">
+                      Press {c.Digits} &rarr; {c.Destination}
+                    </span>
+                  {:else}
+                    <span class="text-xs text-slate-400">None</span>
+                  {/each}
+                </div>
+              </td>
+              <td class="text-right space-x-3 whitespace-nowrap">
+                <button type="button" class="link-action" on:click={() => openEdit(ivr)}>Edit</button>
+                <button type="button" class="link-danger" on:click={() => remove(ivr)}>Delete</button>
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    </div>
+  {/if}
+</Card>
+
+<Modal bind:isOpen={modalOpen} title={editingId ? 'Edit IVR Menu' : 'New IVR Menu'}>
+  <form on:submit={save} class="space-y-4">
+    <div>
+      <label for="ivr-name" class="label">Menu Name</label>
+      <input id="ivr-name" class="input" bind:value={form.Name} placeholder="e.g. Main Company Reception" required />
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label for="ivr-ext" class="label">Menu Extension</label>
+        <input id="ivr-ext" class="input mono" bind:value={form.Extension} placeholder="e.g. 7000" required />
       </div>
-    {/if}
-  </div>
-</div>
+      <div>
+        <label for="ivr-timeout" class="label">Timeout (ms)</label>
+        <input id="ivr-timeout" type="number" class="input mono" bind:value={form.Timeout} required />
+      </div>
+    </div>
 
-<!-- Add IVR Modal -->
-<Modal bind:isOpen={isModalOpen} title="Create Auto Attendant" description="Create a new interactive voice menu.">
-  <form on:submit={handleCreateIVR} class="space-y-5">
     <div>
-      <label for="ivrName" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Menu Name</label>
-      <input id="ivrName" type="text" bind:value={newIvrName} required placeholder="e.g. Main Menu" class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none">
+      <label for="ivr-greeting" class="label">Audio Prompt / WAV File</label>
+      <input id="ivr-greeting" class="input mono" bind:value={form.Greeting} placeholder="e.g. ivr/main_welcome.wav" required />
     </div>
+
     <div>
-      <label for="ivrExt" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Virtual Extension</label>
-      <input id="ivrExt" type="text" bind:value={newIvrExtension} required placeholder="e.g. 8000" class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-semibold text-slate-700">DTMF Keypress Choices</span>
+        <button type="button" on:click={addChoice} class="text-xs text-sky-700 font-semibold hover:underline">+ Add Key</button>
+      </div>
+
+      <div class="space-y-2">
+        {#each form.Choices as choice, idx}
+          <div class="flex items-center gap-2">
+            <input class="input mono w-20 text-center" bind:value={choice.Digits} placeholder="Key" aria-label="Digits" required />
+            <span class="text-xs text-slate-400">&rarr;</span>
+            <input class="input mono flex-1" bind:value={choice.Destination} placeholder="Target Ext/Queue" aria-label="Destination" required />
+            <button type="button" on:click={() => removeChoice(idx)} class="text-rose-600 hover:text-rose-800 p-1" title="Remove choice">✕</button>
+          </div>
+        {/each}
+      </div>
     </div>
-    <div>
-      <label for="ivrGreeting" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Greeting Phrase / Audio File</label>
-      <input id="ivrGreeting" type="text" bind:value={newIvrGreeting} required placeholder="phrase:greeting" class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none">
-    </div>
-    
-    <div class="pt-4 flex justify-end space-x-3">
-      <Button variant="secondary" on:click={() => isModalOpen = false} type="button">Cancel</Button>
-      <button type="submit" disabled={isSubmitting} class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg disabled:opacity-50">
-        {isSubmitting ? 'Saving...' : 'Create Menu'}
-      </button>
+
+    <div class="flex justify-end gap-2 pt-2">
+      <Button variant="secondary" on:click={() => modalOpen = false}>Cancel</Button>
+      <Button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button>
     </div>
   </form>
 </Modal>
-
-<!-- Edit IVR Modal -->
-<Modal bind:isOpen={isEditModalOpen} title="Edit Auto Attendant" description="Modify interactive voice menu configuration.">
-  <form on:submit={handleEditIVR} class="space-y-5">
-    <div>
-      <label for="editIvrName" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Menu Name</label>
-      <input id="editIvrName" type="text" bind:value={editIvrName} required placeholder="e.g. Main Menu" class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none">
-    </div>
-    <div>
-      <label for="editIvrExt" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Virtual Extension</label>
-      <input id="editIvrExt" type="text" bind:value={editIvrExtension} required placeholder="e.g. 8000" class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none">
-    </div>
-    <div>
-      <label for="editIvrGreeting" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Greeting Phrase / Audio File</label>
-      <input id="editIvrGreeting" type="text" bind:value={editIvrGreeting} required placeholder="phrase:greeting" class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none">
-    </div>
-    
-    <div class="pt-4 flex justify-end space-x-3">
-      <Button variant="secondary" on:click={() => isEditModalOpen = false} type="button">Cancel</Button>
-      <button type="submit" disabled={isSubmitting} class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg disabled:opacity-50">
-        {isSubmitting ? 'Saving...' : 'Save Changes'}
-      </button>
-    </div>
-  </form>
-</Modal>
-

@@ -1,99 +1,122 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import GlassCard from '../components/ui/GlassCard.svelte';
-  import Badge from '../components/ui/Badge.svelte';
+  import { api, formatDateTime, formatDuration } from '../lib/api';
+  import { toast, toastError } from '../lib/toast';
+  import PageHeader from '../components/ui/PageHeader.svelte';
+  import Card from '../components/ui/Card.svelte';
   import Button from '../components/ui/Button.svelte';
+  import Badge from '../components/ui/Badge.svelte';
+  import EmptyState from '../components/ui/EmptyState.svelte';
 
-  let voicemails = [];
-  async function fetchVoicemails() {
-    try {
-      const res = await fetch(`/api/v1/voicemails`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        voicemails = data.voicemails || [];
-      }
-    } catch (e) {}
+  interface VoicemailItem {
+    ID: string;
+    Extension: string;
+    CallerID: string;
+    Duration: number;
+    FilePath: string;
+    IsRead: boolean;
+    CreatedAt: string;
   }
 
-  onMount(fetchVoicemails);
+  let voicemails: VoicemailItem[] = [];
+  let loading = true;
+  let loadError = '';
+  let search = '';
 
-  async function handleDelete(id) {
-    if(!confirm("Delete this voicemail?")) return;
+  $: filtered = voicemails.filter(v => 
+    !search.trim() || `${v.Extension} ${v.CallerID}`.toLowerCase().includes(search.trim().toLowerCase())
+  );
+
+  async function load() {
+    loading = true;
+    loadError = '';
     try {
-      const res = await fetch(`/api/v1/voicemails/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
-      });
-      if (res.ok) fetchVoicemails();
-    } catch (e) {}
+      const data = await api.get<{ voicemails: VoicemailItem[] }>('/voicemails');
+      voicemails = data.voicemails || [];
+    } catch (e: any) {
+      loadError = e.message;
+    } finally {
+      loading = false;
+    }
   }
 
-  async function handleSimulate() {
+  async function toggleRead(v: VoicemailItem) {
     try {
-      const res = await fetch(`/api/v1/voicemails`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('pbx_token')}`
-        },
-        body: JSON.stringify({ CallerID: 'Test Caller', Extension: '1001', Duration: 15, IsRead: false })
-      });
-      if (res.ok) fetchVoicemails();
-    } catch (e) {}
+      await api.put(`/voicemails/${v.ID}`, { IsRead: !v.IsRead });
+      toast.success(v.IsRead ? 'Marked unread' : 'Marked read');
+      await load();
+    } catch (e) {
+      toastError(e);
+    }
   }
+
+  async function remove(v: VoicemailItem) {
+    if (!confirm(`Delete voicemail from ${v.CallerID}?`)) return;
+    try {
+      await api.del(`/voicemails/${v.ID}`);
+      toast.success('Voicemail deleted');
+      await load();
+    } catch (e) {
+      toastError(e);
+    }
+  }
+
+  onMount(load);
 </script>
 
-<div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">
-  <header class="flex justify-between items-end mb-8">
-    <div>
-      <h1 class="text-3xl font-bold tracking-tight text-white mb-1">Visual Voicemail</h1>
-      <p class="text-slate-500 text-sm">Listen and read transcriptions of incoming messages.</p>
-    </div>
-    <button class="bg-cyan-600 hover:bg-cyan-500 text-slate-950 px-4 py-2 rounded-lg font-bold text-xs font-mono uppercase tracking-wider transition-colors" on:click={handleSimulate}>
-      Simulate Voicemail
-    </button>
-  </header>
+<PageHeader title="Voicemail Server" description="Stored audio messages, duration, and mailbox states.">
+  <Button variant="secondary" on:click={load}>Refresh</Button>
+</PageHeader>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    {#if voicemails.length === 0}
-      <div class="col-span-1 md:col-span-2 p-8 text-center text-slate-400 bg-[#121622] border border-[#202738] rounded-xl font-mono text-xs">No voicemails found.</div>
-    {/if}
-    {#each voicemails as vm}
-    <GlassCard hoverEffect={true}>
-      <div class="flex justify-between items-start mb-4">
-        <div class="flex items-center space-x-3">
-          <div class="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center">
-            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-          </div>
-          <div>
-            <p class="font-semibold text-white">{vm.CallerID}</p>
-            <p class="text-xs text-slate-500">Extension: {vm.Extension} • Duration: {vm.Duration}s</p>
-          </div>
-        </div>
-        {#if !vm.IsRead}
-          <Badge status="error">New</Badge>
-        {/if}
-      </div>
-      
-      <div class="bg-slate-900 p-4 text-slate-100 rounded-lg border border-slate-800 mb-4">
-        <p class="text-sm text-slate-700 italic font-serif leading-relaxed">[Voicemail transcription unavailable]</p>
-      </div>
-      
-      <div class="flex items-center space-x-4">
-        <button title="Play Voicemail" aria-label="Play Voicemail" class="w-10 h-10 rounded-full bg-indigo-600 hover:bg-indigo-500 flex items-center justify-center transition-colors shadow-lg shadow-indigo-500/30">
-          <svg class="w-4 h-4 text-white ml-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
-        </button>
-        <div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
-          <div class="h-full bg-indigo-500 w-1/3"></div>
-        </div>
-        <span class="text-xs text-slate-500 font-mono">0:00 / {vm.Duration}</span>
-        <button title="Delete Voicemail" aria-label="Delete Voicemail" class="text-rose-500 hover:text-white p-2 rounded hover:bg-rose-500 ml-4 transition-colors" on:click={() => handleDelete(vm.ID)}>
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-        </button>
-      </div>
-    </GlassCard>
-    {/each}
-  </div>
-</div>
+<Card padded={false} title="Mailbox Messages" subtitle="{voicemails.length} recordings">
+  <svelte:fragment slot="actions">
+    <input class="input !py-1.5 !text-xs w-56" placeholder="Search extension or caller…" bind:value={search} aria-label="Search messages" />
+  </svelte:fragment>
+
+  {#if loading || loadError || filtered.length === 0}
+    <EmptyState
+      {loading}
+      error={loadError}
+      title={search ? 'No voicemails match your search' : 'No voicemails recorded'}
+      message={search ? '' : 'Voicemail recordings left on PBX extensions will appear here.'}
+    >
+      <svelte:fragment slot="retry"><Button size="sm" variant="secondary" on:click={load}>Retry</Button></svelte:fragment>
+    </EmptyState>
+  {:else}
+    <div class="overflow-x-auto">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Extension</th>
+            <th>Caller ID</th>
+            <th>Duration</th>
+            <th>Status</th>
+            <th>Received</th>
+            <th class="text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {#each filtered as v (v.ID)}
+            <tr>
+              <td class="mono font-bold text-slate-800 text-sm">{v.Extension}</td>
+              <td class="mono text-xs text-slate-700">{v.CallerID || 'Unknown'}</td>
+              <td class="mono text-xs text-slate-600">{formatDuration(v.Duration)}</td>
+              <td>
+                <Badge tone={v.IsRead ? 'neutral' : 'warning'}>
+                  {v.IsRead ? 'Read' : 'New'}
+                </Badge>
+              </td>
+              <td class="text-xs text-slate-500">{formatDateTime(v.CreatedAt)}</td>
+              <td class="text-right space-x-3 whitespace-nowrap">
+                <button type="button" class="link-action" on:click={() => toggleRead(v)}>
+                  {v.IsRead ? 'Mark Unread' : 'Mark Read'}
+                </button>
+                <button type="button" class="link-danger" on:click={() => remove(v)}>Delete</button>
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    </div>
+  {/if}
+</Card>

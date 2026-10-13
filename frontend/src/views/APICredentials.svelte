@@ -1,132 +1,164 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { api } from '../lib/api';
+  import { toast, toastError } from '../lib/toast';
+  import PageHeader from '../components/ui/PageHeader.svelte';
+  import Card from '../components/ui/Card.svelte';
+  import Button from '../components/ui/Button.svelte';
   import Modal from '../components/ui/Modal.svelte';
-  let tokens = [];
-  let isModalOpen = false;
-  let newTokenName = '';
+  import EmptyState from '../components/ui/EmptyState.svelte';
 
-  async function fetchTokens() {
-    try {
-      const res = await fetch(`/api/v1/credentials`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        tokens = (data.credentials || []).map(t => ({
-          id: t.TokenKey, rawId: t.ID, name: t.Name, scopes: ['*'], created: t.CreatedAt, lastUsed: 'Never', status: 'Active'
-        }));
-      }
-    } catch (e) {}
+  interface CredentialItem {
+    ID: string;
+    Name: string;
+    TokenKey: string;
+    CreatedAt: string;
   }
 
-  onMount(fetchTokens);
+  let credentials: CredentialItem[] = [];
+  let loading = true;
+  let loadError = '';
+  let saving = false;
+  let search = '';
 
-  async function handleCreateToken(e) {
+  let modalOpen = false;
+  let form = { Name: '' };
+  let createdSecret = '';
+  let createdTokenKey = '';
+
+  $: filtered = credentials.filter(c => 
+    !search.trim() || `${c.Name} ${c.TokenKey}`.toLowerCase().includes(search.trim().toLowerCase())
+  );
+
+  async function load() {
+    loading = true;
+    loadError = '';
+    try {
+      const data = await api.get<{ credentials: CredentialItem[] }>('/credentials');
+      credentials = data.credentials || [];
+    } catch (e: any) {
+      loadError = e.message;
+    } finally {
+      loading = false;
+    }
+  }
+
+  function openCreate() {
+    form = { Name: '' };
+    createdSecret = '';
+    createdTokenKey = '';
+    modalOpen = true;
+  }
+
+  async function createKey(e: Event) {
     e.preventDefault();
+    if (!form.Name.trim()) return toast.error('Application name is required');
+
+    saving = true;
     try {
-      const res = await fetch(`/api/v1/credentials`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('pbx_token')}`
-        },
-        body: JSON.stringify({ 
-          Name: newTokenName, 
-          TokenKey: 'pbx_live_' + (window.crypto?.randomUUID ? window.crypto.randomUUID().replace(/-/g, '') : Date.now().toString(36))
-        })
-      });
-      if (res.ok) {
-        isModalOpen = false;
-        newTokenName = '';
-        fetchTokens();
-      }
-    } catch (e) {}
+      const res = await api.post<any>('/credentials', { Name: form.Name.trim() });
+      createdSecret = res.Secret || '';
+      createdTokenKey = res.TokenKey || '';
+      toast.success('API Key generated');
+      await load();
+    } catch (err) {
+      toastError(err);
+    } finally {
+      saving = false;
+    }
   }
 
-  async function handleDeleteToken(id) {
-    if(!confirm("Revoke this token?")) return;
+  async function remove(c: CredentialItem) {
+    if (!confirm(`Revoke API key "${c.Name}"? Applications using this token will stop working immediately.`)) return;
     try {
-      const res = await fetch(`/api/v1/credentials/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
-      });
-      if (res.ok) fetchTokens();
-    } catch (e) {}
+      await api.del(`/credentials/${c.ID}`);
+      toast.success('API key revoked');
+      await load();
+    } catch (e) {
+      toastError(e);
+    }
   }
+
+  onMount(load);
 </script>
 
-<div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">
-  <header class="flex justify-between items-end mb-8">
-    <div>
-      <h1 class="text-3xl font-black text-white tracking-tight mb-2">API Credentials</h1>
-      <p class="text-slate-500 font-medium text-sm">Manage JWTs and API keys for external integrations.</p>
-    </div>
-    <button class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-xl font-bold transition-colors shadow-lg shadow-indigo-600/20 flex items-center" on:click={() => isModalOpen = true}>
-      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
-      Generate Token
-    </button>
-  </header>
+<PageHeader title="API Credentials" description="Bearer tokens and webhook authorization keys for external telecom integrations.">
+  <Button on:click={openCreate}>+ Generate Key</Button>
+</PageHeader>
 
-  <div class="bg-[#121622] rounded-xl border border-[#202738] overflow-hidden shadow-2xl">
-    <div class="p-4 border-b border-[#1E2538] flex justify-between items-center bg-[#0E121B]">
-      <h3 class="text-xs font-bold text-white uppercase tracking-wider flex items-center font-mono">
-        <svg class="w-4 h-4 mr-2 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-        Active Access Tokens
-      </h3>
-    </div>
-    
-    <table class="w-full text-left">
-      <thead>
-        <tr class="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-[#1E2538] font-mono bg-[#0E121B]">
-          <th class="p-4">Token Name</th>
-          <th class="p-4">Key Identifier</th>
-          <th class="p-4">Permissions (Scopes)</th>
-          <th class="p-4">Last Used</th>
-          <th class="p-4 text-right">Actions</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-[#1E2538]">
-        {#each tokens as token}
-          <tr class="hover:bg-[#182030]/50 transition-colors group {token.status === 'Revoked' ? 'opacity-50' : ''}">
-            <td class="p-4">
-              <span class="font-bold text-white block text-sm font-mono">{token.name}</span>
-              <span class="text-xs text-slate-500 font-mono">Created: {token.created}</span>
-            </td>
-            <td class="p-4">
-              <div class="flex items-center space-x-2">
-                <span class="font-mono text-xs text-cyan-400 bg-cyan-950/40 px-2 py-0.5 rounded border border-cyan-500/20">{token.id}</span>
-                <button aria-label="Copy Key" class="text-slate-400 hover:text-white transition-colors" disabled={token.status==='Revoked'}><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button>
-              </div>
-            </td>
-            <td class="p-4">
-              <div class="flex flex-wrap gap-1.5">
-                {#each token.scopes as scope}
-                  <span class="px-2 py-0.5 bg-[#182030] border border-[#26334A] rounded text-[10px] font-bold font-mono text-cyan-400">{scope}</span>
-                {/each}
-              </div>
-            </td>
-            <td class="p-4 text-xs text-slate-400 font-mono">
-              {token.lastUsed}
-            </td>
-            <td class="p-4 text-right space-x-2">
-              <button title="Revoke Token" aria-label="Revoke Token" class="text-rose-400 hover:text-white hover:bg-rose-600 p-1.5 rounded transition-colors" on:click={() => handleDeleteToken(token.rawId)}><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
-            </td>
+<Card padded={false} title="Active Application Keys" subtitle="{credentials.length} keys issued">
+  <svelte:fragment slot="actions">
+    <input class="input !py-1.5 !text-xs w-56" placeholder="Search application…" bind:value={search} aria-label="Search keys" />
+  </svelte:fragment>
+
+  {#if loading || loadError || filtered.length === 0}
+    <EmptyState
+      {loading}
+      error={loadError}
+      title={search ? 'No API keys match your search' : 'No API keys issued'}
+      message={search ? '' : 'Issue an API key to allow external software to access the PBX REST API.'}
+    >
+      {#if !search}<Button size="sm" on:click={openCreate}>Generate first key</Button>{/if}
+      <svelte:fragment slot="retry"><Button size="sm" variant="secondary" on:click={load}>Retry</Button></svelte:fragment>
+    </EmptyState>
+  {:else}
+    <div class="overflow-x-auto">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Application</th>
+            <th>API Token Key</th>
+            <th class="text-right">Actions</th>
           </tr>
-        {/each}
-      </tbody>
-    </table>
-  </div>
-</div>
+        </thead>
+        <tbody>
+          {#each filtered as c (c.ID)}
+            <tr>
+              <td class="font-bold text-slate-800 text-sm">{c.Name}</td>
+              <td class="mono font-semibold text-xs text-sky-700">{c.TokenKey}</td>
+              <td class="text-right whitespace-nowrap">
+                <button type="button" class="link-danger" on:click={() => remove(c)}>Revoke</button>
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    </div>
+  {/if}
+</Card>
 
-<Modal bind:isOpen={isModalOpen} title="Generate API Token">
-  <form on:submit={handleCreateToken} class="space-y-4">
-    <div>
-      <label for="token_name" class="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1.5">Token Name</label>
-      <input id="token_name" type="text" bind:value={newTokenName} required placeholder="e.g. My Integration" class="w-full bg-[#0B0E17] border border-[#1E2538] text-white rounded-lg px-3 py-2 font-mono text-sm focus:border-cyan-500 outline-none" />
+<Modal bind:isOpen={modalOpen} title={createdSecret ? 'API Key Generated' : 'Generate API Key'}>
+  {#if createdSecret}
+    <div class="space-y-4">
+      <div class="p-3 bg-amber-50 border border-amber-200 rounded-md text-amber-900 text-xs leading-relaxed">
+        <strong>Important:</strong> Copy your API secret key now. For security purposes, this secret will not be displayed again.
+      </div>
+
+      <div>
+        <label for="created-token" class="label">API Key</label>
+        <input id="created-token" class="input mono" readonly value={createdTokenKey} />
+      </div>
+
+      <div>
+        <label for="created-secret" class="label">API Secret</label>
+        <input id="created-secret" class="input mono font-bold text-sky-700" readonly value={createdSecret} />
+      </div>
+
+      <div class="flex justify-end pt-2">
+        <Button on:click={() => modalOpen = false}>Done</Button>
+      </div>
     </div>
-    <div class="pt-4 flex justify-end space-x-3">
-      <button type="button" class="px-4 py-2 text-slate-400 hover:text-white font-mono text-xs" on:click={() => isModalOpen = false}>Cancel</button>
-      <button type="submit" class="bg-cyan-600 hover:bg-cyan-500 text-slate-950 px-5 py-2 rounded-lg font-bold font-mono text-xs uppercase tracking-wider">Generate</button>
-    </div>
-  </form>
+  {:else}
+    <form on:submit={createKey} class="space-y-4">
+      <div>
+        <label for="cred-name" class="label">Application Name</label>
+        <input id="cred-name" class="input" bind:value={form.Name} placeholder="e.g. CRM Integration or Billing Sync" required />
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <Button variant="secondary" on:click={() => modalOpen = false}>Cancel</Button>
+        <Button type="submit" disabled={saving}>{saving ? 'Generating…' : 'Generate'}</Button>
+      </div>
+    </form>
+  {/if}
 </Modal>

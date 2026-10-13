@@ -1,47 +1,115 @@
 /**
- * Robust API Client for MSIP PBX
- * Automatically detects environment:
- * - Production: uses relative '/api/v1' (proxied by Nginx on port 80/443 with no firewall issues or CORS)
- * - Development: uses port 8080 (KrakenD)
- * - Automatic multi-tier fallback to port 8080 and 8081 if connection fails
+ * MSIP API client.
+ *
+ * All browser traffic goes through the same origin under /api/v1, which nginx
+ * (production) or the Vite dev proxy forwards to the KrakenD gateway.
+ * Every request carries the session JWT, disables HTTP caching, parses JSON
+ * safely and surfaces backend error messages as ApiError instances.
  */
 
-export function getApiBase(): string {
-  if (typeof window === 'undefined') return '/api/v1';
-  if (window.location.port === '5173') {
-    return `/api/v1`;
+export const API_BASE = '/api/v1';
+
+export class ApiError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
   }
-  return '/api/v1';
 }
 
-export function getWsBase(): string {
-  if (typeof window === 'undefined') return '';
-  const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  if (window.location.port === '5173') {
-    return `${proto}//${window.location.hostname}:8080/api/v1`;
-  }
-  return `${proto}//${window.location.host}/api/v1`;
+export function getToken(): string | null {
+  return localStorage.getItem('pbx_token');
 }
 
-export const API_BASE = getApiBase();
-
-export async function apiFetch(endpoint: string, options?: RequestInit): Promise<Response> {
-  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  const path = cleanEndpoint.startsWith('/api/v1') ? cleanEndpoint.replace('/api/v1', '') : cleanEndpoint;
-
-  // 1. Primary attempt: relative /api/v1 (or API_BASE)
+export function getCurrentUser(): { id?: string; email?: string; role?: string; tenantId?: string } {
   try {
-    const res = await fetch(`${API_BASE}${path}`, options);
-    return res;
-  } catch (err1) {
-    if (typeof window === 'undefined') throw err1;
+    return JSON.parse(localStorage.getItem('pbx_user') || '{}');
+  } catch {
+    return {};
+  }
+}
 
-    // 2. Fallback to Gateway on port 8080
+export function logout() {
+  localStorage.removeItem('pbx_token');
+  localStorage.removeItem('pbx_user');
+  window.location.href = '/';
+}
+
+async function request<T = any>(method: string, path: string, body?: unknown): Promise<T> {
+  const clean = path.startsWith('/') ? path : `/${path}`;
+  const headers: Record<string, string> = { Accept: 'application/json' };
+  const token = getToken();
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  if (body !== undefined) headers['Content-Type'] = 'application/json';
+
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${clean}`, {
+      method,
+      headers,
+      cache: 'no-store',
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    throw new ApiError(0, 'Unable to reach the PBX API. Check that the backend and gateway containers are running.');
+  }
+
+  if (res.status === 401 && clean !== '/auth/login') {
+    logout();
+    throw new ApiError(401, 'Session expired. Please sign in again.');
+  }
+
+  const text = await res.text();
+  let data: any = null;
+  if (text) {
     try {
-      return await fetch(`/api/v1${path}`, options);
-    } catch (err2) {
-      // 3. Fallback to Go Backend directly on port 8081
-      return await fetch(`http://${window.location.hostname}:8081/api/v1${path}`, options);
+      data = JSON.parse(text);
+    } catch {
+      data = null;
     }
   }
+
+  if (!res.ok) {
+    const msg = (data && (data.error || data.message)) || `Request failed with status ${res.status}`;
+    throw new ApiError(res.status, msg);
+  }
+  return data as T;
+}
+
+export const api = {
+  get: <T = any>(path: string) => request<T>('GET', path),
+  post: <T = any>(path: string, body?: unknown) => request<T>('POST', path, body ?? {}),
+  put: <T = any>(path: string, body?: unknown) => request<T>('PUT', path, body ?? {}),
+  del: <T = any>(path: string) => request<T>('DELETE', path),
+};
+
+/** Builds an absolute ws:// or wss:// URL for a same-origin API path. */
+export function wsUrl(path: string): string {
+  const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const clean = path.startsWith('/') ? path : `/${path}`;
+  return `${proto}//${window.location.host}${API_BASE}${clean}`;
+}
+
+/** Formats an ISO timestamp for tables. */
+export function formatDateTime(value?: string): string {
+  if (!value) return '—';
+  const d = new Date(value);
+  if (isNaN(d.getTime()) || d.getFullYear() < 2000) return '—';
+  return d.toLocaleString(undefined, { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+export function formatDate(value?: string): string {
+  if (!value) return '—';
+  const d = new Date(value);
+  if (isNaN(d.getTime()) || d.getFullYear() < 2000) return '—';
+  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' });
+}
+
+/** Formats seconds as m:ss or h:mm:ss. */
+export function formatDuration(totalSeconds?: number): string {
+  const s = Math.max(0, Math.floor(totalSeconds || 0));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = (s % 60).toString().padStart(2, '0');
+  return h > 0 ? `${h}:${m.toString().padStart(2, '0')}:${sec}` : `${m}:${sec}`;
 }

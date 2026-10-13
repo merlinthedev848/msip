@@ -2,39 +2,94 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ------------------------------------------------------------------
+   MSIP design system — single permanent light theme.
+   Canvas #EEF2F6 · Surfaces white · Accent #0284C7 (sky-600)
+   ------------------------------------------------------------------ */
+
 @layer base {
   :root {
-    color-scheme: dark;
+    color-scheme: light;
   }
 
+  html,
   body {
-    @apply bg-[#0B0F19] text-slate-100 font-sans antialiased selection:bg-indigo-500 selection:text-white;
-    background-color: #0B0F19;
+    @apply bg-[#EEF2F6] text-slate-800 antialiased;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+@layer components {
+  /* Form controls */
+  .label {
+    @apply block text-xs font-medium text-slate-600 mb-1;
+  }
+  .input,
+  .select,
+  .textarea {
+    @apply w-full bg-white border border-slate-300 rounded-md px-3 py-2 text-sm text-slate-800 placeholder-slate-400 outline-none transition-colors;
+  }
+  .input:focus,
+  .select:focus,
+  .textarea:focus {
+    @apply border-sky-600 ring-2 ring-sky-100;
+  }
+  .input:disabled,
+  .select:disabled {
+    @apply bg-slate-50 text-slate-500;
+  }
+  .help {
+    @apply text-[11px] text-slate-500 mt-1;
+  }
+
+  /* Data tables */
+  .tbl {
+    @apply w-full text-left text-sm;
+  }
+  .tbl thead tr {
+    @apply bg-slate-50 border-b border-slate-200;
+  }
+  .tbl th {
+    @apply px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-slate-500 whitespace-nowrap;
+  }
+  .tbl td {
+    @apply px-4 py-3 text-slate-700 border-b border-slate-100 align-middle;
+  }
+  .tbl tbody tr:hover {
+    @apply bg-slate-50/70;
+  }
+  .tbl tbody tr:last-child td {
+    @apply border-b-0;
+  }
+
+  /* Inline row action links */
+  .link-action {
+    @apply text-xs font-medium text-sky-700 hover:text-sky-900 hover:underline;
+  }
+  .link-danger {
+    @apply text-xs font-medium text-rose-600 hover:text-rose-800 hover:underline;
+  }
+
+  .mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   }
 }
 
 @layer utilities {
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-
-  /* Custom dark scrollbar */
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
   }
   ::-webkit-scrollbar-track {
-    background: #090d16;
+    background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: #1e293b;
+    background: #cbd5e1;
     border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #334155;
+    background: #94a3b8;
   }
 }

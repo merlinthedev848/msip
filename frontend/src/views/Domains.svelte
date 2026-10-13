@@ -1,226 +1,164 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { api, formatDateTime } from '../lib/api';
+  import { toast, toastError } from '../lib/toast';
+  import PageHeader from '../components/ui/PageHeader.svelte';
+  import Card from '../components/ui/Card.svelte';
+  import Button from '../components/ui/Button.svelte';
   import Modal from '../components/ui/Modal.svelte';
-  
-  let domains = [];
-  let isModalOpen = false;
-  let isEditModalOpen = false;
-  
-  let newName = '';
-  let newDescription = '';
-  
-  let editDomainId = '';
-  let editName = '';
-  let editDescription = '';
-  
-  async function fetchDomains() {
-    try {
-      const res = await fetch(`/api/v1/domains`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        domains = (data.domains || []).map(d => ({
-          id: d.ID, name: d.Name, description: d.Domain, extCount: 0, maxExt: 50, cc: 0, maxCc: 20, status: 'Active'
-        }));
-      }
-    } catch (e) {}
+  import EmptyState from '../components/ui/EmptyState.svelte';
+
+  interface DomainItem {
+    ID: string;
+    Name: string;
+    Domain: string;
+    CreatedAt: string;
   }
 
-  onMount(fetchDomains);
+  let domains: DomainItem[] = [];
+  let loading = true;
+  let loadError = '';
+  let saving = false;
+  let search = '';
 
-  async function handleAddDomain(e) {
-    e.preventDefault();
+  let modalOpen = false;
+  let editingId: string | null = null;
+  let form = { Name: '', Domain: '' };
+
+  $: filtered = domains.filter(d => 
+    !search.trim() || `${d.Name} ${d.Domain}`.toLowerCase().includes(search.trim().toLowerCase())
+  );
+
+  async function load() {
+    loading = true;
+    loadError = '';
     try {
-      const res = await fetch(`/api/v1/domains`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('pbx_token')}`
-        },
-        body: JSON.stringify({ Name: newName, Domain: newDescription })
-      });
-      if (res.ok) {
-        isModalOpen = false;
-        newName = '';
-        newDescription = '';
-        fetchDomains();
-      }
-    } catch (e) {}
-  }
-
-  function openEditModal(domain) {
-    editDomainId = domain.id;
-    editName = domain.name;
-    editDescription = domain.description;
-    isEditModalOpen = true;
-  }
-
-  async function handleEditDomain(e) {
-    e.preventDefault();
-    try {
-      const res = await fetch(`/api/v1/domains/${editDomainId}`, {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('pbx_token')}`
-        },
-        body: JSON.stringify({ Name: editName, Domain: editDescription })
-      });
-      if (res.ok) {
-        isEditModalOpen = false;
-        fetchDomains();
-      } else {
-        alert("Failed to update domain.");
-      }
-    } catch (e) {
-      alert("Error updating domain.");
+      const data = await api.get<{ domains: DomainItem[] }>('/domains');
+      domains = data.domains || [];
+    } catch (e: any) {
+      loadError = e.message;
+    } finally {
+      loading = false;
     }
   }
 
-  async function handleDeleteDomain(id) {
-    if(!confirm("Delete this domain?")) return;
-    try {
-      const res = await fetch(`/api/v1/domains/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
-      });
-      if (res.ok) fetchDomains();
-    } catch (e) {}
+  function openCreate() {
+    editingId = null;
+    form = { Name: '', Domain: '' };
+    modalOpen = true;
   }
+
+  function openEdit(d: DomainItem) {
+    editingId = d.ID;
+    form = { Name: d.Name, Domain: d.Domain };
+    modalOpen = true;
+  }
+
+  async function save(e: Event) {
+    e.preventDefault();
+    if (!form.Name.trim()) return toast.error('Tenant name is required');
+    if (!form.Domain.trim()) return toast.error('Domain is required');
+
+    saving = true;
+    try {
+      const payload = {
+        Name: form.Name.trim(),
+        Domain: form.Domain.trim().toLowerCase()
+      };
+
+      if (editingId) {
+        await api.put(`/domains/${editingId}`, payload);
+        toast.success('Tenant domain updated');
+      } else {
+        await api.post('/domains', payload);
+        toast.success('Tenant domain created');
+      }
+      modalOpen = false;
+      await load();
+    } catch (err) {
+      toastError(err);
+    } finally {
+      saving = false;
+    }
+  }
+
+  async function remove(d: DomainItem) {
+    if (!confirm(`Delete tenant domain "${d.Name}" (${d.Domain})? All associated extensions and routes will be deleted.`)) return;
+    try {
+      await api.del(`/domains/${d.ID}`);
+      toast.success('Tenant domain deleted');
+      await load();
+    } catch (e) {
+      toastError(e);
+    }
+  }
+
+  onMount(load);
 </script>
 
-<div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">
-  <header class="flex justify-between items-end mb-8">
-    <div>
-      <h1 class="text-3xl font-black text-white tracking-tight mb-2">Multi-Tenant Domains</h1>
-      <p class="text-slate-500 font-medium text-sm">Manage isolated tenant environments and resource limits.</p>
-    </div>
-    <button class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-xl font-bold transition-colors shadow-lg shadow-indigo-600/20 flex items-center" on:click={() => isModalOpen = true}>
-      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-      Add Domain
-    </button>
-  </header>
+<PageHeader title="Tenant Domains" description="Multi-tenant SIP isolation, domains, and organization partitions.">
+  <Button on:click={openCreate}>+ New Tenant Domain</Button>
+</PageHeader>
 
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-    <div class="bg-[#121622] rounded-xl border border-[#202738] p-5 shadow-lg">
-      <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 font-mono">Total Tenants</p>
-      <h2 class="text-3xl font-black text-white font-mono">{domains.length}</h2>
-    </div>
-    <div class="bg-[#121622] rounded-xl border border-[#202738] p-5 shadow-lg">
-      <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 font-mono">Global Extensions</p>
-      <h2 class="text-3xl font-black text-white font-mono">{domains.reduce((a,b)=>a+b.extCount, 0)}</h2>
-    </div>
-    <div class="bg-[#121622] rounded-xl border border-[#202738] p-5 shadow-lg">
-      <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 font-mono">Concurrent Calls</p>
-      <div class="flex items-baseline space-x-2">
-        <h2 class="text-3xl font-black text-white font-mono">{domains.reduce((a,b)=>a+b.cc, 0)}</h2>
-        <span class="text-xs font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded font-mono">LIVE</span>
-      </div>
-    </div>
-  </div>
+<Card padded={false} title="Configured Tenancies" subtitle="{domains.length} domains">
+  <svelte:fragment slot="actions">
+    <input class="input !py-1.5 !text-xs w-56" placeholder="Search tenant or domain…" bind:value={search} aria-label="Search domains" />
+  </svelte:fragment>
 
-  <div class="bg-[#121622] rounded-xl border border-[#202738] overflow-hidden shadow-2xl">
-    <div class="p-4 border-b border-[#1E2538] flex justify-between items-center bg-[#0E121B]">
-      <h3 class="text-xs font-bold text-white uppercase tracking-wider font-mono">Configured Tenant Domains</h3>
-      <div class="relative">
-        <svg class="w-4 h-4 text-slate-500 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-        <input type="text" placeholder="Search tenants..." class="bg-[#0B0E17] border border-[#1E2538] text-white text-xs rounded-lg focus:border-cyan-500 block w-64 pl-9 p-2 placeholder-slate-500 outline-none font-mono">
-      </div>
-    </div>
-    
-    <table class="w-full text-left">
-      <thead>
-        <tr class="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-[#1E2538] font-mono bg-[#0E121B]">
-          <th class="p-4">Domain Name</th>
-          <th class="p-4 text-center">Extensions</th>
-          <th class="p-4 text-center">Concurrent Limits</th>
-          <th class="p-4">Status</th>
-          <th class="p-4 text-right">Actions</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-[#1E2538]">
-        {#each domains as domain}
-          <tr class="hover:bg-[#182030]/50 transition-colors group">
-            <td class="p-4">
-              <div class="flex items-center space-x-3">
-                <div class="w-9 h-9 rounded-lg bg-[#182030] flex items-center justify-center text-cyan-400 font-bold border border-[#26334A] font-mono text-sm">
-                  {domain.name.charAt(0).toUpperCase()}
-                </div>
-                <div>
-                  <p class="font-bold text-white text-sm group-hover:text-cyan-300 transition-colors font-mono">{domain.name}</p>
-                  <p class="text-xs text-slate-500 font-mono">{domain.description}</p>
-                </div>
-              </div>
-            </td>
-            <td class="p-4">
-              <div class="flex flex-col items-center">
-                <span class="font-mono font-bold text-white text-sm">{domain.extCount} <span class="text-slate-500 text-xs">/ {domain.maxExt}</span></span>
-                <div class="w-24 h-1.5 bg-[#182030] rounded-full mt-1.5 overflow-hidden border border-[#26334A]">
-                  <div class="h-full {domain.extCount/domain.maxExt > 0.8 ? 'bg-amber-400' : 'bg-cyan-500'}" style="width: {(domain.extCount/domain.maxExt)*100}%"></div>
-                </div>
-              </div>
-            </td>
-            <td class="p-4">
-              <div class="flex flex-col items-center">
-                <span class="font-mono font-bold text-emerald-400 text-sm">{domain.cc} <span class="text-slate-500 text-xs">/ {domain.maxCc}</span></span>
-                <div class="w-24 h-1.5 bg-[#182030] rounded-full mt-1.5 overflow-hidden border border-[#26334A]">
-                  <div class="h-full {domain.cc/domain.maxCc > 0.8 ? 'bg-rose-500' : 'bg-emerald-500'}" style="width: {(domain.cc/domain.maxCc)*100}%"></div>
-                </div>
-              </div>
-            </td>
-            <td class="p-4">
-              <span class="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider font-mono
-                {domain.status === 'Active' ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-500/30' : 
-                 domain.status === 'Warning' ? 'bg-amber-950/60 text-amber-400 border border-amber-500/30' : 
-                 'bg-rose-950/60 text-rose-400 border border-rose-500/30'}">
-                {domain.status}
-              </span>
-            </td>
-            <td class="p-4 text-right space-x-2">
-              <button aria-label="Edit Domain" class="text-slate-400 hover:text-cyan-400 transition-colors p-1.5" on:click={() => openEditModal(domain)}><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
-              <button aria-label="Delete Domain" class="text-slate-400 hover:text-rose-400 transition-colors p-1.5" on:click={() => handleDeleteDomain(domain.id)}><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
-            </td>
+  {#if loading || loadError || filtered.length === 0}
+    <EmptyState
+      {loading}
+      error={loadError}
+      title={search ? 'No tenants match your search' : 'No tenant domains configured'}
+      message={search ? '' : 'Add multi-tenant domains to partition extensions and routing per customer organization.'}
+    >
+      {#if !search}<Button size="sm" on:click={openCreate}>Add first domain</Button>{/if}
+      <svelte:fragment slot="retry"><Button size="sm" variant="secondary" on:click={load}>Retry</Button></svelte:fragment>
+    </EmptyState>
+  {:else}
+    <div class="overflow-x-auto">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Organization Name</th>
+            <th>SIP Domain</th>
+            <th>Created</th>
+            <th class="text-right">Actions</th>
           </tr>
-        {/each}
-      </tbody>
-    </table>
-  </div>
-</div>
+        </thead>
+        <tbody>
+          {#each filtered as d (d.ID)}
+            <tr>
+              <td class="font-bold text-slate-800 text-sm">{d.Name}</td>
+              <td class="mono font-semibold text-xs text-sky-700">{d.Domain}</td>
+              <td class="text-xs text-slate-500">{formatDateTime(d.CreatedAt)}</td>
+              <td class="text-right space-x-3 whitespace-nowrap">
+                <button type="button" class="link-action" on:click={() => openEdit(d)}>Edit</button>
+                <button type="button" class="link-danger" on:click={() => remove(d)}>Delete</button>
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+    </div>
+  {/if}
+</Card>
 
-<Modal bind:isOpen={isModalOpen} title="Create New Domain">
-  <form on:submit={handleAddDomain} class="space-y-4">
+<Modal bind:isOpen={modalOpen} title={editingId ? 'Edit Tenant Domain' : 'New Tenant Domain'}>
+  <form on:submit={save} class="space-y-4">
     <div>
-      <label for="new_domain_name" class="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1.5">Domain Identity</label>
-      <input id="new_domain_name" type="text" bind:value={newName} required placeholder="e.g. Acme Corp" class="w-full bg-[#0B0E17] border border-[#1E2538] text-white rounded-lg px-3 py-2 font-mono text-sm focus:border-cyan-500 outline-none" />
+      <label for="dom-name" class="label">Organization Name</label>
+      <input id="dom-name" class="input" bind:value={form.Name} placeholder="e.g. Acme Corporation" required />
     </div>
+
     <div>
-      <label for="new_domain_desc" class="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1.5">FQDN / Hostname</label>
-      <input id="new_domain_desc" type="text" bind:value={newDescription} required placeholder="pbx.acmecorp.com" class="w-full bg-[#0B0E17] border border-[#1E2538] text-white rounded-lg px-3 py-2 font-mono text-sm focus:border-cyan-500 outline-none" />
+      <label for="dom-domain" class="label">SIP Realm / Domain</label>
+      <input id="dom-domain" class="input mono" bind:value={form.Domain} placeholder="e.g. acme.pbx.com" required />
     </div>
-    <div class="pt-4 flex justify-end space-x-3">
-      <button type="button" class="px-4 py-2 text-slate-400 hover:text-white font-mono text-xs" on:click={() => isModalOpen = false}>Cancel</button>
-      <button type="submit" class="bg-cyan-600 hover:bg-cyan-500 text-slate-950 px-5 py-2 rounded-lg font-bold font-mono text-xs uppercase tracking-wider">Create Domain</button>
+
+    <div class="flex justify-end gap-2 pt-2">
+      <Button variant="secondary" on:click={() => modalOpen = false}>Cancel</Button>
+      <Button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button>
     </div>
   </form>
 </Modal>
-
-<Modal bind:isOpen={isEditModalOpen} title="Edit Domain Settings">
-  <form on:submit={handleEditDomain} class="space-y-4">
-    <div>
-      <label for="edit_domain_name" class="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1.5">Domain Identity</label>
-      <input id="edit_domain_name" type="text" bind:value={editName} required placeholder="e.g. Acme Corp" class="w-full bg-[#0B0E17] border border-[#1E2538] text-white rounded-lg px-3 py-2 font-mono text-sm focus:border-cyan-500 outline-none" />
-    </div>
-    <div>
-      <label for="edit_domain_desc" class="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1.5">FQDN / Hostname</label>
-      <input id="edit_domain_desc" type="text" bind:value={editDescription} required placeholder="pbx.acmecorp.com" class="w-full bg-[#0B0E17] border border-[#1E2538] text-white rounded-lg px-3 py-2 font-mono text-sm focus:border-cyan-500 outline-none" />
-    </div>
-    <div class="pt-4 flex justify-end space-x-3">
-      <button type="button" class="px-4 py-2 text-slate-400 hover:text-white font-mono text-xs" on:click={() => isEditModalOpen = false}>Cancel</button>
-      <button type="submit" class="bg-cyan-600 hover:bg-cyan-500 text-slate-950 px-5 py-2 rounded-lg font-bold font-mono text-xs uppercase tracking-wider">Save Changes</button>
-    </div>
-  </form>
-</Modal>
-
-
-

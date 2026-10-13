@@ -1,194 +1,185 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import GlassCard from '../components/ui/GlassCard.svelte';
+  import { api } from '../lib/api';
+  import { toast, toastError } from '../lib/toast';
+  import PageHeader from '../components/ui/PageHeader.svelte';
+  import Card from '../components/ui/Card.svelte';
   import Button from '../components/ui/Button.svelte';
   import Modal from '../components/ui/Modal.svelte';
+  import Badge from '../components/ui/Badge.svelte';
+  import EmptyState from '../components/ui/EmptyState.svelte';
 
-  let routes = [];
-  let isModalOpen = false;
-  let isEditModalOpen = false;
-
-  let newDID = '';
-  let newTarget = '';
-  let newType = 'EXTENSION';
-
-  let editRouteId = '';
-  let editDID = '';
-  let editTarget = '';
-  let editType = 'EXTENSION';
-
-  async function fetchRoutes() {
-    try {
-      const res = await fetch(`/api/v1/inbound-routes`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        routes = data.inbound_routes || [];
-      }
-    } catch (e) {}
+  interface InboundRouteItem {
+    ID: string;
+    DIDNumber: string;
+    DestinationType: string;
+    DestinationTarget: string;
+    CreatedAt: string;
   }
 
-  onMount(fetchRoutes);
+  let routes: InboundRouteItem[] = [];
+  let loading = true;
+  let loadError = '';
+  let saving = false;
+  let search = '';
 
-  async function handleCreateRoute(e) {
-    e.preventDefault();
+  let modalOpen = false;
+  let editingId: string | null = null;
+  let form = {
+    DIDNumber: '',
+    DestinationType: 'EXTENSION',
+    DestinationTarget: ''
+  };
+
+  $: filtered = routes.filter(r => 
+    !search.trim() || `${r.DIDNumber} ${r.DestinationTarget} ${r.DestinationType}`.toLowerCase().includes(search.trim().toLowerCase())
+  );
+
+  async function load() {
+    loading = true;
+    loadError = '';
     try {
-      const res = await fetch(`/api/v1/inbound-routes`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('pbx_token')}`
-        },
-        body: JSON.stringify({ DIDNumber: newDID, DestinationType: newType, DestinationTarget: newTarget })
-      });
-      if (res.ok) {
-        isModalOpen = false;
-        newDID = ''; newTarget = '';
-        fetchRoutes();
-      }
-    } catch (e) {}
-  }
-
-  function openEditModal(route) {
-    editRouteId = route.ID;
-    editDID = route.DIDNumber;
-    editTarget = route.DestinationTarget;
-    editType = route.DestinationType;
-    isEditModalOpen = true;
-  }
-
-  async function handleEditRoute(e) {
-    e.preventDefault();
-    try {
-      const res = await fetch(`/api/v1/inbound-routes/${editRouteId}`, {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('pbx_token')}`
-        },
-        body: JSON.stringify({ DIDNumber: editDID, DestinationType: editType, DestinationTarget: editTarget })
-      });
-      if (res.ok) {
-        isEditModalOpen = false;
-        fetchRoutes();
-      } else {
-        alert("Failed to update route.");
-      }
-    } catch (e) {
-      alert("Error updating route.");
+      const data = await api.get<{ routes: InboundRouteItem[] }>('/inbound-routes');
+      routes = data.routes || [];
+    } catch (e: any) {
+      loadError = e.message;
+    } finally {
+      loading = false;
     }
   }
 
-  async function handleDeleteRoute(id) {
-    if(!confirm("Delete this inbound route?")) return;
-    try {
-      const res = await fetch(`/api/v1/inbound-routes/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
-      });
-      if (res.ok) fetchRoutes();
-    } catch (e) {}
+  function openCreate() {
+    editingId = null;
+    form = { DIDNumber: '', DestinationType: 'EXTENSION', DestinationTarget: '' };
+    modalOpen = true;
   }
+
+  function openEdit(r: InboundRouteItem) {
+    editingId = r.ID;
+    form = {
+      DIDNumber: r.DIDNumber,
+      DestinationType: r.DestinationType,
+      DestinationTarget: r.DestinationTarget
+    };
+    modalOpen = true;
+  }
+
+  async function save(e: Event) {
+    e.preventDefault();
+    if (!form.DIDNumber.trim()) return toast.error('DID Number or pattern is required');
+    if (!form.DestinationTarget.trim()) return toast.error('Destination Target is required');
+
+    saving = true;
+    try {
+      const payload = {
+        DIDNumber: form.DIDNumber.trim(),
+        DestinationType: form.DestinationType,
+        DestinationTarget: form.DestinationTarget.trim()
+      };
+
+      if (editingId) {
+        await api.put(`/inbound-routes/${editingId}`, payload);
+        toast.success('Inbound route updated');
+      } else {
+        await api.post('/inbound-routes', payload);
+        toast.success('Inbound route created');
+      }
+      modalOpen = false;
+      await load();
+    } catch (err) {
+      toastError(err);
+    } finally {
+      saving = false;
+    }
+  }
+
+  async function remove(r: InboundRouteItem) {
+    if (!confirm(`Delete inbound route for ${r.DIDNumber}?`)) return;
+    try {
+      await api.del(`/inbound-routes/${r.ID}`);
+      toast.success('Inbound route deleted');
+      await load();
+    } catch (e) {
+      toastError(e);
+    }
+  }
+
+  onMount(load);
 </script>
 
-<div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">
-  
-  <header class="flex justify-between items-end mb-8">
-    <div>
-      <h1 class="text-3xl font-bold tracking-tight text-white mb-1">Inbound Routing</h1>
-      <p class="text-slate-500 text-sm">Map phone numbers (DIDs) to system destinations.</p>
+<PageHeader title="Inbound Routes" description="Map incoming DID telephone numbers directly to PBX extensions, IVRs, or queues.">
+  <Button on:click={openCreate}>+ New Inbound Route</Button>
+</PageHeader>
+
+<Card padded={false} title="Inbound Dialplan" subtitle="{routes.length} routing rules">
+  <svelte:fragment slot="actions">
+    <input class="input !py-1.5 !text-xs w-56" placeholder="Search DID or target…" bind:value={search} aria-label="Search routes" />
+  </svelte:fragment>
+
+  {#if loading || loadError || filtered.length === 0}
+    <EmptyState
+      {loading}
+      error={loadError}
+      title={search ? 'No routes match your search' : 'No inbound routes configured'}
+      message={search ? '' : 'Add a DID number mapping to route incoming carrier calls into FreeSWITCH.'}
+    >
+      {#if !search}<Button size="sm" on:click={openCreate}>Add first route</Button>{/if}
+      <svelte:fragment slot="retry"><Button size="sm" variant="secondary" on:click={load}>Retry</Button></svelte:fragment>
+    </EmptyState>
+  {:else}
+    <div class="overflow-x-auto">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>DID Pattern</th>
+            <th>Type</th>
+            <th>Target Destination</th>
+            <th class="text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {#each filtered as r (r.ID)}
+            <tr>
+              <td class="mono font-bold text-slate-800 text-sm">{r.DIDNumber}</td>
+              <td><Badge tone="info">{r.DestinationType}</Badge></td>
+              <td class="mono text-xs text-slate-700 font-semibold">{r.DestinationTarget}</td>
+              <td class="text-right space-x-3 whitespace-nowrap">
+                <button type="button" class="link-action" on:click={() => openEdit(r)}>Edit</button>
+                <button type="button" class="link-danger" on:click={() => remove(r)}>Delete</button>
+              </td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
     </div>
-    <Button variant="primary" on:click={() => isModalOpen = true}>Add Route</Button>
-  </header>
+  {/if}
+</Card>
 
-  <div class="grid grid-cols-1 gap-4">
-    {#if routes.length === 0}
-      <div class="p-8 text-center text-slate-400 bg-[#121622] border border-[#202738] rounded-xl font-mono text-xs">No inbound routes configured.</div>
-    {/if}
-    {#each routes as route}
-    <GlassCard hoverEffect={true} className="flex flex-col md:flex-row items-center justify-between p-4 gap-4">
-      <div class="flex items-center space-x-4 w-full md:w-auto">
-        <div class="flex-shrink-0 bg-[#182030] border border-[#26334A] p-2.5 rounded-lg text-cyan-400">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
-        </div>
-        <div>
-          <h3 class="text-base font-mono font-bold text-white">{route.DIDNumber}</h3>
-          <p class="text-xs text-slate-400 font-mono">Inbound DID Direct Routing</p>
-        </div>
-      </div>
-      
-      <div class="hidden md:flex flex-1 items-center justify-center">
-        <div class="h-px bg-[#1E2538] w-full max-w-[100px] relative">
-          <div class="absolute right-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 border-t border-r border-cyan-500/60 transform rotate-45"></div>
-        </div>
-      </div>
-
-      <div class="flex items-center w-full md:w-auto bg-[#0B0E17] border border-[#1E2538] rounded-lg px-3 py-2">
-        <div class="w-2 h-2 rounded-full bg-emerald-500 mr-2.5 shadow-[0_0_6px_rgba(16,185,129,0.8)]"></div>
-        <div>
-          <p class="text-[10px] text-slate-400 font-mono font-bold uppercase">{route.DestinationType}</p>
-          <p class="text-xs font-mono font-bold text-cyan-300">{route.DestinationTarget}</p>
-        </div>
-      </div>
-      
-      <div class="flex ml-4 space-x-1">
-        <button title="Edit Route" aria-label="Edit Route" class="text-slate-400 hover:text-cyan-400 p-1.5 transition-colors" on:click={() => openEditModal(route)}><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
-        <button title="Delete Route" aria-label="Delete Route" class="text-slate-400 hover:text-rose-400 p-1.5 transition-colors" on:click={() => handleDeleteRoute(route.ID)}><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
-      </div>
-    </GlassCard>
-    {/each}
-  </div>
-
-</div>
-
-<Modal bind:isOpen={isModalOpen} title="Create Inbound Route">
-  <form on:submit={handleCreateRoute} class="space-y-4">
+<Modal bind:isOpen={modalOpen} title={editingId ? 'Edit Inbound Route' : 'Add Inbound Route'}>
+  <form on:submit={save} class="space-y-4">
     <div>
-      <label for="new_did" class="block text-sm font-bold text-slate-500 mb-1">DID Number / Pattern</label>
-      <input id="new_did" type="text" bind:value={newDID} required placeholder="+1234567890" class="w-full bg-slate-950/80 border border-slate-800 text-slate-100 rounded-xl px-4 py-2 text-white focus:ring-indigo-500 focus:border-indigo-500" />
+      <label for="route-did" class="label">DID Number / Pattern</label>
+      <input id="route-did" class="input mono" bind:value={form.DIDNumber} placeholder="e.g. +14155550199 or _X." required />
     </div>
+
     <div>
-      <label for="new_type" class="block text-sm font-bold text-slate-500 mb-1">Destination Type</label>
-      <select id="new_type" bind:value={newType} class="w-full bg-slate-950/80 border border-slate-800 text-slate-100 rounded-xl px-4 py-2 text-white focus:ring-indigo-500 focus:border-indigo-500">
+      <label for="route-type" class="label">Destination Type</label>
+      <select id="route-type" class="select" bind:value={form.DestinationType}>
         <option value="EXTENSION">Extension</option>
-        <option value="IVR">IVR Menu</option>
+        <option value="IVR">Digital Receptionist (IVR)</option>
+        <option value="QUEUE">Call Queue</option>
         <option value="VOICEMAIL">Voicemail</option>
       </select>
     </div>
+
     <div>
-      <label for="new_target" class="block text-sm font-bold text-slate-500 mb-1">Target ID / Extension</label>
-      <input id="new_target" type="text" bind:value={newTarget} required placeholder="1000" class="w-full bg-slate-950/80 border border-slate-800 text-slate-100 rounded-xl px-4 py-2 text-white focus:ring-indigo-500 focus:border-indigo-500" />
+      <label for="route-target" class="label">Target Extension / Number</label>
+      <input id="route-target" class="input mono" bind:value={form.DestinationTarget} placeholder="e.g. 1001" required />
     </div>
-    <div class="pt-4 flex justify-end space-x-3">
-      <button type="button" class="px-4 py-2 text-slate-500 hover:text-white" on:click={() => isModalOpen = false}>Cancel</button>
-      <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-xl font-bold shadow-lg shadow-indigo-500/20">Add Route</button>
+
+    <div class="flex justify-end gap-2 pt-2">
+      <Button variant="secondary" on:click={() => modalOpen = false}>Cancel</Button>
+      <Button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button>
     </div>
   </form>
 </Modal>
-
-<Modal bind:isOpen={isEditModalOpen} title="Edit Inbound Route">
-  <form on:submit={handleEditRoute} class="space-y-4">
-    <div>
-      <label for="edit_did" class="block text-sm font-bold text-slate-500 mb-1">DID Number / Pattern</label>
-      <input id="edit_did" type="text" bind:value={editDID} required placeholder="+1234567890" class="w-full bg-slate-950/80 border border-slate-800 text-slate-100 rounded-xl px-4 py-2 text-white focus:ring-indigo-500 focus:border-indigo-500" />
-    </div>
-    <div>
-      <label for="edit_type" class="block text-sm font-bold text-slate-500 mb-1">Destination Type</label>
-      <select id="edit_type" bind:value={editType} class="w-full bg-slate-950/80 border border-slate-800 text-slate-100 rounded-xl px-4 py-2 text-white focus:ring-indigo-500 focus:border-indigo-500">
-        <option value="EXTENSION">Extension</option>
-        <option value="IVR">IVR Menu</option>
-        <option value="VOICEMAIL">Voicemail</option>
-      </select>
-    </div>
-    <div>
-      <label for="edit_target" class="block text-sm font-bold text-slate-500 mb-1">Target ID / Extension</label>
-      <input id="edit_target" type="text" bind:value={editTarget} required placeholder="1000" class="w-full bg-slate-950/80 border border-slate-800 text-slate-100 rounded-xl px-4 py-2 text-white focus:ring-indigo-500 focus:border-indigo-500" />
-    </div>
-    <div class="pt-4 flex justify-end space-x-3">
-      <button type="button" class="px-4 py-2 text-slate-500 hover:text-white" on:click={() => isEditModalOpen = false}>Cancel</button>
-      <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-xl font-bold shadow-lg shadow-indigo-500/20">Save Changes</button>
-    </div>
-  </form>
-</Modal>
-

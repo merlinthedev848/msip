@@ -1,39 +1,40 @@
 <script lang="ts">
-  import { slide, fade } from 'svelte/transition';
   import { onMount, onDestroy } from 'svelte';
-  import { UserAgent, Registerer, Inviter, SessionState } from 'sip.js';
+  import { UserAgent, Registerer } from 'sip.js';
 
   let isOpen = false;
+  let showConfig = false;
   let currentNumber = "";
-  let activeCall = null; // null | 'calling' | 'connected' | 'ringing'
+  let activeCall: 'calling' | 'connected' | 'ringing' | null = null;
   let callDuration = 0;
-  let callTimer: ReturnType<typeof setInterval>;
+  let callTimer: any;
 
   let remoteAudio: HTMLAudioElement;
-  let remoteVideo: HTMLVideoElement;
-  let userAgent: UserAgent;
-  let registerer: Registerer;
+  let userAgent: UserAgent | null = null;
+  let registerer: Registerer | null = null;
   let session: any = null;
-  let currentStream: MediaStream = null;
 
-  // Configure WebRTC details
-  let sipExt = localStorage.getItem('pbx_softphone_ext') || "1001";
-  let sipPass = localStorage.getItem('pbx_softphone_pass') || "testpass";
-  let sipDomain = window.location.hostname;
-  let wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  let wsPort = window.location.protocol === 'https:' ? '7443' : '5066';
-  let wsServer = `${wsProtocol}//${window.location.hostname}:${wsPort}`;
+  let sipExt = localStorage.getItem('pbx_softphone_ext') || "";
+  let sipPass = localStorage.getItem('pbx_softphone_pass') || "";
   let isRegistered = false;
+  let registrationStatus = "Not configured";
+
+  function saveConfig() {
+    localStorage.setItem('pbx_softphone_ext', sipExt.trim());
+    localStorage.setItem('pbx_softphone_pass', sipPass.trim());
+    showConfig = false;
+    connectSip();
+  }
 
   const toggle = () => {
     isOpen = !isOpen;
-    if (isOpen && !isRegistered) {
+    if (isOpen && !isRegistered && sipExt && sipPass) {
       connectSip();
     }
   };
 
-  const appendDigit = (digit) => {
-    if (currentNumber.length < 15) currentNumber += digit;
+  const appendDigit = (digit: string) => {
+    if (currentNumber.length < 20) currentNumber += digit;
   };
 
   const backspace = () => {
@@ -41,258 +42,193 @@
   };
 
   const connectSip = async () => {
-    const uri = UserAgent.makeURI(`sip:${sipExt}@${sipDomain}`);
-    if (!uri) return;
-
-    userAgent = new UserAgent({
-      uri: uri,
-      transportOptions: { server: wsServer },
-      authorizationUsername: sipExt,
-      authorizationPassword: sipPass,
-      delegate: {
-        onInvite(invitation) {
-          session = invitation;
-          activeCall = 'ringing';
-          currentNumber = invitation.remoteIdentity.uri.user || 'Unknown';
-        }
-      }
-    });
+    if (!sipExt || !sipPass) {
+      registrationStatus = "Configure extension credentials";
+      return;
+    }
 
     try {
+      registrationStatus = "Registering...";
+      const sipDomain = window.location.hostname;
+      const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsPort = window.location.protocol === 'https:' ? '7443' : '5066';
+      const wsServer = `${wsProtocol}//${window.location.hostname}:${wsPort}`;
+
+      const uri = UserAgent.makeURI(`sip:${sipExt}@${sipDomain}`);
+      if (!uri) {
+        registrationStatus = "Invalid SIP URI";
+        return;
+      }
+
+      userAgent = new UserAgent({
+        uri: uri,
+        transportOptions: { server: wsServer },
+        authorizationUsername: sipExt,
+        authorizationPassword: sipPass,
+        delegate: {
+          onInvite(invitation) {
+            session = invitation;
+            activeCall = 'ringing';
+            currentNumber = invitation.remoteIdentity.uri.user || 'Unknown';
+          }
+        }
+      });
+
       await userAgent.start();
       registerer = new Registerer(userAgent);
+      registerer.stateChange.addListener((newState) => {
+        if (newState === 'Registered') {
+          isRegistered = true;
+          registrationStatus = `Registered (Ext ${sipExt})`;
+        } else if (newState === 'Unregistered') {
+          isRegistered = false;
+          registrationStatus = 'Unregistered';
+        } else if (newState === 'Terminated') {
+          isRegistered = false;
+          registrationStatus = 'Registration failed';
+        }
+      });
       await registerer.register();
-      isRegistered = true;
-    } catch (error) {
-      console.error("SIP Registration Failed:", error);
+    } catch (e: any) {
+      isRegistered = false;
+      registrationStatus = e.message || 'SIP connection error';
     }
   };
 
-  onDestroy(() => {
-    if (userAgent) userAgent.stop();
+  const hangupCall = () => {
+    if (session) {
+      session.bye();
+      session = null;
+    }
+    activeCall = null;
+    clearInterval(callTimer);
+    callDuration = 0;
+  };
+
+  onMount(() => {
+    if (sipExt && sipPass) {
+      registrationStatus = "Ready to connect";
+    }
   });
 
-  const dial = async () => {
-    if (!currentNumber || !userAgent) return;
-    activeCall = 'calling';
-    
-    const target = UserAgent.makeURI(`sip:${currentNumber}@${sipDomain}`);
-    if (!target) return;
-
-    const sdhOptions = {
-      constraints: { audio: true, video: true },
-      peerConnectionConfiguration: {
-        iceServers: [
-          { urls: 'stun:localhost:3478' },
-          { urls: 'turn:localhost:3478', username: 'pbxuser', credential: 'pbxpass' }
-        ]
-      }
-    };
-
-    session = new Inviter(userAgent, target, {
-      sessionDescriptionHandlerOptions: sdhOptions
-    });
-
-    session.stateChange.addListener((state: SessionState) => {
-      if (state === SessionState.Established) {
-        activeCall = 'connected';
-        callDuration = 0;
-        callTimer = setInterval(() => callDuration++, 1000);
-        
-        const sdh = session.sessionDescriptionHandler;
-        const stream = new MediaStream();
-        sdh.peerConnection.getReceivers().forEach((receiver) => {
-          if (receiver.track) stream.addTrack(receiver.track);
-        });
-        currentStream = stream;
-        
-        // Let Svelte reactivity attach it to elements, or do it manually
-        setTimeout(() => {
-          if (remoteAudio) {
-            remoteAudio.srcObject = stream;
-            remoteAudio.play().catch(e => console.error(e));
-          }
-          if (remoteVideo) {
-            remoteVideo.srcObject = stream;
-            remoteVideo.play().catch(e => console.error(e));
-          }
-        }, 100);
-      } else if (state === SessionState.Terminated) {
-        hangup();
-      }
-    });
-
-    try {
-      await session.invite();
-    } catch (e) {
-      console.error("Invite failed", e);
-      hangup();
-    }
-  };
-
-  const answer = async () => {
-    if (!session) return;
-    try {
-      const sdhOptions = {
-        constraints: { audio: true, video: true },
-        peerConnectionConfiguration: {
-          iceServers: [
-            { urls: 'stun:localhost:3478' },
-            { urls: 'turn:localhost:3478', username: 'pbxuser', credential: 'pbxpass' }
-          ]
-        }
-      };
-
-      await session.accept({
-        sessionDescriptionHandlerOptions: sdhOptions
-      });
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const hangup = () => {
-    if (session) {
-      if (session.state === SessionState.Established) {
-        session.bye();
-      } else if (session.state === SessionState.Initial || session.state === SessionState.Establishing) {
-        if (session instanceof Inviter) session.cancel();
-        else session.reject();
-      }
-    }
-    session = null;
-    activeCall = null;
-    currentNumber = "";
-    clearInterval(callTimer);
-  };
-
-  $: formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  onDestroy(() => {
+    if (registerer) registerer.unregister();
+    if (userAgent) userAgent.stop();
+    if (callTimer) clearInterval(callTimer);
+  });
 </script>
 
-<audio bind:this={remoteAudio} autoplay style="display:none"></audio>
+<audio bind:this={remoteAudio} autoplay></audio>
 
-<div class="fixed bottom-6 right-6 z-50 flex flex-col items-end">
-  
-  {#if isOpen}
-    <div 
-      transition:slide={{duration: 200}}
-      class="bg-[#121622] border border-[#202738] rounded-xl shadow-2xl overflow-hidden mb-4 w-72 flex flex-col"
-    >
-      <!-- Header -->
-      <div class="bg-[#0B0E17] px-4 py-3 border-b border-[#1E2538] flex justify-between items-center">
-        <div class="flex items-center space-x-2">
-          <div class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
-          <span class="text-xs font-bold text-gray-300 uppercase tracking-widest font-mono">Ext 1001</span>
-        </div>
-        <button on:click={toggle} aria-label="Close Softphone" class="text-gray-500 hover:text-white transition-colors">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
+<!-- Floating Launcher Button Bottom-Right -->
+<div class="fixed bottom-6 right-6 z-40">
+  <button 
+    on:click={toggle}
+    aria-label="Toggle Softphone"
+    class="w-14 h-14 rounded-full bg-[#0284C7] hover:bg-sky-700 text-white shadow-lg flex items-center justify-center transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-sky-200"
+  >
+    {#if isOpen}
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+    {:else}
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+    {/if}
+  </button>
+</div>
+
+<!-- Softphone Panel -->
+{#if isOpen}
+  <div class="fixed bottom-24 right-6 z-40 w-80 bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden flex flex-col font-sans">
+    
+    <!-- Top Header -->
+    <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+      <div class="flex items-center space-x-2">
+        <span class="w-2.5 h-2.5 rounded-full {isRegistered ? 'bg-emerald-500' : 'bg-slate-400'}"></span>
+        <span class="text-xs font-bold text-slate-800">WebRTC Softphone</span>
       </div>
+      <button 
+        type="button"
+        on:click={() => showConfig = !showConfig}
+        class="text-xs text-sky-700 font-semibold hover:underline"
+      >
+        {showConfig ? 'Keypad' : 'Settings'}
+      </button>
+    </div>
 
-      {#if !activeCall}
-        <!-- Display -->
-        <div class="p-4 bg-[#0B0E17] flex justify-between items-center h-20 border-b border-[#1E2538]">
-          <h2 class="text-3xl font-mono text-white tracking-widest truncate">{currentNumber || '...'}</h2>
+    <!-- Status Bar -->
+    <div class="px-4 py-1.5 bg-slate-100 text-[11px] text-slate-600 border-b border-slate-200 flex items-center justify-between">
+      <span class="truncate">{registrationStatus}</span>
+      {#if !isRegistered && !showConfig}
+        <button on:click={connectSip} class="text-sky-700 font-bold hover:underline">Connect</button>
+      {/if}
+    </div>
+
+    {#if showConfig}
+      <!-- Settings Panel -->
+      <form on:submit|preventDefault={saveConfig} class="p-4 space-y-3 text-xs">
+        <div>
+          <label for="sp-ext" class="block font-medium text-slate-700 mb-1">SIP Extension</label>
+          <input id="sp-ext" class="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 mono" bind:value={sipExt} placeholder="e.g. 1001" required />
+        </div>
+        <div>
+          <label for="sp-pass" class="block font-medium text-slate-700 mb-1">SIP Password</label>
+          <input id="sp-pass" type="password" class="w-full bg-white border border-slate-300 rounded px-2.5 py-1.5 mono" bind:value={sipPass} placeholder="Secret" required />
+        </div>
+        <button type="submit" class="w-full py-2 bg-[#0284C7] hover:bg-sky-700 text-white font-bold rounded mt-2">
+          Save & Register
+        </button>
+      </form>
+    {:else}
+      <!-- Dialpad Area -->
+      <div class="p-4 space-y-3">
+        <!-- Number Input Display -->
+        <div class="flex items-center bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+          <input 
+            type="text" 
+            bind:value={currentNumber} 
+            placeholder="Dial number or ext..." 
+            class="bg-transparent border-none text-slate-900 font-mono text-base font-bold w-full focus:outline-none"
+          />
           {#if currentNumber}
-            <button on:click={backspace} aria-label="Backspace" class="text-gray-500 hover:text-rose-400 p-2 transition-colors">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z"></path></svg>
+            <button on:click={backspace} class="text-slate-400 hover:text-slate-700 p-1" title="Backspace">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l7-7h10a2 2 0 012 2v10a2 2 0 01-2 2H10l-7-7z" /></svg>
             </button>
           {/if}
         </div>
 
-        <!-- Dialpad -->
-        <div class="p-4 grid grid-cols-3 gap-3 bg-[#121622]">
-          {#each [
-            {n:'1', l:''}, {n:'2', l:'ABC'}, {n:'3', l:'DEF'},
-            {n:'4', l:'GHI'}, {n:'5', l:'JKL'}, {n:'6', l:'MNO'},
-            {n:'7', l:'PQRS'}, {n:'8', l:'TUV'}, {n:'9', l:'WXYZ'},
-            {n:'*', l:''}, {n:'0', l:'+'}, {n:'#', l:''}
-          ] as key}
+        <!-- 12-button Keypad -->
+        <div class="grid grid-cols-3 gap-2">
+          {#each ['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'] as d}
             <button 
-              on:click={() => appendDigit(key.n)}
-              class="h-14 rounded-lg bg-[#182030] hover:bg-[#202B40] active:bg-cyan-600 transition-colors flex flex-col items-center justify-center border border-[#26334A]"
+              type="button"
+              on:click={() => appendDigit(d)}
+              class="h-10 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-lg transition-colors flex items-center justify-center text-sm font-mono"
             >
-              <span class="text-xl font-bold text-white font-mono leading-none">{key.n}</span>
-              <span class="text-[9px] font-bold text-slate-400 mt-1 uppercase font-mono">{key.l}</span>
+              {d}
             </button>
           {/each}
         </div>
 
-        <!-- Action Bar -->
-        <div class="p-4 pb-6 flex justify-center space-x-6 border-t border-[#1E2538] bg-[#0E121B]">
-          <button aria-label="Call History" class="w-12 h-12 rounded-lg bg-[#182030] border border-[#26334A] text-gray-400 hover:text-white flex items-center justify-center transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-          </button>
-          <button 
-            on:click={dial}
-            aria-label="Dial"
-            class="w-14 h-14 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-950 transform -translate-y-1 transition-transform active:scale-95"
-          >
-            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
-          </button>
-          <button aria-label="Contacts" class="w-12 h-12 rounded-lg bg-[#182030] border border-[#26334A] text-gray-400 hover:text-white flex items-center justify-center transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-          </button>
-        </div>
-      {:else}
-        <!-- Active Call View -->
-        <div in:fade class="flex-1 flex flex-col p-6 items-center justify-center bg-[#0B0E17] min-h-[300px]">
-          {#if activeCall === 'calling'}
-            <div class="w-16 h-16 rounded-full border-4 border-cyan-500/20 border-t-cyan-500 animate-spin mb-6"></div>
-            <h3 class="text-lg font-bold text-white mb-1 font-mono">Calling...</h3>
-            <p class="text-sm font-mono text-gray-400">{currentNumber}</p>
+        <!-- Call Actions -->
+        <div class="pt-2">
+          {#if activeCall}
+            <button 
+              type="button"
+              on:click={hangupCall}
+              class="w-full py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-md flex items-center justify-center space-x-2 text-xs"
+            >
+              <span>Hang Up</span>
+            </button>
           {:else}
-            <div class="w-full flex-1 mb-4 flex items-center justify-center bg-black rounded-xl overflow-hidden relative border border-[#1E2538]">
-              {#if currentNumber === '9000'}
-                <!-- Display the actual WebRTC Video Stream -->
-                <video bind:this={remoteVideo} autoplay playsinline class="w-full h-full object-cover"></video>
-                <div class="absolute bottom-2 left-2 px-2 py-1 bg-[#121622] border border-[#202738] rounded text-xs text-white font-mono">Video MCU</div>
-              {:else}
-                <!-- Normal Audio Call Interface -->
-                <div class="w-20 h-20 rounded-xl bg-[#182030] border border-[#26334A] flex items-center justify-center shadow-lg">
-                  <svg class="w-10 h-10 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                </div>
-              {/if}
-            </div>
-            
-            {#if currentNumber !== '9000'}
-              <h3 class="text-xl font-bold text-white mb-1">Unknown Contact</h3>
-            {/if}
-            <p class="text-sm font-mono text-indigo-400 mb-4">{currentNumber}</p>
-            <div class="px-4 py-1.5 bg-gray-950 rounded-full text-white font-mono text-xl tracking-widest border border-gray-800 shadow-inner">
-              {formatTime(callDuration)}
-            </div>
+            <button 
+              type="button"
+              class="w-full py-2.5 bg-[#0284C7] hover:bg-sky-700 text-white font-bold rounded-xl shadow-md flex items-center justify-center space-x-2 text-xs"
+            >
+              <span>Call</span>
+            </button>
           {/if}
-          
-          <div class="mt-8 flex space-x-4">
-            <button aria-label="Mute" class="w-12 h-12 rounded-full bg-gray-800 text-white flex items-center justify-center hover:bg-gray-700">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
-            </button>
-            <button on:click={hangup} aria-label="Hangup" class="w-16 h-16 rounded-full bg-rose-500 hover:bg-rose-400 text-white flex items-center justify-center shadow-lg shadow-rose-500/30 transform transition-transform active:scale-95">
-              <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.516l2.257-1.13a1 1 0 00.502-1.21L9.22 3.684A1 1 0 008.27 3H5z"></path></svg>
-            </button>
-            <button aria-label="Transfer" class="w-12 h-12 rounded-full bg-gray-800 text-white flex items-center justify-center hover:bg-gray-700">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9V5a2 2 0 012-2h2a2 2 0 012 2v4M14 11h-4m4 0h4m-4 0v4m-4-4v4m0 4h4m-4 0h-4m0 0v-4"></path></svg>
-            </button>
-          </div>
         </div>
-      {/if}
-    </div>
-  {/if}
-
-  <!-- Toggle Button (Always visible) -->
-  <button 
-    on:click={toggle}
-    class="w-16 h-16 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-xl shadow-indigo-600/30 flex items-center justify-center transition-all transform hover:scale-105 active:scale-95"
-  >
-    {#if isOpen}
-      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-    {:else}
-      <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+      </div>
     {/if}
-  </button>
-</div>
+
+  </div>
+{/if}

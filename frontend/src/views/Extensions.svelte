@@ -1,275 +1,197 @@
 <script lang="ts">
-  import GlassCard from '../components/ui/GlassCard.svelte';
-  import Badge from '../components/ui/Badge.svelte';
+  import { onMount } from 'svelte';
+  import { api } from '../lib/api';
+  import { toast, toastError } from '../lib/toast';
+  import PageHeader from '../components/ui/PageHeader.svelte';
+  import Card from '../components/ui/Card.svelte';
   import Button from '../components/ui/Button.svelte';
   import Modal from '../components/ui/Modal.svelte';
+  import Badge from '../components/ui/Badge.svelte';
+  import EmptyState from '../components/ui/EmptyState.svelte';
 
-  import { onMount } from 'svelte';
-  
-  let extensions = [];
-  let isApiConnected = true;
-  
-  let isModalOpen = false;
-  let isEditModalOpen = false;
-
-  let newExtNumber = '';
-  let newExtPassword = '';
-  let newExtConfirm = '';
-  
-  let editExtId = '';
-  let editExtNumber = '';
-  let editExtPassword = '';
-  let editExtConfirm = '';
-  let editExtActive = true;
-
-  let isSubmitting = false;
-
-  async function fetchExtensions() {
-    try {
-      const res = await fetch(`/api/v1/extensions`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        extensions = (data.extensions || []).map(e => ({
-          id: e.ID,
-          ext: e.ExtensionNumber,
-          name: 'DB Endpoint',
-          status: e.IsActive ? 'Online' : 'Offline',
-          ip: 'Dynamic',
-          code: e.ProvisioningCode || 'N/A',
-          isActive: e.IsActive
-        }));
-        isApiConnected = true;
-      } else { throw new Error("API Offline"); }
-    } catch (e) {
-      isApiConnected = false;
-      extensions = [];
-    }
+  interface ExtensionItem {
+    ID: string;
+    ExtensionNumber: string;
+    IsActive: boolean;
+    ProvisioningCode: string;
+    CreatedAt: string;
   }
 
-  onMount(() => {
-    fetchExtensions();
-  });
+  let extensions: ExtensionItem[] = [];
+  let loading = true;
+  let loadError = '';
+  let saving = false;
+  let search = '';
 
-  async function handleCreateExtension(e) {
-    e.preventDefault();
-    if (newExtPassword !== newExtConfirm) {
-      alert("Passwords do not match!");
-      return;
-    }
-    isSubmitting = true;
+  let modalOpen = false;
+  let editingId: string | null = null;
+  let form = {
+    ExtensionNumber: '',
+    Password: '',
+    ConfirmPassword: '',
+    IsActive: true
+  };
+
+  $: filtered = extensions.filter(e => 
+    !search.trim() || `${e.ExtensionNumber} ${e.ProvisioningCode}`.toLowerCase().includes(search.trim().toLowerCase())
+  );
+
+  async function load() {
+    loading = true;
+    loadError = '';
     try {
-      const res = await fetch(`/api/v1/extensions`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('pbx_token')}`
-        },
-        body: JSON.stringify({
-          ExtensionNumber: newExtNumber,
-          PasswordHash: newExtPassword,
-          IsActive: true
-        })
-      });
-      
-      if (res.ok) {
-        isModalOpen = false;
-        newExtNumber = '';
-        newExtPassword = '';
-        newExtConfirm = '';
-        await fetchExtensions();
-      } else {
-        alert("Failed to create extension.");
-      }
-    } catch (err) {
-      alert("API Error: Make sure backend is running.");
+      const data = await api.get<{ extensions: ExtensionItem[] }>('/extensions');
+      extensions = data.extensions || [];
+    } catch (e: any) {
+      loadError = e.message;
     } finally {
-      isSubmitting = false;
+      loading = false;
     }
   }
 
-  function openEditModal(ext) {
-    editExtId = ext.id;
-    editExtNumber = ext.ext;
-    editExtPassword = '';
-    editExtConfirm = '';
-    editExtActive = ext.isActive;
-    isEditModalOpen = true;
+  function openCreate() {
+    editingId = null;
+    form = { ExtensionNumber: '', Password: '', ConfirmPassword: '', IsActive: true };
+    modalOpen = true;
   }
 
-  async function handleEditExtension(e) {
+  function openEdit(ext: ExtensionItem) {
+    editingId = ext.ID;
+    form = { ExtensionNumber: ext.ExtensionNumber, Password: '', ConfirmPassword: '', IsActive: ext.IsActive };
+    modalOpen = true;
+  }
+
+  async function save(e: Event) {
     e.preventDefault();
-    if (editExtPassword && editExtPassword !== editExtConfirm) {
-      alert("Passwords do not match!");
-      return;
+    if (!form.ExtensionNumber.trim()) return toast.error('Extension number is required');
+    if (!editingId && !form.Password) return toast.error('SIP Password is required');
+    if (form.Password && form.Password !== form.ConfirmPassword) {
+      return toast.error('Passwords do not match');
     }
-    isSubmitting = true;
+
+    saving = true;
     try {
       const payload: any = {
-        ExtensionNumber: editExtNumber,
-        IsActive: editExtActive
+        ExtensionNumber: form.ExtensionNumber.trim(),
+        IsActive: form.IsActive
       };
-      if (editExtPassword) {
-        payload.PasswordHash = editExtPassword;
+      if (form.Password) {
+        payload.PasswordHash = form.Password;
       }
-      const res = await fetch(`/api/v1/extensions/${editExtId}`, {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('pbx_token')}`
-        },
-        body: JSON.stringify(payload)
-      });
-      
-      if (res.ok) {
-        isEditModalOpen = false;
-        await fetchExtensions();
+
+      if (editingId) {
+        await api.put(`/extensions/${editingId}`, payload);
+        toast.success('Extension updated');
       } else {
-        alert("Failed to update extension.");
+        await api.post('/extensions', payload);
+        toast.success('Extension created');
       }
+      modalOpen = false;
+      await load();
     } catch (err) {
-      alert("API Error updating extension.");
+      toastError(err);
     } finally {
-      isSubmitting = false;
+      saving = false;
     }
   }
 
-  async function handleDeleteExtension(id) {
-    if(!confirm("Are you sure you want to delete this extension?")) return;
+  async function remove(ext: ExtensionItem) {
+    if (!confirm(`Delete extension ${ext.ExtensionNumber}?`)) return;
     try {
-      const res = await fetch(`/api/v1/extensions/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
-      });
-      if (res.ok) fetchExtensions();
-    } catch (e) {}
+      await api.del(`/extensions/${ext.ID}`);
+      toast.success('Extension deleted');
+      await load();
+    } catch (e) {
+      toastError(e);
+    }
   }
+
+  onMount(load);
 </script>
 
-<div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">
-  
-  <header class="flex justify-between items-end mb-8">
-    <div>
-      <h1 class="text-3xl font-bold tracking-tight text-white mb-1">Extensions</h1>
-      <p class="text-slate-500 text-sm">Manage SIP devices and user endpoints.</p>
-    </div>
-    <Button variant="primary" on:click={() => isModalOpen = true}>
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-      <span>New Extension</span>
-    </Button>
-  </header>
+<PageHeader title="Extensions" description="Manage SIP user endpoints and provision codes.">
+  <Button on:click={openCreate}>+ New Extension</Button>
+</PageHeader>
 
-  {#if !isApiConnected}
-  <div class="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg flex items-start space-x-3 text-yellow-500 text-sm">
-    <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-    <div>
-      <p class="font-bold">Backend API Offline</p>
-      <p class="opacity-80 mt-1">The Go backend (port 8081) is not responding. Showing simulated data instead of PostgreSQL records.</p>
-    </div>
-  </div>
-  {/if}
+<Card padded={false} title="Configured Extensions" subtitle="{extensions.length} extensions">
+  <svelte:fragment slot="actions">
+    <input class="input !py-1.5 !text-xs w-56" placeholder="Search extension…" bind:value={search} aria-label="Search extensions" />
+  </svelte:fragment>
 
-  <GlassCard className="p-0 overflow-hidden">
-    <div class="p-4 border-b border-slate-800/80 bg-slate-950/40 flex items-center">
-      <svg class="w-5 h-5 text-slate-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-      <input type="text" placeholder="Search extensions..." class="bg-transparent border-none text-slate-700 focus:outline-none w-full placeholder-gray-600 text-sm" />
-    </div>
-
+  {#if loading || loadError || filtered.length === 0}
+    <EmptyState
+      {loading}
+      error={loadError}
+      title={search ? 'No extensions match your search' : 'No extensions found'}
+      message={search ? '' : 'Create your first extension to connect a SIP hardware device or softphone.'}
+    >
+      {#if !search}<Button size="sm" on:click={openCreate}>Add first extension</Button>{/if}
+      <svelte:fragment slot="retry"><Button size="sm" variant="secondary" on:click={load}>Retry</Button></svelte:fragment>
+    </EmptyState>
+  {:else}
     <div class="overflow-x-auto">
-      <table class="w-full text-left border-collapse">
+      <table class="tbl">
         <thead>
-          <tr class="bg-[#0E121B] border-b border-[#1E2538] text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono">
-            <th class="py-3 px-4">Extension</th>
-            <th class="py-3 px-4">Status</th>
-            <th class="py-3 px-4">Provisioning Code</th>
-            <th class="py-3 px-4 text-right">Actions</th>
+          <tr>
+            <th>Extension</th>
+            <th>Status</th>
+            <th>Provisioning Code</th>
+            <th class="text-right">Actions</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-[#1E2538] text-sm text-slate-200">
-          {#each extensions as ext}
-            <tr class="hover:bg-[#182030]/50 transition-colors group cursor-pointer font-mono">
-              <td class="p-4 font-mono text-cyan-400 font-bold text-sm">{ext.ext}</td>
-              <td class="p-4">
-                <span class="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider font-mono border {ext.status === 'Online' ? 'bg-emerald-950/60 text-emerald-400 border-emerald-500/30' : 'bg-[#182030] text-slate-400 border-[#26334A]'}">
-                  {ext.status}
+        <tbody>
+          {#each filtered as ext (ext.ID)}
+            <tr>
+              <td class="mono font-bold text-slate-800 text-sm">{ext.ExtensionNumber}</td>
+              <td>
+                <Badge tone={ext.IsActive ? 'success' : 'neutral'}>
+                  {ext.IsActive ? 'Active' : 'Disabled'}
+                </Badge>
+              </td>
+              <td>
+                <span class="mono px-2 py-0.5 bg-sky-50 text-sky-800 rounded text-xs border border-sky-200">
+                  {ext.ProvisioningCode || '—'}
                 </span>
               </td>
-              <td class="p-4">
-                <span class="font-mono text-xs text-cyan-300 tracking-wider bg-[#182030] px-2 py-0.5 rounded border border-[#26334A]">
-                  {ext.code}
-                </span>
-              </td>
-              <td class="p-4 text-right flex justify-end space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button title="Edit Extension" aria-label="Edit Extension" class="text-slate-400 hover:text-cyan-400 transition-colors p-1" on:click={() => openEditModal(ext)}>
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                </button>
-                <button title="Delete Extension" aria-label="Delete Extension" class="text-rose-400 hover:text-white transition-colors p-1" on:click={() => handleDeleteExtension(ext.id)}>
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                </button>
+              <td class="text-right space-x-3 whitespace-nowrap">
+                <button type="button" class="link-action" on:click={() => openEdit(ext)}>Edit</button>
+                <button type="button" class="link-danger" on:click={() => remove(ext)}>Delete</button>
               </td>
             </tr>
           {/each}
         </tbody>
       </table>
     </div>
-  </GlassCard>
-</div>
+  {/if}
+</Card>
 
-<!-- Add Extension Modal -->
-<Modal bind:isOpen={isModalOpen} title="Provision New Extension" description="Create a new SIP extension in the PostgreSQL database. It will immediately be available to register on Kamailio/FreeSWITCH.">
-  <form on:submit={handleCreateExtension} class="space-y-4">
+<Modal bind:isOpen={modalOpen} title={editingId ? 'Edit Extension' : 'Create Extension'}>
+  <form on:submit={save} class="space-y-4">
     <div>
-      <label for="extNumber" class="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1.5">Extension Number</label>
-      <input id="extNumber" type="text" bind:value={newExtNumber} required placeholder="e.g. 1005" class="w-full bg-[#0B0E17] border border-[#1E2538] rounded-lg px-3 py-2 text-white font-mono text-sm focus:border-cyan-500 outline-none">
+      <label for="ext-number" class="label">Extension Number</label>
+      <input id="ext-number" class="input mono" bind:value={form.ExtensionNumber} placeholder="e.g. 1001" required />
     </div>
+
     <div>
-      <label for="extPassword" class="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1.5">SIP Password</label>
-      <input id="extPassword" type="password" bind:value={newExtPassword} required placeholder="Strong password" class="w-full bg-[#0B0E17] border border-[#1E2538] rounded-lg px-3 py-2 text-white font-mono text-sm focus:border-cyan-500 outline-none">
+      <label for="ext-pass" class="label">SIP Password {editingId ? '(leave blank to keep current)' : ''}</label>
+      <input id="ext-pass" type="password" class="input mono" bind:value={form.Password} placeholder="SIP registration secret" required={!editingId} />
     </div>
-    <div>
-      <label for="extConfirm" class="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1.5">Confirm Password</label>
-      <input id="extConfirm" type="password" bind:value={newExtConfirm} required placeholder="Confirm password" class="w-full bg-[#0B0E17] border border-[#1E2538] rounded-lg px-3 py-2 text-white font-mono text-sm focus:border-cyan-500 outline-none">
+
+    {#if form.Password}
+      <div>
+        <label for="ext-confirm" class="label">Confirm Password</label>
+        <input id="ext-confirm" type="password" class="input mono" bind:value={form.ConfirmPassword} placeholder="Confirm password" required />
+      </div>
+    {/if}
+
+    <div class="flex items-center space-x-2 pt-1">
+      <input id="ext-active" type="checkbox" bind:checked={form.IsActive} class="rounded border-slate-300 text-sky-600 focus:ring-sky-500" />
+      <label for="ext-active" class="text-xs font-medium text-slate-700">Active</label>
     </div>
-    
-    <div class="pt-4 flex justify-end space-x-3">
-      <Button variant="secondary" on:click={() => isModalOpen = false} type="button">Cancel</Button>
-      <button type="submit" disabled={isSubmitting} class="bg-cyan-600 hover:bg-cyan-500 text-slate-950 px-5 py-2 rounded-lg font-bold font-mono text-xs uppercase tracking-wider disabled:opacity-50">
-        {isSubmitting ? 'Provisioning...' : 'Create Extension'}
-      </button>
+
+    <div class="flex justify-end gap-2 pt-2">
+      <Button variant="secondary" on:click={() => modalOpen = false}>Cancel</Button>
+      <Button type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save'}</Button>
     </div>
   </form>
 </Modal>
-
-<!-- Edit Extension Modal -->
-<Modal bind:isOpen={isEditModalOpen} title="Edit Extension" description="Update settings for this SIP extension.">
-  <form on:submit={handleEditExtension} class="space-y-5">
-    <div>
-      <label for="editExtNumber" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Extension Number</label>
-      <input id="editExtNumber" type="text" bind:value={editExtNumber} required class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
-    </div>
-    <div>
-      <label for="editExtPassword" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">SIP Password (Leave blank to keep current)</label>
-      <input id="editExtPassword" type="password" bind:value={editExtPassword} placeholder="New password" class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
-    </div>
-    <div>
-      <label for="editExtConfirm" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Confirm Password</label>
-      <input id="editExtConfirm" type="password" bind:value={editExtConfirm} placeholder="Confirm new password" class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
-    </div>
-    <div class="flex items-center space-x-3">
-      <input id="editExtActive" type="checkbox" bind:checked={editExtActive} class="rounded text-indigo-600 focus:ring-indigo-500 border-slate-800">
-      <label for="editExtActive" class="text-sm text-slate-700 font-bold uppercase tracking-wider">Is Active</label>
-    </div>
-    
-    <div class="pt-4 flex justify-end space-x-3">
-      <Button variant="secondary" on:click={() => isEditModalOpen = false} type="button">Cancel</Button>
-      <button type="submit" disabled={isSubmitting} class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50">
-        {isSubmitting ? 'Saving...' : 'Save Changes'}
-      </button>
-    </div>
-  </form>
-</Modal>
-
-
-
-
