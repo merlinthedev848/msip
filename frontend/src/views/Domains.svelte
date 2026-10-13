@@ -93,45 +93,45 @@
 <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">
   <header class="flex justify-between items-end mb-8">
     <div>
-      <h1 class="text-3xl font-black text-slate-900 tracking-tight mb-2">Multi-Tenant Domains</h1>
+      <h1 class="text-3xl font-black text-white tracking-tight mb-2">Multi-Tenant Domains</h1>
       <p class="text-slate-500 font-medium text-sm">Manage isolated tenant environments and resource limits.</p>
     </div>
-    <button class="bg-indigo-600 hover:bg-indigo-500 text-slate-900 px-6 py-2 rounded-xl font-bold transition-colors shadow-lg shadow-indigo-600/20 flex items-center" on:click={() => isModalOpen = true}>
+    <button class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-xl font-bold transition-colors shadow-lg shadow-indigo-600/20 flex items-center" on:click={() => isModalOpen = true}>
       <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
       Add Domain
     </button>
   </header>
 
   <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-    <div class="bg-white/40 rounded-2xl border border-slate-200 p-6">
+    <div class="bg-slate-900/75 backdrop-blur-xl rounded-2xl border border-slate-800 p-6">
       <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Total Tenants</p>
-      <h2 class="text-4xl font-black text-slate-900 font-mono">{domains.length}</h2>
+      <h2 class="text-4xl font-black text-white font-mono">{domains.length}</h2>
     </div>
-    <div class="bg-white/40 rounded-2xl border border-slate-200 p-6">
+    <div class="bg-slate-900/75 backdrop-blur-xl rounded-2xl border border-slate-800 p-6">
       <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Global Extensions</p>
-      <h2 class="text-4xl font-black text-slate-900 font-mono">{domains.reduce((a,b)=>a+b.extCount, 0)}</h2>
+      <h2 class="text-4xl font-black text-white font-mono">{domains.reduce((a,b)=>a+b.extCount, 0)}</h2>
     </div>
-    <div class="bg-white/40 rounded-2xl border border-slate-200 p-6">
+    <div class="bg-slate-900/75 backdrop-blur-xl rounded-2xl border border-slate-800 p-6">
       <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Concurrent Calls</p>
       <div class="flex items-baseline space-x-2">
-        <h2 class="text-4xl font-black text-slate-900 font-mono">{domains.reduce((a,b)=>a+b.cc, 0)}</h2>
+        <h2 class="text-4xl font-black text-white font-mono">{domains.reduce((a,b)=>a+b.cc, 0)}</h2>
         <span class="text-sm font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded">Live</span>
       </div>
     </div>
   </div>
 
-  <div class="bg-white/60 rounded-[2rem] border border-slate-200 overflow-hidden shadow-2xl">
-    <div class="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50/30">
-      <h3 class="text-lg font-bold text-slate-900">Configured Domains</h3>
+  <div class="bg-slate-900/75 backdrop-blur-xl rounded-[2rem] border border-slate-800 overflow-hidden shadow-2xl">
+    <div class="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-900/50/30">
+      <h3 class="text-lg font-bold text-white">Configured Domains</h3>
       <div class="relative">
         <svg class="w-4 h-4 text-slate-500 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-        <input type="text" placeholder="Search tenants..." class="bg-white border border-slate-200 text-slate-900 text-sm rounded-xl focus:ring-indigo-500 focus:border-indigo-500 block w-64 pl-9 p-2 placeholder-gray-500 transition-colors">
+        <input type="text" placeholder="Search tenants..." class="bg-slate-950/80 border border-slate-800 text-slate-100 text-white text-sm rounded-xl focus:ring-indigo-500 focus:border-indigo-500 block w-64 pl-9 p-2 placeholder-gray-500 transition-colors">
       </div>
     </div>
     
     <table class="w-full text-left">
       <thead>
-        <tr class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] border-b border-slate-200">
+        <tr class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] border-b border-slate-800">
           <th class="p-6">Domain Name</th>
           <th class="p-6 text-center">Extensions</th>
           <th class="p-6 text-center">Concurrent Limits</th>
@@ -141,21 +141,21 @@
       </thead>
       <tbody class="divide-y divide-gray-800/50">
         {#each domains as domain}
-          <tr class="hover:bg-slate-100/30 transition-colors group">
+          <tr class="hover:bg-slate-800/50/30 transition-colors group">
             <td class="p-6">
               <div class="flex items-center space-x-4">
-                <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-blue-600 font-bold border border-slate-200">
+                <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-blue-600 font-bold border border-slate-800">
                   {domain.name.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <p class="font-bold text-slate-900 text-base group-hover:text-indigo-300 transition-colors">{domain.name}</p>
+                  <p class="font-bold text-white text-base group-hover:text-indigo-300 transition-colors">{domain.name}</p>
                   <p class="text-xs text-slate-500">{domain.description}</p>
                 </div>
               </div>
             </td>
             <td class="p-6">
               <div class="flex flex-col items-center">
-                <span class="font-mono font-bold text-slate-900 text-lg">{domain.extCount} <span class="text-gray-600 text-sm">/ {domain.maxExt}</span></span>
+                <span class="font-mono font-bold text-white text-lg">{domain.extCount} <span class="text-gray-600 text-sm">/ {domain.maxExt}</span></span>
                 <div class="w-24 h-1.5 bg-slate-100 rounded-full mt-2 overflow-hidden">
                   <div class="h-full {domain.extCount/domain.maxExt > 0.8 ? 'bg-amber-500' : 'bg-indigo-500'}" style="width: {(domain.extCount/domain.maxExt)*100}%"></div>
                 </div>
@@ -192,15 +192,15 @@
   <form on:submit={handleAddDomain} class="space-y-4">
     <div>
       <label for="new_domain_name" class="block text-sm font-bold text-slate-500 mb-1">Domain Identity</label>
-      <input id="new_domain_name" type="text" bind:value={newName} required placeholder="e.g. Acme Corp" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
+      <input id="new_domain_name" type="text" bind:value={newName} required placeholder="e.g. Acme Corp" class="w-full bg-slate-950/80 border border-slate-800 text-slate-100 rounded-xl px-4 py-2 text-white focus:ring-indigo-500 focus:border-indigo-500" />
     </div>
     <div>
       <label for="new_domain_desc" class="block text-sm font-bold text-slate-500 mb-1">FQDN / Hostname</label>
-      <input id="new_domain_desc" type="text" bind:value={newDescription} required placeholder="pbx.acmecorp.com" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
+      <input id="new_domain_desc" type="text" bind:value={newDescription} required placeholder="pbx.acmecorp.com" class="w-full bg-slate-950/80 border border-slate-800 text-slate-100 rounded-xl px-4 py-2 text-white focus:ring-indigo-500 focus:border-indigo-500" />
     </div>
     <div class="pt-4 flex justify-end space-x-3">
-      <button type="button" class="px-4 py-2 text-slate-500 hover:text-slate-900" on:click={() => isModalOpen = false}>Cancel</button>
-      <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-slate-900 px-6 py-2 rounded-xl font-bold shadow-lg shadow-indigo-500/20">Create Domain</button>
+      <button type="button" class="px-4 py-2 text-slate-500 hover:text-white" on:click={() => isModalOpen = false}>Cancel</button>
+      <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-xl font-bold shadow-lg shadow-indigo-500/20">Create Domain</button>
     </div>
   </form>
 </Modal>
@@ -209,15 +209,15 @@
   <form on:submit={handleEditDomain} class="space-y-4">
     <div>
       <label for="edit_domain_name" class="block text-sm font-bold text-slate-500 mb-1">Domain Identity</label>
-      <input id="edit_domain_name" type="text" bind:value={editName} required placeholder="e.g. Acme Corp" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
+      <input id="edit_domain_name" type="text" bind:value={editName} required placeholder="e.g. Acme Corp" class="w-full bg-slate-950/80 border border-slate-800 text-slate-100 rounded-xl px-4 py-2 text-white focus:ring-indigo-500 focus:border-indigo-500" />
     </div>
     <div>
       <label for="edit_domain_desc" class="block text-sm font-bold text-slate-500 mb-1">FQDN / Hostname</label>
-      <input id="edit_domain_desc" type="text" bind:value={editDescription} required placeholder="pbx.acmecorp.com" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
+      <input id="edit_domain_desc" type="text" bind:value={editDescription} required placeholder="pbx.acmecorp.com" class="w-full bg-slate-950/80 border border-slate-800 text-slate-100 rounded-xl px-4 py-2 text-white focus:ring-indigo-500 focus:border-indigo-500" />
     </div>
     <div class="pt-4 flex justify-end space-x-3">
-      <button type="button" class="px-4 py-2 text-slate-500 hover:text-slate-900" on:click={() => isEditModalOpen = false}>Cancel</button>
-      <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-slate-900 px-6 py-2 rounded-xl font-bold shadow-lg shadow-indigo-500/20">Save Changes</button>
+      <button type="button" class="px-4 py-2 text-slate-500 hover:text-white" on:click={() => isEditModalOpen = false}>Cancel</button>
+      <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-xl font-bold shadow-lg shadow-indigo-500/20">Save Changes</button>
     </div>
   </form>
 </Modal>

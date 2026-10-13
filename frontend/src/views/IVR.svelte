@@ -6,7 +6,7 @@
 <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">
   <header class="flex justify-between items-end mb-4">
     <div>
-      <h1 class="text-3xl font-bold tracking-tight text-slate-900 mb-1">IVR Builder</h1>
+      <h1 class="text-3xl font-bold tracking-tight text-white mb-1">IVR Builder</h1>
       <p class="text-slate-500 text-sm">Visual node designer for interactive voice response menus.</p>
     </div>
     <div class="flex space-x-3">
@@ -15,7 +15,7 @@
     </div>
   </header>
 
-  <GlassCard className="flex-1 min-h-[500px] relative overflow-hidden bg-white/80">
+  <GlassCard className="flex-1 min-h-[500px] relative overflow-hidden ">
     <!-- Grid Background -->
     <div class="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
     
@@ -24,7 +24,7 @@
       
       <!-- Start Node -->
       <div class="bg-indigo-600 border border-indigo-400 rounded-xl px-6 py-3 shadow-lg shadow-indigo-500/20 z-10 cursor-move hover:-translate-y-1 transition-transform">
-        <p class="text-slate-900 font-bold">Main Welcome (Start)</p>
+        <p class="text-white font-bold">Main Welcome (Start)</p>
         <p class="text-indigo-200 text-xs">Audio: greeting.wav</p>
       </div>
       
@@ -33,7 +33,7 @@
       
       <!-- Split Node -->
       <div class="bg-slate-100 border border-slate-300 rounded-xl px-6 py-3 shadow-lg z-10 text-center">
-        <p class="text-slate-900 font-semibold mb-2">Input Menu</p>
+        <p class="text-white font-semibold mb-2">Input Menu</p>
         <div class="flex space-x-8">
           <div class="flex flex-col items-center">
             <span class="w-6 h-6 bg-slate-200 rounded text-xs flex items-center justify-center font-bold text-slate-700">1</span>

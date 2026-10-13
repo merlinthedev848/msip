@@ -58,7 +58,7 @@
   
   <header class="flex justify-between items-center mb-10">
     <div>
-      <h1 class="text-3xl font-black text-slate-900 tracking-tight mb-2 flex items-center">
+      <h1 class="text-3xl font-black text-white tracking-tight mb-2 flex items-center">
         Live Call Centre
         <span class="ml-3 px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100 text-xs font-bold uppercase tracking-wider flex items-center">
           <span class="w-1.5 h-1.5 rounded-full {isConnected ? 'bg-indigo-400 animate-pulse' : 'bg-rose-500'} mr-2"></span>
@@ -68,7 +68,7 @@
       <p class="text-slate-500 font-medium text-sm">Real-time queue and agent performance metrics.</p>
     </div>
     
-    <button on:click={() => window.open('/wallboard-fullscreen', '_blank')} class="bg-slate-100 hover:bg-slate-200 text-slate-900 px-4 py-2 rounded-xl font-bold text-sm transition-colors flex items-center border border-slate-200">
+    <button on:click={() => window.open('/wallboard-fullscreen', '_blank')} class="bg-slate-100 hover:bg-slate-200 text-white px-4 py-2 rounded-xl font-bold text-sm transition-colors flex items-center border border-slate-800">
       <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
       Pop Out Display
     </button>
@@ -77,27 +77,27 @@
   <!-- Massive KPIs -->
   <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
     
-    <div class="bg-white/60 rounded-[2rem] border border-slate-200 p-8 flex flex-col justify-center items-center relative overflow-hidden group">
+    <div class="bg-slate-900/75 backdrop-blur-xl rounded-[2rem] border border-slate-800 p-8 flex flex-col justify-center items-center relative overflow-hidden group">
       <div class="absolute inset-0 bg-gradient-to-br from-rose-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
       <p class="text-sm font-bold text-slate-500 uppercase tracking-[0.3em] mb-4">Calls Waiting</p>
-      <h2 class="text-8xl font-black {metrics.queue_length > 5 ? 'text-rose-500 animate-pulse' : 'text-slate-900'} font-mono transition-colors duration-500">
+      <h2 class="text-8xl font-black {metrics.queue_length > 5 ? 'text-rose-500 animate-pulse' : 'text-white'} font-mono transition-colors duration-500">
         {metrics.queue_length}
       </h2>
     </div>
 
-    <div class="bg-white/60 rounded-[2rem] border border-slate-200 p-8 flex flex-col justify-center items-center relative overflow-hidden group">
+    <div class="bg-slate-900/75 backdrop-blur-xl rounded-[2rem] border border-slate-800 p-8 flex flex-col justify-center items-center relative overflow-hidden group">
       <div class="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
       <p class="text-sm font-bold text-slate-500 uppercase tracking-[0.3em] mb-4">Active Agents</p>
-      <h2 class="text-8xl font-black text-slate-900 font-mono">{metrics.agents_online}</h2>
+      <h2 class="text-8xl font-black text-white font-mono">{metrics.agents_online}</h2>
     </div>
 
-    <div class="bg-white/60 rounded-[2rem] border border-slate-200 p-8 flex flex-col justify-center items-center relative overflow-hidden group">
+    <div class="bg-slate-900/75 backdrop-blur-xl rounded-[2rem] border border-slate-800 p-8 flex flex-col justify-center items-center relative overflow-hidden group">
       <div class="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
       <p class="text-sm font-bold text-slate-500 uppercase tracking-[0.3em] mb-4">Avg Wait Time</p>
-      <h2 class="text-7xl font-black text-slate-900 font-mono">{formatTime(metrics.avg_wait_time)}</h2>
+      <h2 class="text-7xl font-black text-white font-mono">{formatTime(metrics.avg_wait_time)}</h2>
     </div>
 
-    <div class="bg-white/60 rounded-[2rem] border border-slate-200 p-8 flex flex-col justify-center items-center relative overflow-hidden group">
+    <div class="bg-slate-900/75 backdrop-blur-xl rounded-[2rem] border border-slate-800 p-8 flex flex-col justify-center items-center relative overflow-hidden group">
       <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
       <p class="text-sm font-bold text-slate-500 uppercase tracking-[0.3em] mb-4">Global SLA</p>
       <div class="flex items-baseline">
@@ -108,10 +108,10 @@
   </div>
 
   <!-- Detailed Queues Table -->
-  <div class="bg-white/60 rounded-[2rem] border border-slate-200 overflow-hidden mt-8">
+  <div class="bg-slate-900/75 backdrop-blur-xl rounded-[2rem] border border-slate-800 overflow-hidden mt-8">
     <table class="w-full text-left">
       <thead>
-        <tr class="bg-slate-50/50 border-b border-slate-200">
+        <tr class="bg-slate-900/50/50 border-b border-slate-800">
           <th class="p-6 text-xs font-bold text-slate-500 uppercase tracking-[0.2em]">Queue Name</th>
           <th class="p-6 text-xs font-bold text-slate-500 uppercase tracking-[0.2em] text-center">Waiting</th>
           <th class="p-6 text-xs font-bold text-slate-500 uppercase tracking-[0.2em] text-center">Agents Ready</th>
@@ -120,8 +120,8 @@
       </thead>
       <tbody class="divide-y divide-slate-200/50">
         {#each queueStats as queue}
-          <tr class="hover:bg-slate-100/30 transition-colors">
-            <td class="p-6 font-bold text-slate-900 text-xl">{queue.name}</td>
+          <tr class="hover:bg-slate-800/50/30 transition-colors">
+            <td class="p-6 font-bold text-white text-xl">{queue.name}</td>
             <td class="p-6 text-center">
               <span class="text-3xl font-black font-mono {queue.waiting > 0 ? 'text-rose-600' : 'text-slate-600'}">{queue.waiting}</span>
             </td>

@@ -115,21 +115,21 @@
 <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">
   <header class="flex justify-between items-end mb-8">
     <div>
-      <h1 class="text-3xl font-bold tracking-tight text-slate-900 mb-1">Outbound Routes</h1>
+      <h1 class="text-3xl font-bold tracking-tight text-white mb-1">Outbound Routes</h1>
       <p class="text-slate-500 text-sm">Define dial patterns and prioritize carrier trunks.</p>
     </div>
     <Button variant="primary" on:click={() => isModalOpen = true}>New Rule</Button>
   </header>
 
   {#if routes.length === 0}
-    <div class="p-8 text-center text-slate-500 bg-white/40 border border-slate-200 rounded-3xl">No outbound routes configured.</div>
+    <div class="p-8 text-center text-slate-500 bg-slate-900/75 backdrop-blur-xl border border-slate-800 rounded-3xl">No outbound routes configured.</div>
   {/if}
   {#each routes as route}
   <GlassCard hoverEffect={true} className="border-l-4 border-l-indigo-500">
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
       <div>
-        <h3 class="text-lg font-bold text-slate-900 mb-1">Route (Priority {route.Priority})</h3>
-        <p class="text-sm font-mono text-slate-500 bg-white inline-block px-2 py-1 rounded">Pattern: {route.DialPattern}</p>
+        <h3 class="text-lg font-bold text-white mb-1">Route (Priority {route.Priority})</h3>
+        <p class="text-sm font-mono text-slate-500 bg-slate-800 text-slate-300 inline-block px-2 py-1 rounded">Pattern: {route.DialPattern}</p>
       </div>
       <div class="mt-4 md:mt-0 flex items-center space-x-4">
         <div class="text-right">
@@ -148,11 +148,11 @@
   <form on:submit={handleCreateRoute} class="space-y-4">
     <div>
       <label for="new_pattern" class="block text-sm font-bold text-slate-500 mb-1">Dial Pattern</label>
-      <input id="new_pattern" type="text" bind:value={newPattern} required placeholder={'e.g. ^0[1-9]\\d{8,9}$'} class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
+      <input id="new_pattern" type="text" bind:value={newPattern} required placeholder={'e.g. ^0[1-9]\\d{8,9}$'} class="w-full bg-slate-950/80 border border-slate-800 text-slate-100 rounded-xl px-4 py-2 text-white focus:ring-indigo-500 focus:border-indigo-500" />
     </div>
     <div>
       <label for="new_trunk" class="block text-sm font-bold text-slate-500 mb-1">Select Trunk</label>
-      <select id="new_trunk" bind:value={newTrunkId} required class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500">
+      <select id="new_trunk" bind:value={newTrunkId} required class="w-full bg-slate-950/80 border border-slate-800 text-slate-100 rounded-xl px-4 py-2 text-white focus:ring-indigo-500 focus:border-indigo-500">
         {#each trunks as trunk}
           <option value={trunk.ID}>{trunk.ProviderName} ({trunk.SIPServer})</option>
         {/each}
@@ -160,11 +160,11 @@
     </div>
     <div>
       <label for="new_priority" class="block text-sm font-bold text-slate-500 mb-1">Priority</label>
-      <input id="new_priority" type="number" bind:value={newPriority} required min="1" max="100" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
+      <input id="new_priority" type="number" bind:value={newPriority} required min="1" max="100" class="w-full bg-slate-950/80 border border-slate-800 text-slate-100 rounded-xl px-4 py-2 text-white focus:ring-indigo-500 focus:border-indigo-500" />
     </div>
     <div class="pt-4 flex justify-end space-x-3">
-      <button type="button" class="px-4 py-2 text-slate-500 hover:text-slate-900" on:click={() => isModalOpen = false}>Cancel</button>
-      <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-slate-900 px-6 py-2 rounded-xl font-bold shadow-lg shadow-indigo-500/20">Add Rule</button>
+      <button type="button" class="px-4 py-2 text-slate-500 hover:text-white" on:click={() => isModalOpen = false}>Cancel</button>
+      <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-xl font-bold shadow-lg shadow-indigo-500/20">Add Rule</button>
     </div>
   </form>
 </Modal>
@@ -173,11 +173,11 @@
   <form on:submit={handleEditRoute} class="space-y-4">
     <div>
       <label for="edit_pattern" class="block text-sm font-bold text-slate-500 mb-1">Dial Pattern</label>
-      <input id="edit_pattern" type="text" bind:value={editPattern} required placeholder={'e.g. ^0[1-9]\\d{8,9}$'} class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
+      <input id="edit_pattern" type="text" bind:value={editPattern} required placeholder={'e.g. ^0[1-9]\\d{8,9}$'} class="w-full bg-slate-950/80 border border-slate-800 text-slate-100 rounded-xl px-4 py-2 text-white focus:ring-indigo-500 focus:border-indigo-500" />
     </div>
     <div>
       <label for="edit_trunk" class="block text-sm font-bold text-slate-500 mb-1">Select Trunk</label>
-      <select id="edit_trunk" bind:value={editTrunkId} required class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500">
+      <select id="edit_trunk" bind:value={editTrunkId} required class="w-full bg-slate-950/80 border border-slate-800 text-slate-100 rounded-xl px-4 py-2 text-white focus:ring-indigo-500 focus:border-indigo-500">
         {#each trunks as trunk}
           <option value={trunk.ID}>{trunk.ProviderName} ({trunk.SIPServer})</option>
         {/each}
@@ -185,11 +185,11 @@
     </div>
     <div>
       <label for="edit_priority" class="block text-sm font-bold text-slate-500 mb-1">Priority</label>
-      <input id="edit_priority" type="number" bind:value={editPriority} required min="1" max="100" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
+      <input id="edit_priority" type="number" bind:value={editPriority} required min="1" max="100" class="w-full bg-slate-950/80 border border-slate-800 text-slate-100 rounded-xl px-4 py-2 text-white focus:ring-indigo-500 focus:border-indigo-500" />
     </div>
     <div class="pt-4 flex justify-end space-x-3">
-      <button type="button" class="px-4 py-2 text-slate-500 hover:text-slate-900" on:click={() => isEditModalOpen = false}>Cancel</button>
-      <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-slate-900 px-6 py-2 rounded-xl font-bold shadow-lg shadow-indigo-500/20">Save Changes</button>
+      <button type="button" class="px-4 py-2 text-slate-500 hover:text-white" on:click={() => isEditModalOpen = false}>Cancel</button>
+      <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-xl font-bold shadow-lg shadow-indigo-500/20">Save Changes</button>
     </div>
   </form>
 </Modal>

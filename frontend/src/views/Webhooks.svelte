@@ -56,10 +56,10 @@
 <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">
   <header class="flex justify-between items-end mb-8">
     <div>
-      <h1 class="text-3xl font-black text-slate-900 tracking-tight mb-2">Event Webhooks</h1>
+      <h1 class="text-3xl font-black text-white tracking-tight mb-2">Event Webhooks</h1>
       <p class="text-slate-500 font-medium text-sm">Push real-time PBX events to your external web services.</p>
     </div>
-    <button class="bg-indigo-600 hover:bg-indigo-500 text-slate-900 px-6 py-2 rounded-xl font-bold transition-colors shadow-lg shadow-indigo-600/20 flex items-center" on:click={() => isModalOpen = true}>
+    <button class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-xl font-bold transition-colors shadow-lg shadow-indigo-600/20 flex items-center" on:click={() => isModalOpen = true}>
       <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
       Add Endpoint
     </button>
@@ -67,13 +67,13 @@
 
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
     <!-- Webhooks List -->
-    <div class="lg:col-span-2 bg-white/60 rounded-[2rem] border border-slate-200 overflow-hidden shadow-2xl">
-      <div class="p-5 border-b border-slate-200 flex justify-between items-center bg-slate-50/30">
-        <h3 class="text-sm font-bold text-slate-900 uppercase tracking-widest">Configured Endpoints</h3>
+    <div class="lg:col-span-2 bg-slate-900/75 backdrop-blur-xl rounded-[2rem] border border-slate-800 overflow-hidden shadow-2xl">
+      <div class="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-900/50/30">
+        <h3 class="text-sm font-bold text-white uppercase tracking-widest">Configured Endpoints</h3>
       </div>
       <table class="w-full text-left">
         <thead>
-          <tr class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] border-b border-slate-200">
+          <tr class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] border-b border-slate-800">
             <th class="p-6">Endpoint URL</th>
             <th class="p-6">Event Trigger</th>
             <th class="p-6 text-center">Last Response</th>
@@ -84,11 +84,11 @@
         <tbody class="divide-y divide-gray-800/50">
           {#if webhooks.length === 0}
             <tr>
-              <td colspan="5" class="p-8 text-center text-slate-500 bg-white/40">No endpoints configured.</td>
+              <td colspan="5" class="p-8 text-center text-slate-500 bg-slate-900/75 backdrop-blur-xl">No endpoints configured.</td>
             </tr>
           {/if}
           {#each webhooks as hook}
-            <tr class="hover:bg-slate-100/30 transition-colors">
+            <tr class="hover:bg-slate-800/50/30 transition-colors">
               <td class="p-4 font-mono font-bold text-blue-600 text-sm">{hook.url}</td>
               <td class="p-4 text-sm font-bold text-slate-700">{hook.trigger}</td>
               <td class="p-4 text-center">
@@ -114,16 +114,16 @@
 
     <!-- Stats -->
     <div class="space-y-6">
-      <div class="bg-white/60 rounded-[2rem] border border-slate-200 p-6 flex flex-col justify-center items-center shadow-2xl relative overflow-hidden h-full">
+      <div class="bg-slate-900/75 backdrop-blur-xl rounded-[2rem] border border-slate-800 p-6 flex flex-col justify-center items-center shadow-2xl relative overflow-hidden h-full">
         <div class="absolute -right-10 -top-10 w-40 h-40 bg-emerald-50 rounded-full blur-3xl"></div>
         <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 z-10">Events Delivered (24h)</p>
-        <h2 class="text-5xl font-black text-slate-900 font-mono z-10">2,810</h2>
+        <h2 class="text-5xl font-black text-white font-mono z-10">2,810</h2>
         <div class="mt-4 flex space-x-4 w-full px-4">
           <div class="flex-1 text-center">
             <p class="text-[10px] font-bold text-slate-500 uppercase">Success</p>
             <p class="text-lg font-mono font-bold text-emerald-400">99.8%</p>
           </div>
-          <div class="flex-1 text-center border-l border-slate-200">
+          <div class="flex-1 text-center border-l border-slate-800">
             <p class="text-[10px] font-bold text-slate-500 uppercase">Failed</p>
             <p class="text-lg font-mono font-bold text-rose-400">12</p>
           </div>
@@ -137,11 +137,11 @@
   <form on:submit={handleCreateWebhook} class="space-y-4">
     <div>
       <label for="hook_url" class="block text-sm font-bold text-slate-500 mb-1">Target URL</label>
-      <input id="hook_url" type="url" bind:value={newUrl} required placeholder="https://api.yourdomain.com/webhook" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
+      <input id="hook_url" type="url" bind:value={newUrl} required placeholder="https://api.yourdomain.com/webhook" class="w-full bg-slate-950/80 border border-slate-800 text-slate-100 rounded-xl px-4 py-2 text-white focus:ring-indigo-500 focus:border-indigo-500" />
     </div>
     <div>
       <label for="hook_event" class="block text-sm font-bold text-slate-500 mb-1">Event Type</label>
-      <select id="hook_event" bind:value={newEvent} class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500">
+      <select id="hook_event" bind:value={newEvent} class="w-full bg-slate-950/80 border border-slate-800 text-slate-100 rounded-xl px-4 py-2 text-white focus:ring-indigo-500 focus:border-indigo-500">
         <option value="call.answered">call.answered</option>
         <option value="call.ended">call.ended</option>
         <option value="sms.received">sms.received</option>
@@ -149,8 +149,8 @@
       </select>
     </div>
     <div class="pt-4 flex justify-end space-x-3">
-      <button type="button" class="px-4 py-2 text-slate-500 hover:text-slate-900" on:click={() => isModalOpen = false}>Cancel</button>
-      <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-slate-900 px-6 py-2 rounded-xl font-bold shadow-lg shadow-indigo-500/20">Create</button>
+      <button type="button" class="px-4 py-2 text-slate-500 hover:text-white" on:click={() => isModalOpen = false}>Cancel</button>
+      <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-xl font-bold shadow-lg shadow-indigo-500/20">Create</button>
     </div>
   </form>
 </Modal>

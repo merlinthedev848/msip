@@ -125,7 +125,7 @@
 <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">
   <header class="flex justify-between items-end mb-8">
     <div>
-      <h1 class="text-3xl font-bold tracking-tight text-slate-900 mb-1">Auto Attendants (IVR)</h1>
+      <h1 class="text-3xl font-bold tracking-tight text-white mb-1">Auto Attendants (IVR)</h1>
       <p class="text-slate-500 text-sm">Configure voice menus and digit routing.</p>
     </div>
     <Button variant="primary" on:click={() => isModalOpen = true}>New Menu</Button>
@@ -136,7 +136,7 @@
       <GlassCard>
         <div class="flex justify-between items-start mb-6">
           <div>
-            <h3 class="text-xl font-bold text-slate-900">{ivr.Name}</h3>
+            <h3 class="text-xl font-bold text-white">{ivr.Name}</h3>
             <p class="text-sm font-mono text-blue-600">Ext: {ivr.Extension}</p>
           </div>
           <Badge status="success">Active</Badge>
@@ -151,14 +151,14 @@
             <span class="text-slate-700">{ivr.Choices ? ivr.Choices.length : 0} options</span>
           </div>
         </div>
-        <div class="mt-6 pt-4 border-t border-slate-200 flex justify-end space-x-3">
+        <div class="mt-6 pt-4 border-t border-slate-800 flex justify-end space-x-3">
           <Button variant="secondary" className="px-4 text-xs" on:click={() => openEditModal(ivr)}>Edit Menu</Button>
           <Button variant="danger" className="px-4 text-xs" on:click={() => handleDeleteIVR(ivr.ID)}>Delete</Button>
         </div>
       </GlassCard>
     {/each}
     {#if ivrs.length === 0}
-      <div class="col-span-full p-8 text-center text-slate-500 border border-dashed border-slate-200 rounded-2xl">
+      <div class="col-span-full p-8 text-center text-slate-500 border border-dashed border-slate-800 rounded-2xl">
         No IVR Menus configured. Click "New Menu" to get started.
       </div>
     {/if}
@@ -170,20 +170,20 @@
   <form on:submit={handleCreateIVR} class="space-y-5">
     <div>
       <label for="ivrName" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Menu Name</label>
-      <input id="ivrName" type="text" bind:value={newIvrName} required placeholder="e.g. Main Menu" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none">
+      <input id="ivrName" type="text" bind:value={newIvrName} required placeholder="e.g. Main Menu" class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none">
     </div>
     <div>
       <label for="ivrExt" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Virtual Extension</label>
-      <input id="ivrExt" type="text" bind:value={newIvrExtension} required placeholder="e.g. 8000" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none">
+      <input id="ivrExt" type="text" bind:value={newIvrExtension} required placeholder="e.g. 8000" class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none">
     </div>
     <div>
       <label for="ivrGreeting" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Greeting Phrase / Audio File</label>
-      <input id="ivrGreeting" type="text" bind:value={newIvrGreeting} required placeholder="phrase:greeting" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none">
+      <input id="ivrGreeting" type="text" bind:value={newIvrGreeting} required placeholder="phrase:greeting" class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none">
     </div>
     
     <div class="pt-4 flex justify-end space-x-3">
       <Button variant="secondary" on:click={() => isModalOpen = false} type="button">Cancel</Button>
-      <button type="submit" disabled={isSubmitting} class="bg-indigo-600 hover:bg-indigo-500 text-slate-900 px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg disabled:opacity-50">
+      <button type="submit" disabled={isSubmitting} class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg disabled:opacity-50">
         {isSubmitting ? 'Saving...' : 'Create Menu'}
       </button>
     </div>
@@ -195,20 +195,20 @@
   <form on:submit={handleEditIVR} class="space-y-5">
     <div>
       <label for="editIvrName" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Menu Name</label>
-      <input id="editIvrName" type="text" bind:value={editIvrName} required placeholder="e.g. Main Menu" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none">
+      <input id="editIvrName" type="text" bind:value={editIvrName} required placeholder="e.g. Main Menu" class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none">
     </div>
     <div>
       <label for="editIvrExt" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Virtual Extension</label>
-      <input id="editIvrExt" type="text" bind:value={editIvrExtension} required placeholder="e.g. 8000" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none">
+      <input id="editIvrExt" type="text" bind:value={editIvrExtension} required placeholder="e.g. 8000" class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none">
     </div>
     <div>
       <label for="editIvrGreeting" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Greeting Phrase / Audio File</label>
-      <input id="editIvrGreeting" type="text" bind:value={editIvrGreeting} required placeholder="phrase:greeting" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none">
+      <input id="editIvrGreeting" type="text" bind:value={editIvrGreeting} required placeholder="phrase:greeting" class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none">
     </div>
     
     <div class="pt-4 flex justify-end space-x-3">
       <Button variant="secondary" on:click={() => isEditModalOpen = false} type="button">Cancel</Button>
-      <button type="submit" disabled={isSubmitting} class="bg-indigo-600 hover:bg-indigo-500 text-slate-900 px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg disabled:opacity-50">
+      <button type="submit" disabled={isSubmitting} class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg disabled:opacity-50">
         {isSubmitting ? 'Saving...' : 'Save Changes'}
       </button>
     </div>

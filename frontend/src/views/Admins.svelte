@@ -116,7 +116,7 @@
 <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out max-w-7xl mx-auto w-full">
   <header class="flex justify-between items-end mb-4">
     <div>
-      <h1 class="text-3xl font-bold tracking-tight text-slate-900 mb-1">Admins & Roles</h1>
+      <h1 class="text-3xl font-bold tracking-tight text-white mb-1">Admins & Roles</h1>
       <p class="text-slate-500 text-sm">Manage dashboard access and custom role permissions for this tenant.</p>
     </div>
     <Button variant="primary" on:click={() => showModal = true}>
@@ -133,17 +133,17 @@
       </div>
     {:else if users.length === 0}
       <div class="p-12 text-center flex flex-col items-center justify-center">
-        <div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4">
+        <div class="w-16 h-16 bg-slate-900/50 rounded-2xl flex items-center justify-center mb-4">
           <svg class="w-8 h-8 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
         </div>
-        <h3 class="text-lg font-medium text-slate-900 mb-2">No users found</h3>
+        <h3 class="text-lg font-medium text-white mb-2">No users found</h3>
         <p class="text-slate-500 text-sm max-w-sm">There are no additional users configured for this tenant. Click "Invite User" to add one.</p>
       </div>
     {:else}
       <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
           <thead>
-            <tr class="bg-white border-b border-slate-200">
+            <tr class="bg-slate-900/40 border-b border-slate-800">
               <th class="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Email Address</th>
               <th class="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Role</th>
               <th class="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Created</th>
@@ -152,13 +152,13 @@
           </thead>
           <tbody class="divide-y divide-gray-800/50">
             {#each users as user}
-              <tr class="hover:bg-slate-100/30 transition-colors group">
+              <tr class="hover:bg-slate-800/50/30 transition-colors group">
                 <td class="py-4 px-6">
                   <div class="flex items-center space-x-3">
                     <div class="w-8 h-8 rounded-full bg-indigo-500/20 text-blue-600 flex items-center justify-center font-bold text-sm">
                       {user.Email ? user.Email[0].toUpperCase() : 'U'}
                     </div>
-                    <span class="text-slate-900 font-medium">{user.Email}</span>
+                    <span class="text-white font-medium">{user.Email}</span>
                   </div>
                 </td>
                 <td class="py-4 px-6">
@@ -173,7 +173,7 @@
                   {user.CreatedAt ? new Date(user.CreatedAt).toLocaleDateString() : 'Unknown'}
                 </td>
                 <td class="py-4 text-right">
-                  <button class="text-slate-500 hover:text-slate-900 mx-2 transition-colors" on:click={() => openEditModal(user)}>Edit</button>
+                  <button class="text-slate-500 hover:text-white mx-2 transition-colors" on:click={() => openEditModal(user)}>Edit</button>
                   <button class="text-red-400 hover:text-red-300 mx-2 transition-colors" on:click={() => handleDeleteUser(user.ID)}>Revoke</button>
                 </td>
               </tr>
@@ -187,10 +187,10 @@
 
 {#if showModal}
 <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-  <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-    <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-white">
-      <h3 class="text-lg font-semibold text-slate-900">Invite User</h3>
-      <button class="text-slate-500 hover:text-slate-900 transition-colors" aria-label="Close" on:click={() => showModal = false}>
+  <div class="bg-slate-950/80 border border-slate-800 text-slate-100 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+    <div class="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-900">
+      <h3 class="text-lg font-semibold text-white">Invite User</h3>
+      <button class="text-slate-500 hover:text-white transition-colors" aria-label="Close" on:click={() => showModal = false}>
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
       </button>
     </div>
@@ -198,15 +198,15 @@
     <form on:submit={handleAddUser} class="p-6 space-y-4">
       <div>
         <label for="email" class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Email Address</label>
-        <input id="email" type="email" bind:value={newEmail} required class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+        <input id="email" type="email" bind:value={newEmail} required class="w-full bg-slate-900/50 border border-slate-800 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
       </div>
       <div>
         <label for="password" class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Password</label>
-        <input id="password" type="password" bind:value={newPassword} required class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+        <input id="password" type="password" bind:value={newPassword} required class="w-full bg-slate-900/50 border border-slate-800 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
       </div>
       <div>
         <label for="role" class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Custom Role</label>
-        <select id="role" bind:value={newRole} class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+        <select id="role" bind:value={newRole} class="w-full bg-slate-900/50 border border-slate-800 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
           <option value="admin">Administrator (Full Access)</option>
           <option value="viewer">Viewer (Read-Only)</option>
         </select>
@@ -223,10 +223,10 @@
 
 {#if showEditModal}
 <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-  <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-    <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-white">
-      <h3 class="text-lg font-semibold text-slate-900">Edit User</h3>
-      <button class="text-slate-500 hover:text-slate-900 transition-colors" aria-label="Close" on:click={() => showEditModal = false}>
+  <div class="bg-slate-950/80 border border-slate-800 text-slate-100 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+    <div class="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-900">
+      <h3 class="text-lg font-semibold text-white">Edit User</h3>
+      <button class="text-slate-500 hover:text-white transition-colors" aria-label="Close" on:click={() => showEditModal = false}>
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
       </button>
     </div>
@@ -234,15 +234,15 @@
     <form on:submit={handleEditUser} class="p-6 space-y-4">
       <div>
         <label for="edit_email" class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Email Address</label>
-        <input id="edit_email" type="email" bind:value={editEmail} required class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+        <input id="edit_email" type="email" bind:value={editEmail} required class="w-full bg-slate-900/50 border border-slate-800 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
       </div>
       <div>
         <label for="edit_password" class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Password (Leave blank to keep current)</label>
-        <input id="edit_password" type="password" bind:value={editPassword} class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+        <input id="edit_password" type="password" bind:value={editPassword} class="w-full bg-slate-900/50 border border-slate-800 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
       </div>
       <div>
         <label for="edit_role" class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Custom Role</label>
-        <select id="edit_role" bind:value={editRole} class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-900 focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+        <select id="edit_role" bind:value={editRole} class="w-full bg-slate-900/50 border border-slate-800 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
           <option value="superadmin">Superadmin</option>
           <option value="admin">Administrator (Full Access)</option>
           <option value="viewer">Viewer (Read-Only)</option>

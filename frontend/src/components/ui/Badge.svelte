@@ -3,17 +3,17 @@
   export let pulse = false;
   
   const styles = {
-    success: 'bg-emerald-100 text-emerald-800 border border-emerald-200',
-    warning: 'bg-amber-100 text-amber-800 border border-amber-200',
-    error: 'bg-red-100 text-red-800 border border-red-200',
-    neutral: 'bg-slate-100 text-slate-800 border border-slate-200',
+    success: 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30',
+    warning: 'bg-amber-500/15 text-amber-300 border border-amber-500/30',
+    error: 'bg-rose-500/15 text-rose-300 border border-rose-500/30',
+    neutral: 'bg-slate-800/80 text-slate-300 border border-slate-700/80',
   };
   
   const dots = {
-    success: 'bg-emerald-500',
-    warning: 'bg-amber-500',
-    error: 'bg-red-500',
-    neutral: 'bg-slate-500',
+    success: 'bg-emerald-400',
+    warning: 'bg-amber-400',
+    error: 'bg-rose-400',
+    neutral: 'bg-slate-400',
   };
 </script>
 
