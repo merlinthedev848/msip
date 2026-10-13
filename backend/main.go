@@ -1587,6 +1587,9 @@ func SetupRouter() *gin.Engine {
 					"cpu_cores":  runtime.NumCPU(),
 				})
 			})
+
+			// PBX Call Control & Voice Feature Suite
+			RegisterCallControlRoutes(v1)
 		}
 	}
 

@@ -27,6 +27,13 @@
   import Provisioning from './views/Provisioning.svelte';
   import RingGroups from './views/RingGroups.svelte';
   import ReportsAnalytics from './views/ReportsAnalytics.svelte';
+
+  import TimeConditions from './views/TimeConditions.svelte';
+  import OutboundRestrictions from './views/OutboundRestrictions.svelte';
+  import PagingPickup from './views/PagingPickup.svelte';
+  import AudioPrompts from './views/AudioPrompts.svelte';
+  import FeatureCodes from './views/FeatureCodes.svelte';
+  import Diagnostics from './views/Diagnostics.svelte';
   
   import Login from './views/Login.svelte';
   import Softphone from './components/Softphone.svelte';
@@ -47,6 +54,12 @@
     { name: 'Ring Groups', path: '/ring-groups', category: 'Voice' },
     { name: 'Call Queues & Wallboard', path: '/call-queues', category: 'Voice' },
     { name: 'Voicemail Server', path: '/voicemail', category: 'Voice' },
+    { name: 'Time Conditions & Holidays', path: '/time-conditions', category: 'Routing' },
+    { name: 'Outbound Restrictions & AutoCLIP', path: '/outbound-restrictions', category: 'Routing' },
+    { name: 'Paging, Intercom & Call Pickup', path: '/paging-pickup', category: 'Voice' },
+    { name: 'Voice Prompts & Call Recording', path: '/audio-prompts', category: 'Media' },
+    { name: 'PBX Feature Codes (*97, *8, *0)', path: '/feature-codes', category: 'Telephony' },
+    { name: 'SIP, IAX & Jitter Diagnostics', path: '/diagnostics', category: 'System' },
     { name: 'System Settings & Admins', path: '/admins', category: 'Settings' },
     { name: 'Reports & Analytics', path: '/reports-analytics', category: 'Analytics' },
     { name: 'Inbound Routing Rules', path: '/inbound-routes', category: 'Routing' },
@@ -148,7 +161,23 @@
     '/domains': Domains,
     '/domain': Domains,
     '/tenants': Domains,
-    '/provisioning': Provisioning
+    '/provisioning': Provisioning,
+    '/time-conditions': TimeConditions,
+    '/holidays': TimeConditions,
+    '/outbound-restrictions': OutboundRestrictions,
+    '/autoclip': OutboundRestrictions,
+    '/paging-pickup': PagingPickup,
+    '/paging': PagingPickup,
+    '/intercom': PagingPickup,
+    '/pickup': PagingPickup,
+    '/audio-prompts': AudioPrompts,
+    '/moh': AudioPrompts,
+    '/recordings': AudioPrompts,
+    '/voice-prompts': AudioPrompts,
+    '/feature-codes': FeatureCodes,
+    '/codes': FeatureCodes,
+    '/diagnostics': Diagnostics,
+    '/jitter': Diagnostics
   };
 
   $: normalizedPath = (currentPath.endsWith('/') && currentPath.length > 1) ? currentPath.slice(0, -1) : currentPath;

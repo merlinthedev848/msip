@@ -81,6 +81,15 @@ func InitDB() {
 		&ThrottleRule{},
 		&FirewallRule{},
 		&FraudRule{},
+		&TimeCondition{},
+		&Holiday{},
+		&OutboundRestriction{},
+		&AutoCLIP{},
+		&PagingGroup{},
+		&PickupGroup{},
+		&AudioPrompt{},
+		&FeatureCode{},
+		&RecordingRule{},
 	)
 	if err != nil {
 		log.Fatalf("Failed to migrate database schema: %v", err)
@@ -89,7 +98,7 @@ func InitDB() {
 	SeedDefaults()
 }
 
-// SeedDefaults populates initial organization, admin user, and test extension if empty.
+// SeedDefaults populates initial organization, admin user, test extension, and feature codes if empty.
 func SeedDefaults() {
 	var count int64
 	DB.Model(&Tenant{}).Count(&count)
@@ -129,5 +138,46 @@ func SeedDefaults() {
 		} else {
 			log.Printf("Seeded default extension: %s", defaultExt.ExtensionNumber)
 		}
+
+		// Seed standard telephony feature codes
+		featureCodes := []FeatureCode{
+			{TenantRef: TenantRef{TenantID: defaultTenant.ID}, Name: "Check Personal Voicemail", Code: "*97", DefaultCode: "*97", Description: "Access caller's personal voicemail mailbox", IsActive: true},
+			{TenantRef: TenantRef{TenantID: defaultTenant.ID}, Name: "Check General Voicemail", Code: "*98", DefaultCode: "*98", Description: "Access any voicemail box with PIN", IsActive: true},
+			{TenantRef: TenantRef{TenantID: defaultTenant.ID}, Name: "Call Pickup (Any Ringing Handset)", Code: "*8", DefaultCode: "*8", Description: "Grab an incoming call ringing on another phone", IsActive: true},
+			{TenantRef: TenantRef{TenantID: defaultTenant.ID}, Name: "Call Forwarding Always (Enable)", Code: "*72", DefaultCode: "*72", Description: "Forward all incoming calls unconditionally", IsActive: true},
+			{TenantRef: TenantRef{TenantID: defaultTenant.ID}, Name: "Call Forwarding Always (Cancel)", Code: "*73", DefaultCode: "*73", Description: "Disable unconditional call forwarding", IsActive: true},
+			{TenantRef: TenantRef{TenantID: defaultTenant.ID}, Name: "Two-Way Intercom Dialing", Code: "*0", DefaultCode: "*0", Description: "Auto-answer handsfree intercom broadcast", IsActive: true},
+			{TenantRef: TenantRef{TenantID: defaultTenant.ID}, Name: "Echo Audio Latency Test", Code: "9999", DefaultCode: "9999", Description: "Two-way RTP audio loopback test", IsActive: true},
+			{TenantRef: TenantRef{TenantID: defaultTenant.ID}, Name: "Video / Audio Conference Room", Code: "9000", DefaultCode: "9000", Description: "Main multi-party MCU conference bridge", IsActive: true},
+			{TenantRef: TenantRef{TenantID: defaultTenant.ID}, Name: "AI Voice Dictation & Transcript", Code: "*88", DefaultCode: "*88", Description: "Record speech and transcribe with AI", IsActive: true},
+			{TenantRef: TenantRef{TenantID: defaultTenant.ID}, Name: "Conversational AI Receptionist", Code: "*99", DefaultCode: "*99", Description: "Interactive conversational AI bot stream", IsActive: true},
+		}
+		for _, fc := range featureCodes {
+			_ = DB.Create(&fc)
+		}
+
+		// Seed default business hours time condition
+		defaultTC := TimeCondition{
+			TenantRef:           TenantRef{TenantID: defaultTenant.ID},
+			Name:                "Business Office Hours",
+			DaysOfWeek:          "Mon,Tue,Wed,Thu,Fri",
+			StartTime:           "09:00",
+			EndTime:             "17:00",
+			InOfficeDestType:    "EXTENSION",
+			InOfficeTarget:      "1001",
+			OutOfOfficeDestType: "VOICEMAIL",
+			OutOfOfficeTarget:   "1001",
+		}
+		_ = DB.Create(&defaultTC)
+
+		// Seed default Music on Hold prompt
+		defaultMoH := AudioPrompt{
+			TenantRef:   TenantRef{TenantID: defaultTenant.ID},
+			Name:        "Default Telecom Harmony",
+			Category:    "MOH",
+			FileName:    "local_stream://moh",
+			Description: "Default FreeSWITCH high-fidelity stereo acoustic hold music",
+		}
+		_ = DB.Create(&defaultMoH)
 	}
 }

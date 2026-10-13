@@ -229,3 +229,97 @@ type FraudRule struct {
 	MaxCost     float64 `gorm:"default:0" json:"MaxCost"`
 	BlockAction string  `gorm:"size:50;not null" json:"BlockAction"`
 }
+
+// TimeCondition defines business hours routing
+type TimeCondition struct {
+	Base
+	TenantRef
+	Name              string `gorm:"size:100;not null" json:"Name"`
+	DaysOfWeek        string `gorm:"size:100;default:'Mon,Tue,Wed,Thu,Fri'" json:"DaysOfWeek"`
+	StartTime         string `gorm:"size:10;default:'09:00'" json:"StartTime"`
+	EndTime           string `gorm:"size:10;default:'17:00'" json:"EndTime"`
+	InOfficeDestType  string `gorm:"size:50;default:'EXTENSION'" json:"InOfficeDestType"`
+	InOfficeTarget    string `gorm:"size:100;not null" json:"InOfficeTarget"`
+	OutOfOfficeDestType string `gorm:"size:50;default:'VOICEMAIL'" json:"OutOfOfficeDestType"`
+	OutOfOfficeTarget   string `gorm:"size:100;not null" json:"OutOfOfficeTarget"`
+}
+
+// Holiday defines scheduled holidays
+type Holiday struct {
+	Base
+	TenantRef
+	Name       string `gorm:"size:100;not null" json:"Name"`
+	StartDate  string `gorm:"size:50;not null" json:"StartDate"`
+	EndDate    string `gorm:"size:50;not null" json:"EndDate"`
+	DestType   string `gorm:"size:50;default:'VOICEMAIL'" json:"DestType"`
+	DestTarget string `gorm:"size:100;not null" json:"DestTarget"`
+}
+
+// OutboundRestriction blocks dialing specific prefixes
+type OutboundRestriction struct {
+	Base
+	TenantRef
+	Name        string `gorm:"size:100;not null" json:"Name"`
+	Pattern     string `gorm:"size:100;not null" json:"Pattern"` // e.g. 0900, 00, +
+	Extensions  string `gorm:"size:255;default:'ALL'" json:"Extensions"` // "ALL" or comma-separated exts
+	Action      string `gorm:"size:50;default:'BLOCK'" json:"Action"` // BLOCK or PIN
+}
+
+// AutoCLIP routes returning callers directly to the extension that last phoned them
+type AutoCLIP struct {
+	Base
+	TenantRef
+	CallerNumber string    `gorm:"size:50;not null;index" json:"CallerNumber"`
+	Extension    string    `gorm:"size:50;not null" json:"Extension"`
+	ExpiresAt    time.Time `json:"ExpiresAt"`
+}
+
+// PagingGroup defines intercom/paging broadcast groups
+type PagingGroup struct {
+	Base
+	TenantRef
+	Name      string `gorm:"size:100;not null" json:"Name"`
+	Extension string `gorm:"size:50;not null;uniqueIndex:idx_tenant_paging_ext" json:"Extension"`
+	Members   string `gorm:"type:text;not null" json:"Members"` // comma-separated extensions
+	TwoWay    bool   `gorm:"default:false" json:"TwoWay"` // false=1-way paging, true=2-way intercom
+}
+
+// PickupGroup allows users to grab ringing calls with *8
+type PickupGroup struct {
+	Base
+	TenantRef
+	Name    string `gorm:"size:100;not null" json:"Name"`
+	Code    string `gorm:"size:50;not null" json:"Code"` // e.g. *8
+	Members string `gorm:"type:text;not null" json:"Members"` // comma-separated extensions
+}
+
+// AudioPrompt manages MoH playlists, system prompts, and custom audio files
+type AudioPrompt struct {
+	Base
+	TenantRef
+	Name        string `gorm:"size:100;not null" json:"Name"`
+	Category    string `gorm:"size:50;not null" json:"Category"` // "MOH", "SYSTEM", "CUSTOM"
+	FileName    string `gorm:"size:255;not null" json:"FileName"`
+	Description string `gorm:"size:255" json:"Description"`
+}
+
+// FeatureCode lists and configures dialed feature codes
+type FeatureCode struct {
+	Base
+	TenantRef
+	Name        string `gorm:"size:100;not null" json:"Name"`
+	Code        string `gorm:"size:20;not null" json:"Code"`
+	DefaultCode string `gorm:"size:20;not null" json:"DefaultCode"`
+	Description string `gorm:"size:255" json:"Description"`
+	IsActive    bool   `gorm:"default:true" json:"IsActive"`
+}
+
+// RecordingRule configures automated call recording
+type RecordingRule struct {
+	Base
+	TenantRef
+	Scope       string `gorm:"size:50;not null" json:"Scope"` // "GLOBAL", "INBOUND", "OUTBOUND", "EXTENSION"
+	Target      string `gorm:"size:100;default:'ALL'" json:"Target"`
+	RecordMode  string `gorm:"size:50;default:'ALWAYS'" json:"RecordMode"` // "ALWAYS", "ON_DEMAND"
+	StorageDays int    `gorm:"default:90" json:"StorageDays"`
+}

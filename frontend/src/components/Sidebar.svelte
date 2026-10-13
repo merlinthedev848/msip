@@ -36,18 +36,30 @@
       children: [
         { name: 'Incoming Call Rules', path: '/inbound-routes' },
         { name: 'Outgoing Call Rules', path: '/outbound-routes' },
-        { name: 'Live Call Center Wallboard', path: '/call-queues' }
+        { name: 'Office Hours & Holidays', path: '/time-conditions' },
+        { name: 'Barring & AutoCLIP', path: '/outbound-restrictions' },
+        { name: 'Live Call Queues', path: '/call-queues' }
       ]
     },
     { 
       name: 'Call Features', 
       icon: 'call-features', 
-      expanded: false,
+      expanded: true,
       children: [
         { name: 'Auto Attendant (IVR)', path: '/digital-receptionists' },
         { name: 'Ring Groups', path: '/ring-groups' },
+        { name: 'Paging & Call Pickup', path: '/paging-pickup' },
         { name: 'Voicemail Server', path: '/voicemail' },
+        { name: 'Feature Codes (*97, *8)', path: '/feature-codes' },
         { name: 'Video Meeting Rooms', path: '/video-rooms' }
+      ]
+    },
+    { 
+      name: 'Voice & Media', 
+      icon: 'media', 
+      expanded: false,
+      children: [
+        { name: 'Prompts & Hold Music', path: '/audio-prompts' }
       ]
     },
     { 
@@ -70,24 +82,25 @@
       ]
     },
     { 
+      name: 'Security & Diagnostics', 
+      icon: 'security', 
+      expanded: false,
+      children: [
+        { name: 'SIP & Jitter Diagnostics', path: '/diagnostics' },
+        { name: 'Firewall & IP Whitelist', path: '/firewall' },
+        { name: 'Anti-Fraud Shield', path: '/fraud' },
+        { name: 'Rate Throttling', path: '/throttling' },
+        { name: 'API Credentials', path: '/api-credentials' },
+        { name: 'Event Webhooks', path: '/webhooks' }
+      ]
+    },
+    { 
       name: 'PBX Settings', 
       icon: 'pbx-settings', 
       expanded: false,
       children: [
         { name: 'Company Domains', path: '/domains' },
         { name: 'Admins & Staff Accounts', path: '/admins' }
-      ]
-    },
-    { 
-      name: 'Security & Developers', 
-      icon: 'security', 
-      expanded: false,
-      children: [
-        { name: 'Firewall & IP Whitelist', path: '/firewall' },
-        { name: 'Anti-Fraud Shield', path: '/fraud' },
-        { name: 'Rate Throttling', path: '/throttling' },
-        { name: 'API Credentials', path: '/api-credentials' },
-        { name: 'Event Webhooks', path: '/webhooks' }
       ]
     },
     { 
@@ -172,6 +185,8 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"/></svg>
               {:else if item.icon === 'reports'}
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+              {:else if item.icon === 'media'}
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
               {:else if item.icon === 'plan'}
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
               {/if}
