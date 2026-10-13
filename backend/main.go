@@ -156,6 +156,9 @@ func SetupRouter() *gin.Engine {
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "healthy"})
 	})
+	r.GET("/api/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"status": "healthy"})
+	})
 
 	// FreeSWITCH mod_xml_curl dynamic gateway (support both /fs and /fs/curl)
 	r.POST("/fs", HandleFSCurl)

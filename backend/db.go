@@ -41,11 +41,21 @@ func InitDB() {
 	}
 
 	var err error
-	DB, err = gorm.Open(dialector, &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Warn),
-	})
+	maxAttempts := 15
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		DB, err = gorm.Open(dialector, &gorm.Config{
+			Logger: logger.Default.LogMode(logger.Warn),
+		})
+		if err == nil {
+			break
+		}
+		if attempt < maxAttempts {
+			log.Printf("Waiting for database connection (attempt %d/%d): %v", attempt, maxAttempts, err)
+			time.Sleep(2 * time.Second)
+		}
+	}
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		log.Fatalf("Failed to connect to database after %d attempts: %v", maxAttempts, err)
 	}
 
 	sqlDB, err := DB.DB()

@@ -3,7 +3,7 @@
     "version": 3,
     "name": "PBX API Gateway",
     "port": 8080,
-    "timeout": "3000ms",
+    "timeout": "15000ms",
     "cache_ttl": "300s",
     "output_encoding": "json",
     "extra_config": {
