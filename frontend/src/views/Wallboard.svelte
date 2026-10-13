@@ -18,15 +18,8 @@
 
   let queueStats = [];
 
-  let interval;
   onMount(() => {
     connectWebSocket();
-    interval = setInterval(() => {
-      // simulate real-time updates for now if websocket is down
-      if (!isConnected) {
-        metrics.queue_length = Math.floor(Math.random() * 5);
-      }
-    }, 5000);
   });
 
   function connectWebSocket() {
@@ -44,7 +37,7 @@
   }
 
   onDestroy(() => {
-    if (interval) clearInterval(interval);
+    if (ws) ws.close();
   });
 
   $: formatTime = (seconds) => {

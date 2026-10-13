@@ -59,31 +59,52 @@
 
   const routes = {
     '/': Dashboard,
+    '/dashboard': Dashboard,
     '/cdrs': CDRs,
+    '/cdr': CDRs,
     '/inbound-routes': Routing,
+    '/inbound': Routing,
+    '/routing': Routing,
     '/outbound-routes': OutboundRoutes,
+    '/outbound': OutboundRoutes,
     '/trunks': Trunks,
+    '/trunk': Trunks,
     '/extensions': Extensions,
+    '/extension': Extensions,
     '/ivr': IVRs,
+    '/ivrs': IVRs,
+    '/ivr-builder': IVR,
     '/voicemail': Voicemail,
+    '/voicemails': Voicemail,
     '/video-rooms': VideoRooms,
+    '/video': VideoRooms,
     '/cameras': Camera,
+    '/camera': Camera,
     '/sms': SMSTrunks,
     '/chat': TeamChat,
     '/api-credentials': APICredentials,
+    '/credentials': APICredentials,
     '/webhooks': Webhooks,
     '/throttling': Throttling,
     '/firewall': Firewall,
     '/fraud': AntiFraud,
+    '/anti-fraud': AntiFraud,
     '/versioning': VersionControl,
+    '/version-control': VersionControl,
+    '/commits': VersionControl,
     '/admins': Admins,
+    '/admin': Admins,
+    '/users': Admins,
     '/wallboard': Wallboard,
     '/domains': Domains,
+    '/domain': Domains,
+    '/tenants': Domains,
     '/provisioning': Provisioning
   };
 
-  $: ActiveComponent = currentPath === '/wallboard-fullscreen' ? Wallboard : routes[currentPath];
-  $: pageTitle = currentPath === '/' ? 'System Overview' : currentPath.replace('/', '').replace(/-/g, ' ').toUpperCase();
+  $: normalizedPath = (currentPath.endsWith('/') && currentPath.length > 1) ? currentPath.slice(0, -1) : currentPath;
+  $: ActiveComponent = currentPath === '/wallboard-fullscreen' ? Wallboard : (routes[normalizedPath] || routes[currentPath]);
+  $: pageTitle = currentPath === '/' ? 'System Overview' : normalizedPath.replace('/', '').replace(/-/g, ' ').toUpperCase();
 </script>
 
 <div class="min-h-screen bg-[#0B0F19] text-slate-100">

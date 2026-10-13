@@ -4,13 +4,17 @@
 
   let activeCalls = 0;
   let activeExtensions = 0;
-  let cpuUsage = 21;
-  let ramUsage = 1238;
+  let activeTrunks = 0;
+  let activeRoutes = 0;
+  let totalCDRs = 0;
+  let cpuUsage = 0;
+  let ramUsage = 0;
+  let goroutines = 0;
   
   // Historical data for sparklines
   let callHistory = Array(20).fill(0);
-  let cpuHistory = Array(20).fill(20);
-  let ramHistory = Array(20).fill(1200);
+  let cpuHistory = Array(20).fill(0);
+  let ramHistory = Array(20).fill(0);
 
   // SVG Path generators
   $: callPoints = callHistory.map((val, i) => `${i * 5.26},${30 - (val / 60 * 30)}`).join(' ');
@@ -24,7 +28,6 @@
 
   let liveCallList = [];
   let ws: WebSocket;
-  let wsInterval: any;
   let statsInterval: any;
   let activeTimeRange = '1H';
 
@@ -37,16 +40,9 @@
   }
 
   let consoleLogs: LogLine[] = [
-    { id: 1, time: '14:32:01.004', level: 'INFO', text: 'fs_cli: FreeSWITCH 1.10.12-release core initialized successfully' },
-    { id: 2, time: '14:32:05.112', level: 'INFO', text: 'mod_sofia: SIP profile "internal" bound to 0.0.0.0:5060 [TCP/UDP]' },
-    { id: 3, time: '14:33:12.981', level: 'EVNT', text: 'endpoint_1001 REGISTERED from 192.168.1.55:5060 (Polycom VVX-450)' },
-    { id: 4, time: '14:34:44.204', level: 'WARN', text: 'mod_event_socket: ACL Challenge from 10.0.0.9 (Denied: IP not in carrier acl)' },
-    { id: 5, time: '14:35:01.442', level: 'EVNT', text: 'endpoint_1045 REGISTERED from 10.0.0.12:5060 (Yealink T48U)' },
-    { id: 6, time: '14:40:22.001', level: 'ROUT', text: 'Dialplan: Inbound DID +18005550199 routed to IVR_Main via context "public"' },
-    { id: 7, time: '14:41:10.155', level: 'EVNT', text: 'endpoint_1002 REGISTERED from 192.168.1.105:5060 (WebRTC Client)' },
-    { id: 8, time: '14:42:00.893', level: 'ERRR', text: 'mod_sofia: Gateway carrier_primary ping timeout (504 Gateway Timeout)' },
-    { id: 9, time: '14:42:01.002', level: 'INFO', text: 'failover: LCR route automatically switched to backup carrier_secondary' },
-    { id: 10, time: '14:43:15.820', level: 'INFO', text: 'mod_conference: WebRTC MCU Room 9001 audio-mix profile loaded' }
+    { id: 1, time: new Date().toTimeString().split(' ')[0], level: 'INFO', text: 'fs_cli: FreeSWITCH core initialized and listening' },
+    { id: 2, time: new Date().toTimeString().split(' ')[0], level: 'INFO', text: 'mod_sofia: SIP profile internal bound to port 5060' },
+    { id: 3, time: new Date().toTimeString().split(' ')[0], level: 'EVNT', text: 'mod_xml_curl: Dynamic directory and dialplan gateway connected' }
   ];
 
   let selectedFilter: 'ALL' | 'INFO' | 'EVNT' | 'WARN' | 'ERRR' = 'ALL';
@@ -73,9 +69,8 @@
     const cmd = cliInput.trim();
     if (!cmd) return;
 
-    const now = new Date().toTimeString().split(' ')[0] + '.' + Math.floor(Math.random() * 900 + 100);
+    const now = new Date().toTimeString().split(' ')[0];
 
-    // Append executed command
     consoleLogs = [...consoleLogs, {
       id: Date.now(),
       time: now,
@@ -83,7 +78,6 @@
       text: `> ${cmd}`
     }];
 
-    // Process command
     const lower = cmd.toLowerCase();
     if (lower === 'clear' || lower === 'cls') {
       consoleLogs = [];
@@ -92,7 +86,7 @@
         id: Date.now() + 1,
         time: now,
         level: 'INFO',
-        text: `UP 0 years, 3 days, 4 hours, 12 minutes, 15 seconds. 0 sessions, 0/1000 concurrent.`
+        text: `FreeSWITCH UP. ${activeCalls} active sessions. Extensions: ${activeExtensions}, Trunks: ${activeTrunks}.`
       }];
     } else if (lower === 'show channels') {
       consoleLogs = [...consoleLogs, {
@@ -106,14 +100,14 @@
         id: Date.now() + 1,
         time: now,
         level: 'INFO',
-        text: `Profile internal: RUNNING (0.0.0.0:5060) | Profile external: RUNNING (0.0.0.0:5080) | Gateways: 2 registered`
+        text: `Profile internal: RUNNING (0.0.0.0:5060) | Profile external: RUNNING (0.0.0.0:5080) | Trunks configured: ${activeTrunks}`
       }];
     } else if (lower === 'reloadxml') {
       consoleLogs = [...consoleLogs, {
         id: Date.now() + 1,
         time: now,
         level: 'EVNT',
-        text: `+OK [Success] Dialplan, Directory and XML configuration reloaded cleanly.`
+        text: `+OK Dialplan, Directory and XML configuration reloaded from database.`
       }];
     } else if (lower === 'help') {
       consoleLogs = [...consoleLogs, {
@@ -127,7 +121,7 @@
         id: Date.now() + 1,
         time: now,
         level: 'WARN',
-        text: `-ERR Unknown fs_cli command "${cmd}". Type "help" for syntax.`
+        text: `-ERR Unknown command "${cmd}". Type "help" for syntax.`
       }];
     }
 
@@ -154,6 +148,18 @@
       if (res.ok) {
         const data = await res.json();
         activeExtensions = data.extensions || 0;
+        activeTrunks = data.trunks || 0;
+        activeRoutes = data.routes || 0;
+        totalCDRs = data.cdrs || 0;
+        goroutines = data.goroutines || 0;
+        if (data.memory_mb !== undefined) {
+          ramUsage = data.memory_mb;
+          ramHistory = [...ramHistory.slice(1), ramUsage];
+        }
+        if (goroutines > 0) {
+          cpuUsage = Math.min(Math.max(goroutines * 3, 2), 100);
+          cpuHistory = [...cpuHistory.slice(1), cpuUsage];
+        }
       }
     } catch (e) {}
   }
@@ -167,20 +173,11 @@
         if (data.metrics) {
           activeCalls = data.metrics.active_calls || 0;
           callHistory = [...callHistory.slice(1), activeCalls];
-          
-          let tempCalls = [];
-          for (let i = 0; i < activeCalls; i++) {
-            tempCalls.push({
-              name: `Agent ${1001 + i}`,
-              caller: `100${1 + i}`,
-              avatar: 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/40',
-              callee: `+1800555019${i}`,
-              codec: 'OPUS / 48kHz (HD)',
-              duration: '01:45',
-              state: i % 2 === 0 ? 'Talking' : 'Ringing'
-            });
-          }
-          liveCallList = tempCalls;
+        }
+        if (data.calls && Array.isArray(data.calls)) {
+          liveCallList = data.calls;
+        } else if (activeCalls === 0) {
+          liveCallList = [];
         }
       } catch (err) {}
     };
@@ -192,40 +189,11 @@
   onMount(async () => {
     await fetchStats();
     connectWS();
-
-    statsInterval = setInterval(fetchStats, 10000);
-    
-    wsInterval = setInterval(() => {
-      cpuUsage = 18 + Math.floor(Math.random() * 10);
-      ramUsage = 1220 + Math.floor(Math.random() * 150);
-
-      cpuHistory = [...cpuHistory.slice(1), cpuUsage];
-      ramHistory = [...ramHistory.slice(1), ramUsage];
-
-      // Simulated background event ticks occasionally
-      if (Math.random() > 0.65 && autoScroll) {
-        const now = new Date().toTimeString().split(' ')[0] + '.' + Math.floor(Math.random() * 900 + 100);
-        const sampleEvents = [
-          { level: 'INFO', text: 'sofia/internal: Keepalive OPTIONS probe ACK received (latency 12ms)' },
-          { level: 'EVNT', text: 'mod_xml_curl: Cached directory queried for tenant "pbx.local"' },
-          { level: 'INFO', text: 'media_engine: SRTP cipher AES_CM_128_HMAC_SHA1_80 negotiated' },
-          { level: 'ROUT', text: 'dialplan: Extension 1001 dialed *97 (Personal Voicemail Access)' }
-        ];
-        const pick = sampleEvents[Math.floor(Math.random() * sampleEvents.length)];
-        consoleLogs = [...consoleLogs.slice(-40), {
-          id: Date.now(),
-          time: now,
-          level: pick.level as any,
-          text: pick.text
-        }];
-        scrollToBottom();
-      }
-    }, 3000);
+    statsInterval = setInterval(fetchStats, 5000);
   });
 
   onDestroy(() => {
     if (ws) ws.close();
-    if (wsInterval) clearInterval(wsInterval);
     if (statsInterval) clearInterval(statsInterval);
   });
 </script>

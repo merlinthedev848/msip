@@ -30,7 +30,10 @@
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('pbx_token')}`
         },
-        body: JSON.stringify({ Name: newTokenName, TokenKey: 'key_' + Math.random().toString(36).substr(2, 9) })
+        body: JSON.stringify({ 
+          Name: newTokenName, 
+          TokenKey: 'pbx_live_' + (window.crypto?.randomUUID ? window.crypto.randomUUID().replace(/-/g, '') : Date.now().toString(36))
+        })
       });
       if (res.ok) {
         isModalOpen = false;
