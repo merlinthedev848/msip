@@ -104,28 +104,51 @@ type Extension struct {
 type InboundRoute struct {
 	Base
 	TenantRef
-	DIDNumber         string `gorm:"size:50;not null;uniqueIndex:idx_tenant_did" json:"DIDNumber"`
-	DestinationType   string `gorm:"size:50;not null" json:"DestinationType"`
-	DestinationTarget string `gorm:"size:100;not null" json:"DestinationTarget"`
+	DIDNumber           string `gorm:"size:50;not null;uniqueIndex:idx_tenant_did" json:"DIDNumber"`
+	CallerIDPattern     string `gorm:"size:100" json:"CallerIDPattern"`
+	Name                string `gorm:"size:100" json:"Name"`
+	DestinationType     string `gorm:"size:50;not null" json:"DestinationType"`
+	DestinationTarget   string `gorm:"size:100;not null" json:"DestinationTarget"`
+	FallbackDestType    string `gorm:"size:50" json:"FallbackDestType"`
+	FallbackDestTarget  string `gorm:"size:100" json:"FallbackDestTarget"`
+	TimeConditionID     string `gorm:"size:100" json:"TimeConditionID"`
+	PrependCID          string `gorm:"size:50" json:"PrependCID"`
+	CallRecording       string `gorm:"size:20;default:'off'" json:"CallRecording"` // "off", "always", "inbound"
+	MaxRingTimeSeconds  int    `gorm:"default:30" json:"MaxRingTimeSeconds"`
 }
 
 type OutboundRoute struct {
 	Base
 	TenantRef
-	DialPattern string    `gorm:"size:100;not null" json:"DialPattern"`
-	TrunkID     uuid.UUID `gorm:"type:uuid;not null;index" json:"TrunkID"`
-	Priority    int       `gorm:"default:1" json:"Priority"`
+	Name              string    `gorm:"size:100" json:"Name"`
+	DialPattern       string    `gorm:"size:100;not null" json:"DialPattern"`
+	PrefixStrip       int       `gorm:"default:0" json:"PrefixStrip"`
+	PrependDigits     string    `gorm:"size:50" json:"PrependDigits"`
+	TrunkID           uuid.UUID `gorm:"type:uuid;not null;index" json:"TrunkID"`
+	FallbackTrunkID   string    `gorm:"size:100" json:"FallbackTrunkID"`
+	Priority          int       `gorm:"default:1" json:"Priority"`
+	OutboundCIDNumber string    `gorm:"size:50" json:"OutboundCIDNumber"`
+	OutboundCIDName   string    `gorm:"size:100" json:"OutboundCIDName"`
+	EmergencyRoute    bool      `gorm:"default:false" json:"EmergencyRoute"`
 }
 
 type Trunk struct {
 	Base
 	TenantRef
-	ProviderName string `gorm:"size:100;not null" json:"ProviderName"`
-	SIPServer    string `gorm:"size:255;not null" json:"SIPServer"`
-	AuthMethod   string `gorm:"size:50;not null" json:"AuthMethod"` // IP_ACL or USERPASS
-	Username     string `gorm:"size:100" json:"Username,omitempty"`
-	Password     string `gorm:"size:100" json:"Password,omitempty"`
-	Register     bool   `gorm:"default:false" json:"Register"`
+	ProviderName   string `gorm:"size:100;not null" json:"ProviderName"`
+	SIPServer      string `gorm:"size:255;not null" json:"SIPServer"`
+	SIPPort        int    `gorm:"default:5060" json:"SIPPort"`
+	Transport      string `gorm:"size:20;default:'UDP'" json:"Transport"` // UDP, TCP, TLS
+	AuthMethod     string `gorm:"size:50;not null" json:"AuthMethod"` // IP_ACL or USERPASS
+	Username       string `gorm:"size:100" json:"Username,omitempty"`
+	Password       string `gorm:"size:100" json:"Password,omitempty"`
+	Register       bool   `gorm:"default:false" json:"Register"`
+	MaxChannels    int    `gorm:"default:10" json:"MaxChannels"`
+	Codecs         string `gorm:"size:100;default:'PCMU,PCMA,G722'" json:"Codecs"`
+	FromDomain     string `gorm:"size:100" json:"FromDomain"`
+	OutboundProxy  string `gorm:"size:100" json:"OutboundProxy"`
+	CallerIDNumber string `gorm:"size:50" json:"CallerIDNumber"`
+	IsActive       bool   `gorm:"default:true" json:"IsActive"`
 }
 
 // CDR stores Call Detail Records pushed by FreeSWITCH
@@ -147,12 +170,17 @@ type CDR struct {
 type IVRMenu struct {
 	Base
 	TenantRef
-	Name        string      `gorm:"size:100;not null" json:"Name"`
-	Extension   string      `gorm:"size:50;not null;uniqueIndex:idx_tenant_ivr_ext" json:"Extension"`
-	Greeting    string      `gorm:"size:255;not null" json:"Greeting"` // Path to wav or text for TTS
-	Timeout     int         `gorm:"default:10000" json:"Timeout"`     // Milliseconds
-	MaxFailures int         `gorm:"default:3" json:"MaxFailures"`
-	Choices     []IVRChoice `gorm:"foreignKey:MenuID" json:"Choices"`
+	Name              string      `gorm:"size:100;not null" json:"Name"`
+	Extension         string      `gorm:"size:50;not null;uniqueIndex:idx_tenant_ivr_ext" json:"Extension"`
+	Greeting          string      `gorm:"size:255;not null" json:"Greeting"` // Path to wav or text for TTS
+	Timeout           int         `gorm:"default:10000" json:"Timeout"`     // Milliseconds
+	MaxFailures       int         `gorm:"default:3" json:"MaxFailures"`
+	TimeoutDestType   string      `gorm:"size:50" json:"TimeoutDestType"`
+	TimeoutDestTarget string      `gorm:"size:100" json:"TimeoutDestTarget"`
+	InvalidDestType   string      `gorm:"size:50" json:"InvalidDestType"`
+	InvalidDestTarget string      `gorm:"size:100" json:"InvalidDestTarget"`
+	AllowDirectDial   bool        `gorm:"default:true" json:"AllowDirectDial"`
+	Choices           []IVRChoice `gorm:"foreignKey:MenuID" json:"Choices"`
 }
 
 // IVRChoice defines digit mapping for a menu

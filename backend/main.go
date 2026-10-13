@@ -512,7 +512,29 @@ func SetupRouter() *gin.Engine {
 				if input.Password != "" {
 					record.Password = input.Password
 				}
+				if input.SIPPort > 0 {
+					record.SIPPort = input.SIPPort
+				}
+				if input.Transport != "" {
+					record.Transport = input.Transport
+				}
+				if input.MaxChannels > 0 {
+					record.MaxChannels = input.MaxChannels
+				}
+				if input.Codecs != "" {
+					record.Codecs = input.Codecs
+				}
+				if input.FromDomain != "" {
+					record.FromDomain = input.FromDomain
+				}
+				if input.OutboundProxy != "" {
+					record.OutboundProxy = input.OutboundProxy
+				}
+				if input.CallerIDNumber != "" {
+					record.CallerIDNumber = input.CallerIDNumber
+				}
 				record.Register = input.Register
+				record.IsActive = input.IsActive
 				DB.Save(&record)
 				c.JSON(http.StatusOK, record)
 			})
@@ -628,6 +650,11 @@ func SetupRouter() *gin.Engine {
 				if input.MaxFailures > 0 {
 					record.MaxFailures = input.MaxFailures
 				}
+				record.TimeoutDestType = input.TimeoutDestType
+				record.TimeoutDestTarget = input.TimeoutDestTarget
+				record.InvalidDestType = input.InvalidDestType
+				record.InvalidDestTarget = input.InvalidDestTarget
+				record.AllowDirectDial = input.AllowDirectDial
 				DB.Save(&record)
 				c.JSON(http.StatusOK, record)
 			})
@@ -891,6 +918,14 @@ func SetupRouter() *gin.Engine {
 				if input.DestinationTarget != "" {
 					record.DestinationTarget = input.DestinationTarget
 				}
+				record.Name = input.Name
+				record.CallerIDPattern = input.CallerIDPattern
+				record.FallbackDestType = input.FallbackDestType
+				record.FallbackDestTarget = input.FallbackDestTarget
+				record.TimeConditionID = input.TimeConditionID
+				record.PrependCID = input.PrependCID
+				record.CallRecording = input.CallRecording
+				record.MaxRingTimeSeconds = input.MaxRingTimeSeconds
 				DB.Save(&record)
 				c.JSON(http.StatusOK, record)
 			})
@@ -956,6 +991,13 @@ func SetupRouter() *gin.Engine {
 				if input.Priority > 0 {
 					record.Priority = input.Priority
 				}
+				record.Name = input.Name
+				record.PrefixStrip = input.PrefixStrip
+				record.PrependDigits = input.PrependDigits
+				record.FallbackTrunkID = input.FallbackTrunkID
+				record.OutboundCIDNumber = input.OutboundCIDNumber
+				record.OutboundCIDName = input.OutboundCIDName
+				record.EmergencyRoute = input.EmergencyRoute
 				DB.Save(&record)
 				c.JSON(http.StatusOK, record)
 			})
