@@ -111,6 +111,18 @@ func sanitizeExtension(e *Extension) {
 	e.PasswordHash = ""
 }
 
+func generateRandomSIPPassword(length int) string {
+	const charset = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$"
+	b := make([]byte, length)
+	if _, err := rand.Read(b); err != nil {
+		return "SipPass" + fmt.Sprintf("%d", time.Now().UnixNano()%1000000)
+	}
+	for i := range b {
+		b[i] = charset[int(b[i])%len(charset)]
+	}
+	return string(b)
+}
+
 // CORSMiddleware enables universal cross-origin requests for browsers
 func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -351,6 +363,12 @@ func SetupRouter() *gin.Engine {
 					return
 				}
 
+				generatedPass := ""
+				if strings.TrimSpace(ext.PasswordHash) == "" {
+					generatedPass = generateRandomSIPPassword(14)
+					ext.PasswordHash = generatedPass
+				}
+
 				if ext.ProvisioningCode == "" {
 					b := make([]byte, 4)
 					_, _ = rand.Read(b)
@@ -362,7 +380,10 @@ func SetupRouter() *gin.Engine {
 					return
 				}
 				sanitizeExtension(&ext)
-				c.JSON(http.StatusCreated, ext)
+				c.JSON(http.StatusCreated, gin.H{
+					"extension":          ext,
+					"generated_password": generatedPass,
+				})
 			})
 
 			v1.PUT("/extensions/:id", func(c *gin.Context) {

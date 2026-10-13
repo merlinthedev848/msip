@@ -25,12 +25,40 @@
 
   let modalOpen = false;
   let editingId: string | null = null;
+  let showPassword = false;
   let form = {
     ExtensionNumber: '',
     Password: '',
     ConfirmPassword: '',
     IsActive: true
   };
+
+  function generatePassword(length = 14): string {
+    const charset = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$';
+    let res = '';
+    const array = new Uint32Array(length);
+    window.crypto.getRandomValues(array);
+    for (let i = 0; i < length; i++) {
+      res += charset[array[i] % charset.length];
+    }
+    return res;
+  }
+
+  function regeneratePassword() {
+    const p = generatePassword(14);
+    form.Password = p;
+    form.ConfirmPassword = p;
+  }
+
+  async function copyPassword() {
+    if (!form.Password) return;
+    try {
+      await navigator.clipboard.writeText(form.Password);
+      toast.success('Password copied to clipboard');
+    } catch {
+      toast.error('Failed to copy password');
+    }
+  }
 
   $: filtered = extensions.filter(e => 
     !search.trim() || `${e.ExtensionNumber} ${e.ProvisioningCode}`.toLowerCase().includes(search.trim().toLowerCase())
@@ -51,12 +79,20 @@
 
   function openCreate() {
     editingId = null;
-    form = { ExtensionNumber: '', Password: '', ConfirmPassword: '', IsActive: true };
+    showPassword = true;
+    const initialPass = generatePassword(14);
+    form = {
+      ExtensionNumber: '',
+      Password: initialPass,
+      ConfirmPassword: initialPass,
+      IsActive: true
+    };
     modalOpen = true;
   }
 
   function openEdit(ext: ExtensionItem) {
     editingId = ext.ID;
+    showPassword = false;
     form = { ExtensionNumber: ext.ExtensionNumber, Password: '', ConfirmPassword: '', IsActive: ext.IsActive };
     modalOpen = true;
   }
@@ -84,7 +120,7 @@
         toast.success('Extension updated');
       } else {
         await api.post('/extensions', payload);
-        toast.success('Extension created');
+        toast.success('Extension created with secure SIP password');
       }
       modalOpen = false;
       await load();
@@ -173,14 +209,60 @@
     </div>
 
     <div>
-      <label for="ext-pass" class="label">SIP Password {editingId ? '(leave blank to keep current)' : ''}</label>
-      <input id="ext-pass" type="password" class="input mono" bind:value={form.Password} placeholder="SIP registration secret" required={!editingId} />
+      <div class="flex items-center justify-between">
+        <label for="ext-pass" class="label mb-0">SIP Password {editingId ? '(leave blank to keep current)' : ''}</label>
+        <div class="flex items-center gap-2 mb-1">
+          <button
+            type="button"
+            class="text-xs text-sky-600 hover:text-sky-800 font-medium"
+            on:click={regeneratePassword}
+          >
+            ↻ Regenerate
+          </button>
+          {#if form.Password}
+            <button
+              type="button"
+              class="text-xs text-slate-600 hover:text-slate-800 font-medium"
+              on:click={copyPassword}
+            >
+              📋 Copy
+            </button>
+            <button
+              type="button"
+              class="text-xs text-slate-600 hover:text-slate-800 font-medium"
+              on:click={() => showPassword = !showPassword}
+            >
+              {showPassword ? 'Hide' : 'Show'}
+            </button>
+          {/if}
+        </div>
+      </div>
+      <div class="relative mt-1">
+        <input
+          id="ext-pass"
+          type={showPassword ? 'text' : 'password'}
+          class="input mono pr-10"
+          bind:value={form.Password}
+          placeholder="SIP registration secret"
+          required={!editingId}
+        />
+      </div>
+      <p class="text-xs text-slate-500 mt-1">
+        A secure SIP registration password has been automatically generated. Make sure to copy it for device provisioning.
+      </p>
     </div>
 
     {#if form.Password}
       <div>
         <label for="ext-confirm" class="label">Confirm Password</label>
-        <input id="ext-confirm" type="password" class="input mono" bind:value={form.ConfirmPassword} placeholder="Confirm password" required />
+        <input
+          id="ext-confirm"
+          type={showPassword ? 'text' : 'password'}
+          class="input mono"
+          bind:value={form.ConfirmPassword}
+          placeholder="Confirm password"
+          required
+        />
       </div>
     {/if}
 
