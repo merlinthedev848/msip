@@ -20,31 +20,23 @@
 
   let navItems: NavItem[] = [
     { name: 'Dashboard', path: '/', icon: 'dashboard' },
-    { name: 'Button Profiles', path: '/button-profiles', icon: 'buttons' },
-    { name: 'Contacts', path: '/contacts', icon: 'contacts' },
-    { name: 'Call Groups', path: '/ring-groups', icon: 'call-groups' },
-    { name: 'Menus', path: '/digital-receptionists', icon: 'menus' },
-    { name: 'Queues', path: '/call-queues', icon: 'queues' },
-    { name: 'Telephone Numbers', path: '/telephone-numbers', icon: 'phone-numbers' },
-    { name: 'Sites', path: '/sites', icon: 'sites' },
-    { name: 'Users', path: '/admins', icon: 'users' },
-    { name: 'Voicemail', path: '/voicemail', icon: 'voicemail' },
-    { name: 'Dashboards', path: '/reports-analytics', icon: 'dashboards' },
-    { name: 'Call Logs', path: '/call-logs', icon: 'call-logs' },
+    { name: 'Extensions & Users', path: '/extensions', icon: 'users' },
+    { name: 'Phone Numbers (DIDs)', path: '/telephone-numbers', icon: 'phone-numbers' },
+    { name: 'Call Logs & Traces', path: '/call-logs', icon: 'call-logs' },
+    { name: 'Reports & Analytics', path: '/reports-analytics', icon: 'dashboards' },
     { 
-      name: 'Advanced', 
-      icon: 'advanced', 
-      expanded: true,
+      name: 'Call Management', 
+      icon: 'call-groups', 
+      expanded: false,
       children: [
-        { name: 'Devices', path: '/devices' },
-        { name: 'Diverts', path: '/diverts' },
-        { name: 'Internal Numbers', path: '/feature-codes' },
-        { name: 'Hold Music', path: '/audio-prompts' },
-        { name: 'Pickup Groups', path: '/paging-pickup' },
-        { name: 'Page Groups', path: '/paging-pickup' },
-        { name: 'Sound Files', path: '/audio-prompts' },
-        { name: 'Time And Date Conditions', path: '/time-conditions' },
-        { name: 'Holidays', path: '/time-conditions' }
+        { name: 'Ring Groups', path: '/ring-groups' },
+        { name: 'Auto Attendant (IVR)', path: '/digital-receptionists' },
+        { name: 'Call Queues & Wallboard', path: '/call-queues' },
+        { name: 'Voicemail Server', path: '/voicemail' },
+        { name: 'Call Diverts & Forwarding', path: '/diverts' },
+        { name: 'Time Conditions & Holidays', path: '/time-conditions' },
+        { name: 'Hold Music & Recordings', path: '/audio-prompts' },
+        { name: 'Paging & Call Pickup', path: '/paging-pickup' }
       ]
     },
     { 
@@ -53,40 +45,48 @@
       expanded: false,
       children: [
         { name: 'SIP Trunks & Gateways', path: '/trunks' },
-        { name: 'Incoming Call Rules', path: '/inbound-routes' },
-        { name: 'Outgoing Call Rules', path: '/outbound-routes' },
-        { name: 'Outbound Barring & AutoCLIP', path: '/outbound-restrictions' },
-        { name: 'Auto Provisioning Templates', path: '/provisioning' }
+        { name: 'Inbound Call Rules', path: '/inbound-routes' },
+        { name: 'Outbound Dial Rules', path: '/outbound-routes' },
+        { name: 'Outbound Barring & AutoCLIP', path: '/outbound-restrictions' }
       ]
     },
     { 
-      name: 'Messaging & Video', 
+      name: 'Directory & Devices', 
+      icon: 'contacts', 
+      expanded: false,
+      children: [
+        { name: 'Company Directory', path: '/contacts' },
+        { name: 'IP Handsets & MACs', path: '/devices' },
+        { name: 'Button & BLF Profiles', path: '/button-profiles' },
+        { name: 'Auto-Provisioning', path: '/provisioning' },
+        { name: 'Office Sites & Branches', path: '/sites' }
+      ]
+    },
+    { 
+      name: 'Collaboration', 
       icon: 'integration', 
       expanded: false,
       children: [
         { name: 'Team Chat', path: '/chat' },
-        { name: 'SMS & MMS Trunks', path: '/sms' },
-        { name: 'Video Meeting Rooms', path: '/video-rooms' },
-        { name: 'IP Security Cameras', path: '/cameras' }
+        { name: 'SMS & MMS Messaging', path: '/sms' },
+        { name: 'Video Conference Rooms', path: '/video-rooms' },
+        { name: 'Security Cameras (RTSP)', path: '/cameras' }
       ]
     },
     { 
-      name: 'Security & Diagnostics', 
+      name: 'Security & System', 
       icon: 'security', 
       expanded: false,
       children: [
+        { name: 'System Administrators', path: '/admins' },
+        { name: 'Tenant Domains', path: '/domains' },
+        { name: 'Feature Codes (*XX)', path: '/feature-codes' },
         { name: 'SIP & Jitter Diagnostics', path: '/diagnostics' },
-        { name: 'Firewall & IP Whitelist', path: '/firewall' },
+        { name: 'Firewall & Access Control', path: '/firewall' },
         { name: 'Anti-Fraud Shield', path: '/fraud' },
-        { name: 'Rate Throttling', path: '/throttling' },
-        { name: 'API Credentials', path: '/api-credentials' },
-        { name: 'Event Webhooks', path: '/webhooks' }
+        { name: 'API Keys & Webhooks', path: '/api-credentials' },
+        { name: 'Change History', path: '/versioning' }
       ]
-    },
-    { 
-      name: 'Audit History', 
-      icon: 'system', 
-      path: '/versioning'
     }
   ];
 
