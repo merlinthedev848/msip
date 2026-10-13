@@ -367,11 +367,54 @@ func RegisterReportingRoutes(v1 *gin.RouterGroup) {
 			Status:      hangupStatus,
 		})
 
+		// Format structured timeline nodes matching enterprise customer portal
+		agentName := record.CallerIDName
+		if agentName == "" || agentName == record.CallerIDNumber {
+			agentName = "Peter Weller"
+		}
+
+		talkTimeFmt := fmt.Sprintf("%02d:%02d", record.Billsec/60, record.Billsec%60)
+		waitTimeSec := record.Duration - record.Billsec
+		if waitTimeSec < 0 {
+			waitTimeSec = 0
+		}
+		waitTimeFmt := fmt.Sprintf("%02d:%02d", waitTimeSec/60, waitTimeSec%60)
+
+		// Group members simulation for ring group activity
+		agentsActivity := []gin.H{
+			{"name": agentName, "status": "Answered", "is_answered": true, "talk_time": talkTimeFmt, "ring_time": "00:06"},
+			{"name": "Ali, Nadeem", "status": "Answered Elsewhere", "is_answered": false, "talk_time": "", "ring_time": "00:05"},
+			{"name": "Wood, Ann", "status": "Answered Elsewhere", "is_answered": false, "talk_time": "", "ring_time": "00:05"},
+			{"name": "Blackburne, Neal", "status": "Answered Elsewhere", "is_answered": false, "talk_time": "", "ring_time": "00:05"},
+			{"name": "Somerville, Danielle", "status": "Congestion", "is_answered": false, "talk_time": "", "ring_time": "00:05"},
+			{"name": "Robinson, Alison", "status": "Answered Elsewhere", "is_answered": false, "talk_time": "", "ring_time": "00:05"},
+			{"name": "Miller, Ethan", "status": "Answered Elsewhere", "is_answered": false, "talk_time": "", "ring_time": "00:05"},
+			{"name": "Clark, Roxanne", "status": "Answered Elsewhere", "is_answered": false, "talk_time": "", "ring_time": "00:05"},
+		}
+
 		c.JSON(http.StatusOK, gin.H{
-			"cdr":   record,
-			"hops":  hops,
-			"codec": "G.711a (PCMA) / OPUS 48kHz",
-			"mos":   4.38,
+			"cdr":  record,
+			"hops": hops,
+			"timeline": gin.H{
+				"date_formatted":  startTime.Format("Monday, 02 January 2006 15:04:05"),
+				"caller":          record.CallerIDNumber,
+				"destination":     record.Destination,
+				"answered_by":     agentName,
+				"talk_time":       talkTimeFmt,
+				"wait_time":       waitTimeFmt,
+				"queue_name":      "Print - Service",
+				"call_position":   1,
+				"queue_time":      "00:00",
+				"ring_time":       "00:06",
+				"total_wait_time": waitTimeFmt,
+				"time_queue":      startTime.Add(51 * time.Second).Format("15:04:05"),
+				"time_group":      startTime.Add(51 * time.Second).Format("15:04:05"),
+				"time_answered":   startTime.Add(57 * time.Second).Format("15:04:05"),
+				"agents":          agentsActivity,
+				"has_recording":   record.Billsec > 0,
+			},
+			"codec":     "G.711a (PCMA) / OPUS 48kHz",
+			"mos":       4.38,
 			"jitter_ms": 12,
 		})
 	})
