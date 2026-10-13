@@ -152,7 +152,7 @@
           </thead>
           <tbody class="divide-y divide-gray-800/50">
             {#each users as user}
-              <tr class="hover:bg-slate-800/50/30 transition-colors group">
+              <tr class="hover:bg-[#182030]/50 transition-colors group">
                 <td class="py-4 px-6">
                   <div class="flex items-center space-x-3">
                     <div class="w-8 h-8 rounded-full bg-indigo-500/20 text-blue-600 flex items-center justify-center font-bold text-sm">
@@ -186,27 +186,27 @@
 </div>
 
 {#if showModal}
-<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-  <div class="bg-slate-950/80 border border-slate-800 text-slate-100 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-    <div class="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-900">
-      <h3 class="text-lg font-semibold text-white">Invite User</h3>
-      <button class="text-slate-500 hover:text-white transition-colors" aria-label="Close" on:click={() => showModal = false}>
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
+  <div class="bg-[#121622] border border-[#202738] text-slate-100 rounded-xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+    <div class="px-6 py-4 border-b border-[#1E2538] flex justify-between items-center bg-[#0E121B]">
+      <h3 class="text-base font-bold text-white font-mono">Invite User</h3>
+      <button class="text-slate-400 hover:text-white transition-colors" aria-label="Close" on:click={() => showModal = false}>
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
       </button>
     </div>
     
     <form on:submit={handleAddUser} class="p-6 space-y-4">
       <div>
-        <label for="email" class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Email Address</label>
-        <input id="email" type="email" bind:value={newEmail} required class="w-full bg-slate-900/50 border border-slate-800 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+        <label for="email" class="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1.5">Email Address</label>
+        <input id="email" type="email" bind:value={newEmail} required class="w-full bg-[#0B0E17] border border-[#1E2538] rounded-lg px-3 py-2 text-white font-mono text-sm focus:border-cyan-500 outline-none transition-all">
       </div>
       <div>
-        <label for="password" class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Password</label>
-        <input id="password" type="password" bind:value={newPassword} required class="w-full bg-slate-900/50 border border-slate-800 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+        <label for="password" class="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1.5">Password</label>
+        <input id="password" type="password" bind:value={newPassword} required class="w-full bg-[#0B0E17] border border-[#1E2538] rounded-lg px-3 py-2 text-white font-mono text-sm focus:border-cyan-500 outline-none transition-all">
       </div>
       <div>
-        <label for="role" class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Custom Role</label>
-        <select id="role" bind:value={newRole} class="w-full bg-slate-900/50 border border-slate-800 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+        <label for="role" class="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1.5">Role Permission</label>
+        <select id="role" bind:value={newRole} class="w-full bg-[#0B0E17] border border-[#1E2538] rounded-lg px-3 py-2 text-white font-mono text-sm focus:border-cyan-500 outline-none transition-all">
           <option value="admin">Administrator (Full Access)</option>
           <option value="viewer">Viewer (Read-Only)</option>
         </select>
@@ -222,27 +222,27 @@
 {/if}
 
 {#if showEditModal}
-<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-  <div class="bg-slate-950/80 border border-slate-800 text-slate-100 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-    <div class="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-900">
-      <h3 class="text-lg font-semibold text-white">Edit User</h3>
-      <button class="text-slate-500 hover:text-white transition-colors" aria-label="Close" on:click={() => showEditModal = false}>
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
+  <div class="bg-[#121622] border border-[#202738] text-slate-100 rounded-xl w-full max-w-md shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+    <div class="px-6 py-4 border-b border-[#1E2538] flex justify-between items-center bg-[#0E121B]">
+      <h3 class="text-base font-bold text-white font-mono">Edit User</h3>
+      <button class="text-slate-400 hover:text-white transition-colors" aria-label="Close" on:click={() => showEditModal = false}>
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
       </button>
     </div>
     
     <form on:submit={handleEditUser} class="p-6 space-y-4">
       <div>
-        <label for="edit_email" class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Email Address</label>
-        <input id="edit_email" type="email" bind:value={editEmail} required class="w-full bg-slate-900/50 border border-slate-800 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+        <label for="edit_email" class="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1.5">Email Address</label>
+        <input id="edit_email" type="email" bind:value={editEmail} required class="w-full bg-[#0B0E17] border border-[#1E2538] rounded-lg px-3 py-2 text-white font-mono text-sm focus:border-cyan-500 outline-none transition-all">
       </div>
       <div>
-        <label for="edit_password" class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Password (Leave blank to keep current)</label>
-        <input id="edit_password" type="password" bind:value={editPassword} class="w-full bg-slate-900/50 border border-slate-800 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+        <label for="edit_password" class="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1.5">Password (Leave blank to keep current)</label>
+        <input id="edit_password" type="password" bind:value={editPassword} class="w-full bg-[#0B0E17] border border-[#1E2538] rounded-lg px-3 py-2 text-white font-mono text-sm focus:border-cyan-500 outline-none transition-all">
       </div>
       <div>
-        <label for="edit_role" class="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1.5">Custom Role</label>
-        <select id="edit_role" bind:value={editRole} class="w-full bg-slate-900/50 border border-slate-800 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+        <label for="edit_role" class="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1.5">Role Permission</label>
+        <select id="edit_role" bind:value={editRole} class="w-full bg-[#0B0E17] border border-[#1E2538] rounded-lg px-3 py-2 text-white font-mono text-sm focus:border-cyan-500 outline-none transition-all">
           <option value="superadmin">Superadmin</option>
           <option value="admin">Administrator (Full Access)</option>
           <option value="viewer">Viewer (Read-Only)</option>

@@ -179,14 +179,14 @@
   
   {#if isOpen}
     <div 
-      transition:slide={{duration: 300}}
-      class="bg-gray-900/95 backdrop-blur-xl border border-gray-700/50 rounded-3xl shadow-2xl overflow-hidden mb-4 w-72 flex flex-col"
+      transition:slide={{duration: 200}}
+      class="bg-[#121622] border border-[#202738] rounded-xl shadow-2xl overflow-hidden mb-4 w-72 flex flex-col"
     >
       <!-- Header -->
-      <div class="bg-gray-950 px-4 py-3 border-b border-gray-800 flex justify-between items-center">
+      <div class="bg-[#0B0E17] px-4 py-3 border-b border-[#1E2538] flex justify-between items-center">
         <div class="flex items-center space-x-2">
           <div class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
-          <span class="text-xs font-bold text-gray-300 uppercase tracking-widest">Ext 1001</span>
+          <span class="text-xs font-bold text-gray-300 uppercase tracking-widest font-mono">Ext 1001</span>
         </div>
         <button on:click={toggle} aria-label="Close Softphone" class="text-gray-500 hover:text-white transition-colors">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -195,7 +195,7 @@
 
       {#if !activeCall}
         <!-- Display -->
-        <div class="p-4 bg-gray-900 flex justify-between items-center h-20">
+        <div class="p-4 bg-[#0B0E17] flex justify-between items-center h-20 border-b border-[#1E2538]">
           <h2 class="text-3xl font-mono text-white tracking-widest truncate">{currentNumber || '...'}</h2>
           {#if currentNumber}
             <button on:click={backspace} aria-label="Backspace" class="text-gray-500 hover:text-rose-400 p-2 transition-colors">
@@ -205,7 +205,7 @@
         </div>
 
         <!-- Dialpad -->
-        <div class="p-4 grid grid-cols-3 gap-3 bg-gray-900/50">
+        <div class="p-4 grid grid-cols-3 gap-3 bg-[#121622]">
           {#each [
             {n:'1', l:''}, {n:'2', l:'ABC'}, {n:'3', l:'DEF'},
             {n:'4', l:'GHI'}, {n:'5', l:'JKL'}, {n:'6', l:'MNO'},
@@ -214,47 +214,47 @@
           ] as key}
             <button 
               on:click={() => appendDigit(key.n)}
-              class="h-14 rounded-2xl bg-gray-800 hover:bg-gray-700 active:bg-indigo-600 transition-colors flex flex-col items-center justify-center border border-gray-700/50"
+              class="h-14 rounded-lg bg-[#182030] hover:bg-[#202B40] active:bg-cyan-600 transition-colors flex flex-col items-center justify-center border border-[#26334A]"
             >
-              <span class="text-xl font-bold text-white leading-none">{key.n}</span>
-              <span class="text-[9px] font-bold text-gray-500 mt-1 uppercase">{key.l}</span>
+              <span class="text-xl font-bold text-white font-mono leading-none">{key.n}</span>
+              <span class="text-[9px] font-bold text-slate-400 mt-1 uppercase font-mono">{key.l}</span>
             </button>
           {/each}
         </div>
 
         <!-- Action Bar -->
-        <div class="p-4 pb-6 flex justify-center space-x-6 border-t border-gray-800 bg-gray-900/80">
-          <button aria-label="Call History" class="w-12 h-12 rounded-full bg-gray-800 text-gray-400 hover:text-white flex items-center justify-center transition-colors">
+        <div class="p-4 pb-6 flex justify-center space-x-6 border-t border-[#1E2538] bg-[#0E121B]">
+          <button aria-label="Call History" class="w-12 h-12 rounded-lg bg-[#182030] border border-[#26334A] text-gray-400 hover:text-white flex items-center justify-center transition-colors">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
           </button>
           <button 
             on:click={dial}
             aria-label="Dial"
-            class="w-16 h-16 rounded-full bg-emerald-500 hover:bg-emerald-400 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30 transform -translate-y-2 transition-transform active:scale-95"
+            class="w-14 h-14 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-950 transform -translate-y-1 transition-transform active:scale-95"
           >
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
           </button>
-          <button aria-label="Contacts" class="w-12 h-12 rounded-full bg-gray-800 text-gray-400 hover:text-white flex items-center justify-center transition-colors">
+          <button aria-label="Contacts" class="w-12 h-12 rounded-lg bg-[#182030] border border-[#26334A] text-gray-400 hover:text-white flex items-center justify-center transition-colors">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
           </button>
         </div>
       {:else}
         <!-- Active Call View -->
-        <div in:fade class="flex-1 flex flex-col p-6 items-center justify-center bg-gray-900/80 min-h-[300px]">
+        <div in:fade class="flex-1 flex flex-col p-6 items-center justify-center bg-[#0B0E17] min-h-[300px]">
           {#if activeCall === 'calling'}
-            <div class="w-16 h-16 rounded-full border-4 border-indigo-500/20 border-t-indigo-500 animate-spin mb-6"></div>
-            <h3 class="text-lg font-bold text-white mb-1">Calling...</h3>
+            <div class="w-16 h-16 rounded-full border-4 border-cyan-500/20 border-t-cyan-500 animate-spin mb-6"></div>
+            <h3 class="text-lg font-bold text-white mb-1 font-mono">Calling...</h3>
             <p class="text-sm font-mono text-gray-400">{currentNumber}</p>
           {:else}
-            <div class="w-full flex-1 mb-4 flex items-center justify-center bg-black/50 rounded-xl overflow-hidden relative border border-gray-800">
+            <div class="w-full flex-1 mb-4 flex items-center justify-center bg-black rounded-xl overflow-hidden relative border border-[#1E2538]">
               {#if currentNumber === '9000'}
                 <!-- Display the actual WebRTC Video Stream -->
                 <video bind:this={remoteVideo} autoplay playsinline class="w-full h-full object-cover"></video>
-                <div class="absolute bottom-2 left-2 px-2 py-1 bg-black/60 backdrop-blur rounded text-xs text-white">Video MCU</div>
+                <div class="absolute bottom-2 left-2 px-2 py-1 bg-[#121622] border border-[#202738] rounded text-xs text-white font-mono">Video MCU</div>
               {:else}
                 <!-- Normal Audio Call Interface -->
-                <div class="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                  <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                <div class="w-20 h-20 rounded-xl bg-[#182030] border border-[#26334A] flex items-center justify-center shadow-lg">
+                  <svg class="w-10 h-10 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                 </div>
               {/if}
             </div>

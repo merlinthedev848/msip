@@ -51,14 +51,14 @@
       <h1 class="text-3xl font-bold tracking-tight text-white mb-1">Visual Voicemail</h1>
       <p class="text-slate-500 text-sm">Listen and read transcriptions of incoming messages.</p>
     </div>
-    <button class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl font-bold text-sm transition-colors" on:click={handleSimulate}>
+    <button class="bg-cyan-600 hover:bg-cyan-500 text-slate-950 px-4 py-2 rounded-lg font-bold text-xs font-mono uppercase tracking-wider transition-colors" on:click={handleSimulate}>
       Simulate Voicemail
     </button>
   </header>
 
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
     {#if voicemails.length === 0}
-      <div class="col-span-1 md:col-span-2 p-8 text-center text-slate-500 bg-slate-900/75 backdrop-blur-xl border border-slate-800 rounded-3xl">No voicemails found.</div>
+      <div class="col-span-1 md:col-span-2 p-8 text-center text-slate-400 bg-[#121622] border border-[#202738] rounded-xl font-mono text-xs">No voicemails found.</div>
     {/if}
     {#each voicemails as vm}
     <GlassCard hoverEffect={true}>

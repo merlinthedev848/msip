@@ -122,7 +122,7 @@
   </header>
 
   <!-- Filter Controls Card -->
-  <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col md:flex-row gap-4 justify-between items-center backdrop-blur-xl shadow-xl">
+  <div class="bg-[#121622] border border-[#202738] rounded-xl p-4 flex flex-col md:flex-row gap-4 justify-between items-center shadow-xl">
     <!-- Search Bar -->
     <div class="relative w-full md:w-96">
       <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
@@ -132,7 +132,7 @@
         type="text" 
         bind:value={searchTerm}
         placeholder="Filter by caller, extension, or destination..." 
-        class="w-full bg-slate-950/70 border border-slate-800 text-slate-100 placeholder-slate-500 text-xs rounded-xl pl-10 pr-4 py-2 focus:outline-none focus:border-indigo-500 font-mono"
+        class="w-full bg-[#0B0E17] border border-[#1E2538] text-white placeholder-slate-500 text-xs rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:border-cyan-500 font-mono"
       />
     </div>
 
@@ -146,7 +146,7 @@
       ] as tab}
         <button 
           on:click={() => statusFilter = tab.id as any}
-          class="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors {statusFilter === tab.id ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/40' : 'text-slate-400 hover:text-white hover:bg-slate-800/60'}"
+          class="px-3 py-1.5 rounded-lg text-xs font-mono font-semibold whitespace-nowrap transition-colors {statusFilter === tab.id ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' : 'text-slate-400 hover:text-white hover:bg-[#182030]'}"
         >
           {tab.label}
         </button>
@@ -155,11 +155,11 @@
   </div>
 
   <!-- CDRs Table Container -->
-  <div class="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl backdrop-blur-xl">
+  <div class="bg-[#121622] border border-[#202738] rounded-xl overflow-hidden shadow-2xl">
     <div class="overflow-x-auto">
       <table class="w-full text-left border-collapse">
         <thead>
-          <tr class="bg-slate-950/80 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-800">
+          <tr class="bg-[#0E121B] text-slate-400 text-[11px] font-mono uppercase tracking-wider border-b border-[#1E2538]">
             <th class="p-4 font-bold">Call Time</th>
             <th class="p-4 font-bold">Caller ID</th>
             <th class="p-4 font-bold">Destination</th>

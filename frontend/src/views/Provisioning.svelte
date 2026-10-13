@@ -47,22 +47,22 @@
   </header>
 
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-    <div class="lg:col-span-2 bg-slate-900/75 backdrop-blur-xl rounded-[2rem] border border-slate-800 overflow-hidden shadow-2xl flex flex-col">
-      <div class="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-900/50/30">
-        <h3 class="text-sm font-bold text-white uppercase tracking-widest flex items-center">
-          <svg class="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m14-6h2m-2 6h2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg>
-          Mapped Devices
+    <div class="lg:col-span-2 bg-[#121622] rounded-xl border border-[#202738] overflow-hidden shadow-2xl flex flex-col">
+      <div class="p-4 border-b border-[#1E2538] flex justify-between items-center bg-[#0E121B]">
+        <h3 class="text-xs font-bold text-white uppercase tracking-wider flex items-center font-mono">
+          <svg class="w-4 h-4 mr-2 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m14-6h2m-2 6h2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg>
+          Mapped Hardware Endpoints
         </h3>
         <div class="relative">
           <svg class="w-4 h-4 text-slate-500 absolute left-3 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-          <input type="text" placeholder="Search MAC..." class="bg-slate-950/80 border border-slate-800 text-slate-100 text-white text-xs rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-48 pl-9 p-1.5 transition-colors">
+          <input type="text" placeholder="Search MAC..." class="bg-[#0B0E17] border border-[#1E2538] text-white text-xs rounded-lg focus:border-cyan-500 block w-48 pl-9 p-1.5 transition-colors font-mono outline-none">
         </div>
       </div>
       
       <div class="flex-1 overflow-x-auto p-2">
         <table class="w-full text-left">
           <thead>
-            <tr class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] border-b border-slate-800">
+            <tr class="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-[#1E2538] font-mono bg-[#0E121B]">
               <th class="p-4">MAC Address</th>
               <th class="p-4">Hardware</th>
               <th class="p-4">Template</th>
@@ -70,24 +70,24 @@
               <th class="p-4">Status</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-800/50">
+          <tbody class="divide-y divide-[#1E2538]">
             {#each devices as dev}
-              <tr class="hover:bg-slate-800/50/30 transition-colors group">
-                <td class="p-4 font-mono font-bold text-white tracking-widest">{dev.mac}</td>
+              <tr class="hover:bg-[#182030]/50 transition-colors group">
+                <td class="p-4 font-mono font-bold text-white tracking-widest text-xs">{dev.mac}</td>
                 <td class="p-4">
-                  <p class="font-bold text-slate-700">{dev.vendor}</p>
+                  <p class="font-bold text-slate-200 text-xs font-mono">{dev.vendor}</p>
                   <p class="text-[10px] text-slate-500 font-mono">{dev.model}</p>
                 </td>
                 <td class="p-4">
-                  <span class="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-medium border border-slate-800">{dev.template}</span>
+                  <span class="px-2 py-0.5 bg-[#182030] text-cyan-400 rounded text-xs font-mono border border-[#26334A]">{dev.template}</span>
                 </td>
-                <td class="p-4 text-center font-mono font-bold text-blue-600">{dev.ext}</td>
+                <td class="p-4 text-center font-mono font-bold text-cyan-400 text-xs">{dev.ext}</td>
                 <td class="p-4">
                   <div class="flex items-center space-x-2">
                     <div class="w-2 h-2 rounded-full {dev.status === 'Provisioned' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : dev.status === 'Rebooting' ? 'bg-amber-500 animate-pulse' : 'bg-rose-500'}"></div>
-                    <span class="text-xs font-bold {dev.status === 'Provisioned' ? 'text-emerald-400' : dev.status === 'Rebooting' ? 'text-amber-400' : 'text-rose-400'}">{dev.status}</span>
+                    <span class="text-xs font-mono font-bold {dev.status === 'Provisioned' ? 'text-emerald-400' : dev.status === 'Rebooting' ? 'text-amber-400' : 'text-rose-400'}">{dev.status}</span>
                   </div>
-                  <p class="text-[10px] text-gray-600 font-mono mt-0.5">{dev.ip}</p>
+                  <p class="text-[10px] text-slate-500 font-mono mt-0.5">{dev.ip}</p>
                 </td>
               </tr>
             {/each}
@@ -98,35 +98,35 @@
 
     <!-- Provisioning Server Info -->
     <div class="space-y-6">
-      <div class="bg-slate-900/75 backdrop-blur-xl rounded-[2rem] border border-slate-800 overflow-hidden shadow-xl p-6">
-        <h3 class="text-sm font-bold text-white uppercase tracking-widest mb-6 flex items-center">
-          <svg class="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+      <div class="bg-[#121622] rounded-xl border border-[#202738] overflow-hidden shadow-xl p-5">
+        <h3 class="text-xs font-bold text-white uppercase tracking-wider mb-4 flex items-center font-mono">
+          <svg class="w-4 h-4 mr-2 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
           HTTP Provisioning URL
         </h3>
         
-        <div class="bg-slate-900/50 border border-slate-800 rounded-xl p-4 flex items-center justify-between group mb-4">
+        <div class="bg-[#0B0E17] border border-[#1E2538] rounded-lg p-3 flex items-center justify-between group mb-3">
           <code class="text-emerald-400 text-xs font-mono">http://{window.location.hostname}/cfg/</code>
-          <button aria-label="Copy URL" class="text-gray-600 hover:text-white transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button>
+          <button aria-label="Copy URL" class="text-slate-500 hover:text-white transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button>
         </div>
         
-        <p class="text-xs text-slate-500 leading-relaxed">
+        <p class="text-xs text-slate-400 leading-relaxed font-mono">
           Configure DHCP Option 66 to point to this URL. Devices will automatically pull their XML configuration based on their MAC address during boot.
         </p>
       </div>
 
-      <div class="bg-slate-900/75 backdrop-blur-xl rounded-[2rem] border border-slate-800 overflow-hidden shadow-xl">
-        <div class="p-5 border-b border-slate-800 bg-slate-900/50/30">
-          <h3 class="text-sm font-bold text-white uppercase tracking-widest flex items-center">
-            <svg class="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+      <div class="bg-[#121622] rounded-xl border border-[#202738] overflow-hidden shadow-xl">
+        <div class="p-4 border-b border-[#1E2538] bg-[#0E121B]">
+          <h3 class="text-xs font-bold text-white uppercase tracking-wider flex items-center font-mono">
+            <svg class="w-4 h-4 mr-2 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
             Base Templates
           </h3>
         </div>
         <div class="p-2">
-          <ul class="divide-y divide-gray-800/50">
+          <ul class="divide-y divide-[#1E2538]">
             {#each templates as tpl}
-              <li class="p-3 flex justify-between items-center hover:bg-slate-800/50/30 rounded-lg transition-colors cursor-pointer group">
-                <span class="text-sm font-medium text-slate-700 group-hover:text-white transition-colors">{tpl}</span>
-                <svg class="w-4 h-4 text-gray-600 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+              <li class="p-3 flex justify-between items-center hover:bg-[#182030]/50 rounded transition-colors cursor-pointer group">
+                <span class="text-xs font-mono font-medium text-slate-300 group-hover:text-white transition-colors">{tpl}</span>
+                <svg class="w-4 h-4 text-slate-500 group-hover:text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
               </li>
             {/each}
           </ul>

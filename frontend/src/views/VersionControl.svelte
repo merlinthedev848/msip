@@ -29,46 +29,46 @@
     </div>
   </header>
 
-  <div class="bg-slate-900/75 backdrop-blur-xl rounded-[2rem] border border-slate-800 overflow-hidden shadow-2xl p-8">
-    <div class="space-y-6">
+  <div class="bg-[#121622] rounded-xl border border-[#202738] overflow-hidden shadow-2xl p-6">
+    <div class="space-y-5">
       {#each commits as commit, i}
-        <div class="relative pl-8 group">
+        <div class="relative pl-6 group">
           <!-- Timeline Dot -->
-          <div class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full border-4 border-gray-900 
-            {i === 0 ? 'bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.8)]' : 'bg-gray-600'}"></div>
+          <div class="absolute -left-[7px] top-2 w-3.5 h-3.5 rounded-full border-2 border-[#121622] 
+            {i === 0 ? 'bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]' : 'bg-slate-600'}"></div>
           
-          <div class="bg-slate-900/50/50 rounded-2xl border border-slate-800 p-5 hover:border-indigo-500/30 transition-colors">
+          <div class="bg-[#0B0E17] rounded-xl border border-[#1E2538] p-4 hover:border-cyan-500/30 transition-colors">
             <div class="flex justify-between items-start mb-2">
-              <div class="flex items-center space-x-3">
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest font-mono bg-slate-100 text-slate-500">{commit.hash}</span>
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest
-                  {commit.type === 'Security' ? 'bg-rose-500/10 text-rose-400' :
-                   commit.type === 'Provisioning' ? 'bg-emerald-50 text-emerald-400' :
-                   'bg-blue-50 text-blue-600'}">
+              <div class="flex items-center space-x-2.5">
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest font-mono bg-[#182030] text-cyan-400 border border-[#26334A]">{commit.hash}</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider font-mono
+                  {commit.type === 'Security' ? 'bg-rose-950/60 text-rose-400 border border-rose-500/30' :
+                   commit.type === 'Provisioning' ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-500/30' :
+                   'bg-cyan-950/60 text-cyan-400 border border-cyan-500/30'}">
                   {commit.type}
                 </span>
               </div>
-              <span class="text-xs font-bold text-slate-500">{commit.time}</span>
+              <span class="text-xs font-mono text-slate-500">{commit.time}</span>
             </div>
             
-            <h3 class="text-lg font-bold text-white mb-3">{commit.msg}</h3>
+            <h3 class="text-sm font-bold text-white mb-2 font-mono">{commit.msg}</h3>
             
-            <div class="flex justify-between items-center mt-4 pt-4 border-t border-slate-800/80">
+            <div class="flex justify-between items-center mt-3 pt-3 border-t border-[#1E2538]">
               <div class="flex items-center space-x-2">
-                <div class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-white border border-slate-800">
+                <div class="w-5 h-5 rounded bg-[#182030] flex items-center justify-center text-[10px] font-bold text-cyan-400 border border-[#26334A] font-mono">
                   {commit.author.charAt(0)}
                 </div>
-                <span class="text-xs font-bold text-slate-500">{commit.author}</span>
+                <span class="text-xs font-mono text-slate-400">{commit.author}</span>
               </div>
               
               <div class="flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button aria-label="View Diff" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-bold text-white transition-colors border border-slate-800 flex items-center">
-                  <svg class="w-3 h-3 mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+                <button aria-label="View Diff" class="px-2.5 py-1 bg-[#182030] hover:bg-[#202B40] rounded text-xs font-mono font-bold text-slate-300 hover:text-white transition-colors border border-[#26334A] flex items-center">
+                  <svg class="w-3 h-3 mr-1 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
                   View Diff
                 </button>
-                <button aria-label="Rollback" class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500 rounded-lg text-xs font-bold text-rose-400 hover:text-white transition-colors border border-rose-500/20 flex items-center">
-                  <svg class="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
-                  Rollback to Here
+                <button aria-label="Rollback" class="px-2.5 py-1 bg-rose-950/50 hover:bg-rose-900 rounded text-xs font-mono font-bold text-rose-400 hover:text-white transition-colors border border-rose-500/30 flex items-center">
+                  <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
+                  Rollback
                 </button>
               </div>
             </div>

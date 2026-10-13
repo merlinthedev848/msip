@@ -179,33 +179,33 @@
     <div class="overflow-x-auto">
       <table class="w-full text-left border-collapse">
         <thead>
-          <tr class="bg-slate-900/40 border-b border-slate-800">
-            <th class="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Ext</th>
-            <th class="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-            <th class="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider">Provisioning Code</th>
-            <th class="py-4 px-6 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Actions</th>
+          <tr class="bg-[#0E121B] border-b border-[#1E2538] text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono">
+            <th class="py-3 px-4">Extension</th>
+            <th class="py-3 px-4">Status</th>
+            <th class="py-3 px-4">Provisioning Code</th>
+            <th class="py-3 px-4 text-right">Actions</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-800/50 text-sm text-slate-700">
+        <tbody class="divide-y divide-[#1E2538] text-sm text-slate-200">
           {#each extensions as ext}
-            <tr class="hover:bg-slate-800/50/30 transition-colors group cursor-pointer">
-              <td class="p-4 font-mono text-blue-600 font-medium">{ext.ext}</td>
+            <tr class="hover:bg-[#182030]/50 transition-colors group cursor-pointer font-mono">
+              <td class="p-4 font-mono text-cyan-400 font-bold text-sm">{ext.ext}</td>
               <td class="p-4">
-                <span class="px-2.5 py-1 rounded-md text-xs font-medium border {ext.status === 'Online' ? 'bg-emerald-50 text-emerald-400 border-emerald-500/20' : 'bg-gray-500/10 text-slate-500 border-gray-500/20'}">
+                <span class="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider font-mono border {ext.status === 'Online' ? 'bg-emerald-950/60 text-emerald-400 border-emerald-500/30' : 'bg-[#182030] text-slate-400 border-[#26334A]'}">
                   {ext.status}
                 </span>
               </td>
               <td class="p-4">
-                <span class="font-mono text-sm text-blue-600 tracking-widest bg-blue-50 px-2 py-1 rounded border border-blue-100">
+                <span class="font-mono text-xs text-cyan-300 tracking-wider bg-[#182030] px-2 py-0.5 rounded border border-[#26334A]">
                   {ext.code}
                 </span>
               </td>
-              <td class="p-4 text-right flex justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button title="Edit Extension" aria-label="Edit Extension" class="text-slate-500 hover:text-white transition-colors p-1" on:click={() => openEditModal(ext)}>
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+              <td class="p-4 text-right flex justify-end space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button title="Edit Extension" aria-label="Edit Extension" class="text-slate-400 hover:text-cyan-400 transition-colors p-1" on:click={() => openEditModal(ext)}>
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                 </button>
-                <button title="Delete Extension" aria-label="Delete Extension" class="text-slate-500 hover:text-red-400 transition-colors p-1" on:click={() => handleDeleteExtension(ext.id)}>
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                <button title="Delete Extension" aria-label="Delete Extension" class="text-rose-400 hover:text-white transition-colors p-1" on:click={() => handleDeleteExtension(ext.id)}>
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                 </button>
               </td>
             </tr>
@@ -218,23 +218,23 @@
 
 <!-- Add Extension Modal -->
 <Modal bind:isOpen={isModalOpen} title="Provision New Extension" description="Create a new SIP extension in the PostgreSQL database. It will immediately be available to register on Kamailio/FreeSWITCH.">
-  <form on:submit={handleCreateExtension} class="space-y-5">
+  <form on:submit={handleCreateExtension} class="space-y-4">
     <div>
-      <label for="extNumber" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Extension Number</label>
-      <input id="extNumber" type="text" bind:value={newExtNumber} required placeholder="e.g. 1005" class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
+      <label for="extNumber" class="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1.5">Extension Number</label>
+      <input id="extNumber" type="text" bind:value={newExtNumber} required placeholder="e.g. 1005" class="w-full bg-[#0B0E17] border border-[#1E2538] rounded-lg px-3 py-2 text-white font-mono text-sm focus:border-cyan-500 outline-none">
     </div>
     <div>
-      <label for="extPassword" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">SIP Password</label>
-      <input id="extPassword" type="password" bind:value={newExtPassword} required placeholder="Strong password" class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
+      <label for="extPassword" class="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1.5">SIP Password</label>
+      <input id="extPassword" type="password" bind:value={newExtPassword} required placeholder="Strong password" class="w-full bg-[#0B0E17] border border-[#1E2538] rounded-lg px-3 py-2 text-white font-mono text-sm focus:border-cyan-500 outline-none">
     </div>
     <div>
-      <label for="extConfirm" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Confirm Password</label>
-      <input id="extConfirm" type="password" bind:value={newExtConfirm} required placeholder="Confirm password" class="w-full bg-slate-900/50 border border-slate-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none">
+      <label for="extConfirm" class="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1.5">Confirm Password</label>
+      <input id="extConfirm" type="password" bind:value={newExtConfirm} required placeholder="Confirm password" class="w-full bg-[#0B0E17] border border-[#1E2538] rounded-lg px-3 py-2 text-white font-mono text-sm focus:border-cyan-500 outline-none">
     </div>
     
     <div class="pt-4 flex justify-end space-x-3">
       <Button variant="secondary" on:click={() => isModalOpen = false} type="button">Cancel</Button>
-      <button type="submit" disabled={isSubmitting} class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-indigo-600/20 disabled:opacity-50">
+      <button type="submit" disabled={isSubmitting} class="bg-cyan-600 hover:bg-cyan-500 text-slate-950 px-5 py-2 rounded-lg font-bold font-mono text-xs uppercase tracking-wider disabled:opacity-50">
         {isSubmitting ? 'Provisioning...' : 'Create Extension'}
       </button>
     </div>

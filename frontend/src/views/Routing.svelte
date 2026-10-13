@@ -104,37 +104,37 @@
 
   <div class="grid grid-cols-1 gap-4">
     {#if routes.length === 0}
-      <div class="p-8 text-center text-slate-500 bg-slate-900/75 backdrop-blur-xl border border-slate-800 rounded-3xl">No inbound routes configured.</div>
+      <div class="p-8 text-center text-slate-400 bg-[#121622] border border-[#202738] rounded-xl font-mono text-xs">No inbound routes configured.</div>
     {/if}
     {#each routes as route}
-    <GlassCard hoverEffect={true} className="flex flex-col md:flex-row items-center justify-between p-5 gap-4">
-      <div class="flex items-center space-x-6 w-full md:w-auto">
-        <div class="flex-shrink-0 bg-blue-50 border border-indigo-500/30 p-3 rounded-xl">
-          <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+    <GlassCard hoverEffect={true} className="flex flex-col md:flex-row items-center justify-between p-4 gap-4">
+      <div class="flex items-center space-x-4 w-full md:w-auto">
+        <div class="flex-shrink-0 bg-[#182030] border border-[#26334A] p-2.5 rounded-lg text-cyan-400">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
         </div>
         <div>
-          <h3 class="text-lg font-mono font-bold text-white">{route.DIDNumber}</h3>
-          <p class="text-sm text-slate-500">Inbound Route</p>
+          <h3 class="text-base font-mono font-bold text-white">{route.DIDNumber}</h3>
+          <p class="text-xs text-slate-400 font-mono">Inbound DID Direct Routing</p>
         </div>
       </div>
       
       <div class="hidden md:flex flex-1 items-center justify-center">
-        <div class="h-px bg-slate-200 w-full max-w-[100px] relative">
-          <div class="absolute right-0 top-1/2 -translate-y-1/2 w-2 h-2 border-t border-r border-slate-800 transform rotate-45"></div>
+        <div class="h-px bg-[#1E2538] w-full max-w-[100px] relative">
+          <div class="absolute right-0 top-1/2 -translate-y-1/2 w-1.5 h-1.5 border-t border-r border-cyan-500/60 transform rotate-45"></div>
         </div>
       </div>
 
-      <div class="flex items-center w-full md:w-auto bg-slate-950/80 border border-slate-800 text-slate-100 rounded-lg p-3">
-        <div class="w-2 h-2 rounded-full bg-emerald-500 mr-3"></div>
+      <div class="flex items-center w-full md:w-auto bg-[#0B0E17] border border-[#1E2538] rounded-lg px-3 py-2">
+        <div class="w-2 h-2 rounded-full bg-emerald-500 mr-2.5 shadow-[0_0_6px_rgba(16,185,129,0.8)]"></div>
         <div>
-          <p class="text-xs text-slate-500 font-medium">DESTINATION ({route.DestinationType})</p>
-          <p class="text-sm font-semibold text-slate-800">{route.DestinationTarget}</p>
+          <p class="text-[10px] text-slate-400 font-mono font-bold uppercase">{route.DestinationType}</p>
+          <p class="text-xs font-mono font-bold text-cyan-300">{route.DestinationTarget}</p>
         </div>
       </div>
       
-      <div class="flex ml-4">
-        <button title="Edit Route" aria-label="Edit Route" class="text-slate-500 hover:text-white p-2 transition-colors" on:click={() => openEditModal(route)}><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
-        <button title="Delete Route" aria-label="Delete Route" class="text-slate-500 hover:text-red-400 p-2 transition-colors" on:click={() => handleDeleteRoute(route.ID)}><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+      <div class="flex ml-4 space-x-1">
+        <button title="Edit Route" aria-label="Edit Route" class="text-slate-400 hover:text-cyan-400 p-1.5 transition-colors" on:click={() => openEditModal(route)}><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
+        <button title="Delete Route" aria-label="Delete Route" class="text-slate-400 hover:text-rose-400 p-1.5 transition-colors" on:click={() => handleDeleteRoute(route.ID)}><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
       </div>
     </GlassCard>
     {/each}

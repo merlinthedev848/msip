@@ -144,12 +144,12 @@
 
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
     {#if trunks.length === 0}
-      <div class="col-span-2 p-12 text-center flex flex-col items-center justify-center bg-slate-900/75 backdrop-blur-xl border border-slate-800/80 rounded-3xl">
-        <div class="w-16 h-16 bg-slate-900/50 rounded-2xl flex items-center justify-center mb-4">
-          <svg class="w-8 h-8 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 8.25l-7.5 7.5-7.5-7.5"></path></svg>
+      <div class="col-span-2 p-12 text-center flex flex-col items-center justify-center bg-[#121622] border border-[#202738] rounded-xl">
+        <div class="w-14 h-14 bg-[#182030] border border-[#26334A] rounded-xl flex items-center justify-center mb-4">
+          <svg class="w-7 h-7 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 8.25l-7.5 7.5-7.5-7.5"></path></svg>
         </div>
-        <h3 class="text-lg font-medium text-white mb-2">No SIP Trunks configured</h3>
-        <p class="text-slate-500 text-sm max-w-sm">Connect your first external carrier or proxy server by clicking "Add Trunk".</p>
+        <h3 class="text-base font-bold text-white mb-1 font-mono">No SIP Trunks Configured</h3>
+        <p class="text-slate-400 text-xs max-w-sm font-mono">Connect your first external carrier gateway or proxy by clicking "Add Trunk".</p>
       </div>
     {/if}
 

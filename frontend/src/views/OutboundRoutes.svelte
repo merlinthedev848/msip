@@ -122,14 +122,14 @@
   </header>
 
   {#if routes.length === 0}
-    <div class="p-8 text-center text-slate-500 bg-slate-900/75 backdrop-blur-xl border border-slate-800 rounded-3xl">No outbound routes configured.</div>
+    <div class="p-8 text-center text-slate-400 bg-[#121622] border border-[#202738] rounded-xl font-mono text-xs">No outbound routes configured.</div>
   {/if}
   {#each routes as route}
-  <GlassCard hoverEffect={true} className="border-l-4 border-l-indigo-500">
+  <GlassCard hoverEffect={true} className="border-l-4 border-l-cyan-500">
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
       <div>
-        <h3 class="text-lg font-bold text-white mb-1">Route (Priority {route.Priority})</h3>
-        <p class="text-sm font-mono text-slate-500 bg-slate-800 text-slate-300 inline-block px-2 py-1 rounded">Pattern: {route.DialPattern}</p>
+        <h3 class="text-base font-bold text-white mb-1 font-mono">Route (Priority {route.Priority})</h3>
+        <p class="text-xs font-mono bg-[#182030] text-cyan-400 border border-[#26334A] inline-block px-2 py-0.5 rounded">Pattern: {route.DialPattern}</p>
       </div>
       <div class="mt-4 md:mt-0 flex items-center space-x-4">
         <div class="text-right">

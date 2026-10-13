@@ -68,25 +68,25 @@
 
   <div class="flex-1 flex space-x-6 min-h-0">
     <!-- Channels Sidebar -->
-    <div class="w-72 bg-slate-900/75 backdrop-blur-xl rounded-[2rem] border border-slate-800 shadow-2xl flex flex-col overflow-hidden shrink-0">
-      <div class="p-5 border-b border-slate-800 bg-slate-900/50/30">
-        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center">
-          <svg class="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+    <div class="w-72 bg-[#121622] rounded-xl border border-[#202738] shadow-2xl flex flex-col overflow-hidden shrink-0">
+      <div class="p-4 border-b border-[#1E2538] bg-[#0E121B]">
+        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center font-mono">
+          <svg class="w-4 h-4 mr-2 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
           Active Channels
         </h3>
       </div>
-      <div class="space-y-2 p-3">
+      <div class="space-y-1.5 p-3">
         {#each channels as chan}
-          <div class="w-full flex items-center justify-between p-3 rounded-xl transition-colors group {chan.active ? 'bg-indigo-600/10 border border-blue-100' : 'hover:bg-slate-900/50 border border-transparent'}">
+          <div class="w-full flex items-center justify-between p-2.5 rounded-lg transition-colors group {chan.active ? 'bg-cyan-500/10 border border-cyan-500/30' : 'hover:bg-[#182030] border border-transparent'}">
             <div class="flex items-center">
-              <span class="text-lg font-bold text-slate-500 mr-2">#</span>
-              <span class="font-bold text-sm {chan.active ? 'text-blue-600' : 'text-slate-700 group-hover:text-white'}">{chan.name}</span>
+              <span class="text-base font-bold text-slate-500 mr-2 font-mono">#</span>
+              <span class="font-bold text-xs font-mono {chan.active ? 'text-cyan-400' : 'text-slate-300 group-hover:text-white'}">{chan.name}</span>
             </div>
             <div class="flex items-center space-x-2">
               {#if chan.unread > 0}
-                <span class="bg-rose-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-[0_0_10px_rgba(244,63,94,0.5)]">{chan.unread}</span>
+                <span class="bg-rose-600 text-white text-[10px] font-bold px-1.5 py-0.2 rounded font-mono">{chan.unread}</span>
               {/if}
-              <button title="Delete Channel" aria-label="Delete Channel" class="text-rose-500 hover:text-white p-1 rounded transition-colors opacity-0 group-hover:opacity-100" on:click|stopPropagation={() => handleDeleteChat(chan.id)}><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+              <button title="Delete Channel" aria-label="Delete Channel" class="text-rose-400 hover:text-white p-1 rounded transition-colors opacity-0 group-hover:opacity-100" on:click|stopPropagation={() => handleDeleteChat(chan.id)}><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
             </div>
           </div>
         {/each}
@@ -94,38 +94,34 @@
     </div>
 
     <!-- Chat Area -->
-    <div class="flex-1 bg-slate-900/75 backdrop-blur-xl rounded-[2rem] border border-slate-800 shadow-2xl flex flex-col overflow-hidden">
+    <div class="flex-1 bg-[#121622] rounded-xl border border-[#202738] shadow-2xl flex flex-col overflow-hidden">
       <!-- Chat Header -->
-      <div class="p-5 border-b border-slate-800 bg-slate-900/50/30 flex justify-between items-center shrink-0">
+      <div class="p-4 border-b border-[#1E2538] bg-[#0E121B] flex justify-between items-center shrink-0">
         <div class="flex items-center space-x-3">
-          <span class="text-2xl font-black text-indigo-500">#</span>
-          <h2 class="text-lg font-bold text-white">general</h2>
-          <span class="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-800 text-[10px] text-slate-500 font-bold uppercase">14 Online</span>
-        </div>
-        <div class="flex space-x-2">
-          <button aria-label="Search Chat" class="p-2 text-slate-500 hover:text-white transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></button>
-          <button aria-label="Channel Settings" class="p-2 text-slate-500 hover:text-white transition-colors"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path></svg></button>
+          <span class="text-xl font-black text-cyan-400 font-mono">#</span>
+          <h2 class="text-sm font-bold text-white font-mono">general</h2>
+          <span class="px-2 py-0.5 rounded bg-[#182030] border border-[#26334A] text-[10px] text-emerald-400 font-mono font-bold uppercase">14 Online</span>
         </div>
       </div>
 
       <!-- Messages -->
-      <div class="flex-1 p-5 overflow-y-auto space-y-6">
+      <div class="flex-1 p-5 overflow-y-auto space-y-5">
         {#each messages as msg}
           {#if msg.isSys}
             <div class="flex justify-center">
-              <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-slate-900/50 px-3 py-1 rounded-full">{msg.text}</span>
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-[#0B0E17] border border-[#1E2538] px-3 py-1 rounded-full font-mono">{msg.text}</span>
             </div>
           {:else}
-            <div class="flex items-start space-x-4">
-              <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center font-black {msg.color} border border-slate-800 shrink-0">
+            <div class="flex items-start space-x-3">
+              <div class="w-8 h-8 rounded-lg bg-[#182030] flex items-center justify-center font-bold text-cyan-400 border border-[#26334A] shrink-0 font-mono text-xs">
                 {msg.user.charAt(0)}
               </div>
               <div class="flex-1">
                 <div class="flex items-baseline space-x-2 mb-1">
-                  <span class="font-bold text-white text-sm">{msg.user}</span>
-                  <span class="text-[10px] font-bold text-slate-500">{msg.time}</span>
+                  <span class="font-bold text-white text-xs font-mono">{msg.user}</span>
+                  <span class="text-[10px] font-mono text-slate-500">{msg.time}</span>
                 </div>
-                <p class="text-slate-700 text-sm leading-relaxed">{msg.text}</p>
+                <p class="text-slate-300 text-xs leading-relaxed font-mono">{msg.text}</p>
               </div>
             </div>
           {/if}
@@ -133,11 +129,10 @@
       </div>
 
       <!-- Input Box -->
-      <div class="p-4 border-t border-slate-800 bg-slate-900/50/50 shrink-0">
+      <div class="p-3 border-t border-[#1E2538] bg-[#0E121B] shrink-0">
         <div class="relative flex items-center">
-          <button aria-label="Attach File" class="absolute left-3 text-slate-500 hover:text-blue-600 transition-colors p-1"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg></button>
-          <input type="text" placeholder="Message #general..." class="w-full bg-slate-950/80 border border-slate-800 text-slate-100 text-white rounded-xl pl-12 pr-12 py-4 focus:ring-indigo-500 focus:border-indigo-500 transition-colors placeholder-gray-600 font-medium">
-          <button aria-label="Send Message" class="absolute right-3 bg-indigo-600 hover:bg-indigo-500 text-white p-2 rounded-lg shadow-lg shadow-indigo-500/30 transition-all"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg></button>
+          <input type="text" placeholder="Message #general..." class="w-full bg-[#0B0E17] border border-[#1E2538] text-white rounded-lg px-4 py-2.5 focus:border-cyan-500 transition-colors placeholder-slate-500 font-mono text-xs outline-none">
+          <button aria-label="Send Message" class="absolute right-2 bg-cyan-600 hover:bg-cyan-500 text-slate-950 p-1.5 rounded transition-all"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg></button>
         </div>
       </div>
     </div>
@@ -147,12 +142,12 @@
 <Modal bind:isOpen={isModalOpen} title="Create Channel">
   <form on:submit={handleCreateChat} class="space-y-4">
     <div>
-      <label for="chat_name" class="block text-sm font-bold text-slate-500 mb-1">Channel Name</label>
-      <input id="chat_name" type="text" bind:value={newName} required placeholder="e.g. general" class="w-full bg-slate-950/80 border border-slate-800 text-slate-100 rounded-xl px-4 py-2 text-white focus:ring-indigo-500 focus:border-indigo-500" />
+      <label for="chat_name" class="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1.5">Channel Name</label>
+      <input id="chat_name" type="text" bind:value={newName} required placeholder="e.g. general" class="w-full bg-[#0B0E17] border border-[#1E2538] text-white rounded-lg px-3 py-2 font-mono text-sm focus:border-cyan-500 outline-none" />
     </div>
     <div class="pt-4 flex justify-end space-x-3">
-      <button type="button" class="px-4 py-2 text-slate-500 hover:text-white" on:click={() => isModalOpen = false}>Cancel</button>
-      <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-xl font-bold shadow-lg shadow-indigo-500/20">Create</button>
+      <button type="button" class="px-4 py-2 text-slate-400 hover:text-white font-mono text-xs" on:click={() => isModalOpen = false}>Cancel</button>
+      <button type="submit" class="bg-cyan-600 hover:bg-cyan-500 text-slate-950 px-5 py-2 rounded-lg font-bold font-mono text-xs uppercase tracking-wider">Create</button>
     </div>
   </form>
 </Modal>

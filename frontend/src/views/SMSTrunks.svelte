@@ -68,16 +68,16 @@
 
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
     <!-- Active Binds -->
-    <div class="lg:col-span-2 bg-slate-900/75 backdrop-blur-xl rounded-[2rem] border border-slate-800 overflow-hidden shadow-2xl">
-      <div class="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-900/50/30">
-        <h3 class="text-sm font-bold text-white uppercase tracking-widest flex items-center">
-          <svg class="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
-          Active SMPP Binds
+    <div class="lg:col-span-2 bg-[#121622] rounded-xl border border-[#202738] overflow-hidden shadow-2xl">
+      <div class="p-4 border-b border-[#1E2538] flex justify-between items-center bg-[#0E121B]">
+        <h3 class="text-xs font-bold text-white uppercase tracking-wider flex items-center font-mono">
+          <svg class="w-4 h-4 mr-2 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+          Active SMPP Gateway Binds
         </h3>
       </div>
       <table class="w-full text-left">
         <thead>
-          <tr class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] border-b border-slate-800">
+          <tr class="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-[#1E2538] font-mono bg-[#0E121B]">
             <th class="p-4">Provider</th>
             <th class="p-4">Host</th>
             <th class="p-4 text-center">Binds</th>
@@ -86,16 +86,16 @@
             <th class="p-4 text-right">Status</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-800/50">
+        <tbody class="divide-y divide-[#1E2538]">
           {#each trunks as trunk}
-            <tr class="hover:bg-slate-800/50/30 transition-colors">
-              <td class="p-4 font-bold text-white">{trunk.name}</td>
-              <td class="p-4 text-xs font-mono text-slate-500">{trunk.host}</td>
-              <td class="p-4 text-center font-mono font-bold text-blue-600">{trunk.binds}</td>
+            <tr class="hover:bg-[#182030]/50 transition-colors">
+              <td class="p-4 font-bold text-white text-sm font-mono">{trunk.name}</td>
+              <td class="p-4 text-xs font-mono text-cyan-400">{trunk.host}</td>
+              <td class="p-4 text-center font-mono font-bold text-cyan-300">{trunk.binds}</td>
               <td class="p-4 text-center font-mono font-bold text-emerald-400">{trunk.tps}</td>
-              <td class="p-4 text-xs font-mono text-slate-500">{trunk.latency}</td>
+              <td class="p-4 text-xs font-mono text-slate-400">{trunk.latency}</td>
               <td class="p-4 text-right">
-                <span class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-widest {trunk.status === 'Connected' ? 'bg-emerald-50 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'}">
+                <span class="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider font-mono {trunk.status === 'Connected' ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-500/30' : 'bg-rose-950/60 text-rose-400 border border-rose-500/30'}">
                   {trunk.status}
                 </span>
               </td>
@@ -107,13 +107,12 @@
 
     <!-- Quick Stats -->
     <div class="space-y-6">
-      <div class="bg-slate-900/75 backdrop-blur-xl rounded-[2rem] border border-slate-800 p-6 flex flex-col justify-center items-center shadow-2xl relative overflow-hidden h-full">
-        <div class="absolute -right-10 -top-10 w-40 h-40 bg-blue-50 rounded-full blur-3xl"></div>
-        <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 z-10">Outbound Messages (24h)</p>
-        <h2 class="text-5xl font-black text-white font-mono z-10">14,208</h2>
-        <div class="mt-4 flex items-center text-emerald-400 z-10">
+      <div class="bg-[#121622] rounded-xl border border-[#202738] p-6 flex flex-col justify-center items-center shadow-2xl h-full">
+        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2 font-mono">Outbound Messages (24h)</p>
+        <h2 class="text-4xl font-black text-white font-mono">14,208</h2>
+        <div class="mt-3 flex items-center text-emerald-400 font-mono text-xs">
           <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-          <span class="text-sm font-bold">+12.5%</span>
+          <span class="font-bold">+12.5% throughput</span>
         </div>
       </div>
     </div>
@@ -122,33 +121,29 @@
 <Modal bind:isOpen={isModalOpen} title="Send SMS Message">
   <form on:submit={handleSendSMS} class="space-y-4">
     <div>
-      <label for="sms_recipient" class="block text-sm font-bold text-slate-500 mb-1">Recipient Number</label>
-      <input id="sms_recipient" type="text" bind:value={newSmsTo} required placeholder="+1234567890" class="w-full bg-slate-950/80 border border-slate-800 text-slate-100 rounded-xl px-4 py-2 text-white focus:ring-indigo-500 focus:border-indigo-500" />
+      <label for="sms_recipient" class="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1.5">Recipient Number</label>
+      <input id="sms_recipient" type="text" bind:value={newSmsTo} required placeholder="+1234567890" class="w-full bg-[#0B0E17] border border-[#1E2538] text-white rounded-lg px-3 py-2 font-mono text-sm focus:border-cyan-500 outline-none" />
     </div>
     <div>
-      <label for="sms_body" class="block text-sm font-bold text-slate-500 mb-1">Message Body</label>
-      <textarea id="sms_body" bind:value={newSmsBody} required rows="3" class="w-full bg-slate-950/80 border border-slate-800 text-slate-100 rounded-xl px-4 py-2 text-white focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+      <label for="sms_body" class="block text-xs font-mono text-slate-400 uppercase tracking-wider mb-1.5">Message Body</label>
+      <textarea id="sms_body" bind:value={newSmsBody} required rows="3" class="w-full bg-[#0B0E17] border border-[#1E2538] text-white rounded-lg px-3 py-2 font-mono text-sm focus:border-cyan-500 outline-none"></textarea>
     </div>
     <div class="pt-4 flex justify-end space-x-3">
-      <button type="button" class="px-4 py-2 text-slate-500 hover:text-white" on:click={() => isModalOpen = false}>Cancel</button>
-      <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-xl font-bold shadow-lg shadow-indigo-500/20">Send</button>
+      <button type="button" class="px-4 py-2 text-slate-400 hover:text-white font-mono text-xs" on:click={() => isModalOpen = false}>Cancel</button>
+      <button type="submit" class="bg-cyan-600 hover:bg-cyan-500 text-slate-950 px-5 py-2 rounded-lg font-bold font-mono text-xs uppercase tracking-wider">Send</button>
     </div>
   </form>
 </Modal>
 
   <!-- Message Log -->
-  <div class="bg-slate-900/75 backdrop-blur-xl rounded-[2rem] border border-slate-800 overflow-hidden shadow-2xl">
-    <div class="p-5 border-b border-slate-800 flex justify-between items-center bg-slate-900/50/30">
-      <h3 class="text-sm font-bold text-white uppercase tracking-widest">Recent Message Log</h3>
-      <div class="flex space-x-2">
-        <button aria-label="Filter" class="p-2 bg-slate-100 rounded-lg text-slate-500 hover:text-white transition-colors border border-slate-800"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg></button>
-        <button aria-label="Refresh Logs" class="p-2 bg-slate-100 rounded-lg text-slate-500 hover:text-white transition-colors border border-slate-800"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg></button>
-      </div>
+  <div class="bg-[#121622] rounded-xl border border-[#202738] overflow-hidden shadow-2xl">
+    <div class="p-4 border-b border-[#1E2538] flex justify-between items-center bg-[#0E121B]">
+      <h3 class="text-xs font-bold text-white uppercase tracking-wider font-mono">Recent Message Log</h3>
     </div>
     
     <table class="w-full text-left">
       <thead>
-        <tr class="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] border-b border-slate-800">
+        <tr class="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-[#1E2538] font-mono bg-[#0E121B]">
           <th class="p-4">Time</th>
           <th class="p-4">Type</th>
           <th class="p-4">From</th>
@@ -157,21 +152,21 @@
           <th class="p-4 text-right">Status</th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-gray-800/50">
+      <tbody class="divide-y divide-[#1E2538]">
         {#each messages as msg}
-          <tr class="hover:bg-slate-800/50/30 transition-colors group cursor-pointer">
-            <td class="p-4 text-xs font-mono text-slate-500">{msg.time}</td>
+          <tr class="hover:bg-[#182030]/50 transition-colors group">
+            <td class="p-4 text-xs font-mono text-slate-400">{msg.time}</td>
             <td class="p-4">
-              <span class="text-xs font-bold {msg.dir === 'Outbound' ? 'text-blue-600' : 'text-emerald-400'}">{msg.dir}</span>
+              <span class="text-xs font-bold font-mono {msg.dir === 'Outbound' ? 'text-cyan-400' : 'text-emerald-400'}">{msg.dir}</span>
             </td>
-            <td class="p-4 font-mono font-bold text-slate-700 text-sm">{msg.from}</td>
-            <td class="p-4 font-mono font-bold text-slate-700 text-sm">{msg.to}</td>
-            <td class="p-4 text-sm text-slate-500 truncate max-w-xs">{msg.text}</td>
+            <td class="p-4 font-mono font-bold text-white text-xs">{msg.from}</td>
+            <td class="p-4 font-mono font-bold text-white text-xs">{msg.to}</td>
+            <td class="p-4 text-xs text-slate-300 font-mono truncate max-w-xs">{msg.text}</td>
             <td class="p-4 text-right">
-              <span class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-widest
-                {msg.status === 'Delivered' || msg.status === 'Received' ? 'bg-emerald-50 text-emerald-400' : 
-                 msg.status === 'Failed' ? 'bg-rose-500/10 text-rose-400' : 
-                 'bg-amber-500/10 text-amber-400'}">
+              <span class="px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider font-mono
+                {msg.status === 'Delivered' || msg.status === 'Received' ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-500/30' : 
+                 msg.status === 'Failed' ? 'bg-rose-950/60 text-rose-400 border border-rose-500/30' : 
+                 'bg-amber-950/60 text-amber-400 border border-amber-500/30'}">
                 {msg.status}
               </span>
             </td>
