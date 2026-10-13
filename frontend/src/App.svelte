@@ -25,6 +25,8 @@
   import Wallboard from './views/Wallboard.svelte';
   import Domains from './views/Domains.svelte';
   import Provisioning from './views/Provisioning.svelte';
+  import RingGroups from './views/RingGroups.svelte';
+  import ReportsAnalytics from './views/ReportsAnalytics.svelte';
   
   import Login from './views/Login.svelte';
   import Softphone from './components/Softphone.svelte';
@@ -116,13 +118,13 @@
     '/ivr': IVRs,
     '/ivrs': IVRs,
     '/digital-receptionists': IVRs,
-    '/ring-groups': Extensions,
+    '/ring-groups': RingGroups,
     '/call-queues': Wallboard,
     '/voicemail': Voicemail,
     '/voicemails': Voicemail,
     '/system-settings': Admins,
-    '/reports': CDRs,
-    '/reports-analytics': CDRs,
+    '/reports': ReportsAnalytics,
+    '/reports-analytics': ReportsAnalytics,
     '/video-rooms': VideoRooms,
     '/video': VideoRooms,
     '/cameras': Camera,

@@ -1,79 +1,78 @@
 <script lang="ts">
-  import { navigate } from 'svelte-routing';
-  import { apiFetch } from '../lib/api';
+  import { api } from '../lib/api';
 
   let email = '';
   let password = '';
   let error = '';
   let isLoading = false;
 
-  async function handleLogin(e) {
+  async function handleLogin(e: Event) {
     e.preventDefault();
     isLoading = true;
     error = '';
 
     try {
-      const res = await apiFetch('/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+      const data = await api.post('/auth/login', {
+        email: email.trim(),
+        password: password
       });
 
-      if (res.ok) {
-        const data = await res.json();
+      if (data && data.token) {
         localStorage.setItem('pbx_token', data.token);
-        localStorage.setItem('pbx_user', JSON.stringify(data.user));
-        // Redirect to dashboard
+        localStorage.setItem('pbx_user', JSON.stringify(data.user || {}));
         window.location.href = '/';
       } else {
-        const errData = await res.json();
-        error = errData.error || 'Invalid credentials';
+        error = 'Invalid authentication response';
       }
-    } catch (err) {
-      error = 'Failed to connect to authentication server.';
+    } catch (err: any) {
+      error = err.message || 'Invalid email or password.';
     } finally {
       isLoading = false;
     }
   }
 </script>
 
-<div class="min-h-screen bg-[#080A0F] flex items-center justify-center p-4">
-  <div class="max-w-md w-full bg-[#121622] border border-[#202738] rounded-xl shadow-2xl p-8 relative">
-    <div>
-      <div class="text-center mb-8">
-        <div class="w-14 h-14 bg-[#182030] border border-[#26334A] rounded-xl mx-auto mb-5 flex items-center justify-center shadow-inner">
-          <svg class="w-7 h-7 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
-        </div>
-        <div class="inline-flex items-center space-x-2 px-2.5 py-0.5 rounded border border-cyan-500/30 bg-cyan-950/40 text-cyan-400 font-mono text-[11px] uppercase tracking-wider mb-2">
-          <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
-          <span>Core Telephony Gateway</span>
-        </div>
-        <h1 class="text-2xl font-black tracking-tight text-white font-mono mt-1">MSIP PBX CONTROL</h1>
-        <p class="text-slate-400 text-xs font-mono mt-1">Operator & Administration Console</p>
+<div class="min-h-screen bg-[#EEF2F6] flex items-center justify-center p-4">
+  <div class="max-w-md w-full bg-white border border-slate-200 rounded-2xl shadow-xl p-8 relative">
+    <div class="text-center mb-6">
+      <div class="w-12 h-12 bg-sky-50 border border-sky-200 rounded-xl mx-auto mb-4 flex items-center justify-center text-[#0284C7]">
+        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12" stroke="#0284C7" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M12 6V12L16 14" stroke="#0EA5E9" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
       </div>
-
-      <form on:submit={handleLogin} class="space-y-5">
-        {#if error}
-          <div class="bg-rose-950/40 border border-rose-500/40 rounded-lg p-3 text-xs text-rose-300 font-mono text-center">
-            {error}
-          </div>
-        {/if}
-
-        <div>
-          <label for="email" class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 font-mono">Operator ID / Email</label>
-          <input id="email" type="email" bind:value={email} required placeholder="admin@pbx.local" class="w-full bg-[#0B0E17] border border-[#1E2538] rounded-lg px-4 py-3 text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all outline-none font-mono text-sm">
-        </div>
-        
-        <div>
-          <label for="password" class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2 font-mono">Access Token / Password</label>
-          <input id="password" type="password" bind:value={password} required placeholder="••••••••" class="w-full bg-[#0B0E17] border border-[#1E2538] rounded-lg px-4 py-3 text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all outline-none font-mono text-sm">
-        </div>
-        
-        <button type="submit" disabled={isLoading} class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-3.5 rounded-lg transition-all disabled:opacity-50 mt-4 uppercase text-xs tracking-wider font-mono">
-          {isLoading ? 'Verifying Credentials...' : 'Authenticate & Connect'}
-        </button>
-      </form>
+      <h1 class="text-xl font-bold text-slate-800 tracking-tight">MSIP PBX CONTROL</h1>
+      <p class="text-slate-500 text-xs mt-1">Telephony Administration & Operator Portal</p>
     </div>
+
+    <form on:submit={handleLogin} class="space-y-4">
+      {#if error}
+        <div class="bg-rose-50 border border-rose-200 rounded-md p-3 text-xs text-rose-700 text-center font-medium">
+          {error}
+        </div>
+      {/if}
+
+      <div>
+        <label for="login-email" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Operator Email / Account</label>
+        <input id="login-email" type="email" bind:value={email} required placeholder="admin@pbx.local" class="input" />
+      </div>
+      
+      <div>
+        <label for="login-password" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Password</label>
+        <input id="login-password" type="password" bind:value={password} required placeholder="••••••••" class="input mono" />
+      </div>
+      
+      <button 
+        type="submit" 
+        disabled={isLoading} 
+        class="w-full bg-[#0284C7] hover:bg-sky-700 text-white font-bold py-2.5 rounded-lg transition-colors shadow-sm disabled:opacity-50 text-sm mt-2"
+      >
+        {isLoading ? 'Authenticating...' : 'Sign In to PBX'}
+      </button>
+
+      <p class="text-center text-[11px] text-slate-400 mt-4">
+        Default administrator credentials: <span class="mono font-semibold text-slate-600">admin@pbx.local / admin123</span>
+      </p>
+    </form>
   </div>
 </div>
-
