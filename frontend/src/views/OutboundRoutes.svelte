@@ -60,7 +60,7 @@
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('pbx_token')}`
         },
-        body: JSON.stringify({ DialPattern: newPattern, TrunkID: newTrunkId, Priority: parseInt(newPriority) })
+        body: JSON.stringify({ DialPattern: newPattern, TrunkID: newTrunkId, Priority: Number(newPriority) })
       });
       if (res.ok) {
         isModalOpen = false;
@@ -87,7 +87,7 @@
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('pbx_token')}`
         },
-        body: JSON.stringify({ DialPattern: editPattern, TrunkID: editTrunkId, Priority: parseInt(editPriority) })
+        body: JSON.stringify({ DialPattern: editPattern, TrunkID: editTrunkId, Priority: Number(editPriority) })
       });
       if (res.ok) {
         isEditModalOpen = false;
@@ -148,7 +148,7 @@
   <form on:submit={handleCreateRoute} class="space-y-4">
     <div>
       <label for="new_pattern" class="block text-sm font-bold text-slate-500 mb-1">Dial Pattern</label>
-      <input id="new_pattern" type="text" bind:value={newPattern} required placeholder="e.g. ^0[1-9]\d{8,9}$" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
+      <input id="new_pattern" type="text" bind:value={newPattern} required placeholder={'e.g. ^0[1-9]\\d{8,9}$'} class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
     </div>
     <div>
       <label for="new_trunk" class="block text-sm font-bold text-slate-500 mb-1">Select Trunk</label>
@@ -173,7 +173,7 @@
   <form on:submit={handleEditRoute} class="space-y-4">
     <div>
       <label for="edit_pattern" class="block text-sm font-bold text-slate-500 mb-1">Dial Pattern</label>
-      <input id="edit_pattern" type="text" bind:value={editPattern} required placeholder="e.g. ^0[1-9]\d{8,9}$" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
+      <input id="edit_pattern" type="text" bind:value={editPattern} required placeholder={'e.g. ^0[1-9]\\d{8,9}$'} class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
     </div>
     <div>
       <label for="edit_trunk" class="block text-sm font-bold text-slate-500 mb-1">Select Trunk</label>

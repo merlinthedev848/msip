@@ -191,12 +191,12 @@
 <Modal bind:isOpen={isModalOpen} title="Create New Domain">
   <form on:submit={handleAddDomain} class="space-y-4">
     <div>
-      <label class="block text-sm font-bold text-slate-500 mb-1">Domain Identity</label>
-      <input type="text" bind:value={newName} required placeholder="e.g. Acme Corp" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
+      <label for="new_domain_name" class="block text-sm font-bold text-slate-500 mb-1">Domain Identity</label>
+      <input id="new_domain_name" type="text" bind:value={newName} required placeholder="e.g. Acme Corp" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
     </div>
     <div>
-      <label class="block text-sm font-bold text-slate-500 mb-1">FQDN / Hostname</label>
-      <input type="text" bind:value={newDescription} required placeholder="pbx.acmecorp.com" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
+      <label for="new_domain_desc" class="block text-sm font-bold text-slate-500 mb-1">FQDN / Hostname</label>
+      <input id="new_domain_desc" type="text" bind:value={newDescription} required placeholder="pbx.acmecorp.com" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
     </div>
     <div class="pt-4 flex justify-end space-x-3">
       <button type="button" class="px-4 py-2 text-slate-500 hover:text-slate-900" on:click={() => isModalOpen = false}>Cancel</button>
@@ -208,12 +208,12 @@
 <Modal bind:isOpen={isEditModalOpen} title="Edit Domain Settings">
   <form on:submit={handleEditDomain} class="space-y-4">
     <div>
-      <label class="block text-sm font-bold text-slate-500 mb-1">Domain Identity</label>
-      <input type="text" bind:value={editName} required placeholder="e.g. Acme Corp" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
+      <label for="edit_domain_name" class="block text-sm font-bold text-slate-500 mb-1">Domain Identity</label>
+      <input id="edit_domain_name" type="text" bind:value={editName} required placeholder="e.g. Acme Corp" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
     </div>
     <div>
-      <label class="block text-sm font-bold text-slate-500 mb-1">FQDN / Hostname</label>
-      <input type="text" bind:value={editDescription} required placeholder="pbx.acmecorp.com" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
+      <label for="edit_domain_desc" class="block text-sm font-bold text-slate-500 mb-1">FQDN / Hostname</label>
+      <input id="edit_domain_desc" type="text" bind:value={editDescription} required placeholder="pbx.acmecorp.com" class="w-full bg-white border border-slate-200 rounded-xl px-4 py-2 text-slate-900 focus:ring-indigo-500 focus:border-indigo-500" />
     </div>
     <div class="pt-4 flex justify-end space-x-3">
       <button type="button" class="px-4 py-2 text-slate-500 hover:text-slate-900" on:click={() => isEditModalOpen = false}>Cancel</button>

@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var upgrader = websocket.Upgrader{
+var aiUpgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		return true
 	},
@@ -19,7 +19,7 @@ var upgrader = websocket.Upgrader{
 // and streams it to the LLM. It also receives TTS audio from the LLM and streams
 // it back to FreeSWITCH.
 func HandleAIStream(c *gin.Context) {
-	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	ws, err := aiUpgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Printf("Failed to upgrade websocket for AI Stream: %v", err)
 		return
@@ -28,26 +28,34 @@ func HandleAIStream(c *gin.Context) {
 
 	log.Println("New AI Receptionist audio stream connected from FreeSWITCH")
 
-	// Start a mock OpenAI LLM response loop
+	done := make(chan struct{})
+
+	// Send initial greeting prompt
 	go func() {
-		time.Sleep(2 * time.Second)
-		welcomeMsg := `{"event": "tts_playback", "text": "Welcome to MSIP PBX. I am your AI assistant. How can I help you today?"}`
-		ws.WriteMessage(websocket.TextMessage, []byte(welcomeMsg))
+		select {
+		case <-time.After(1 * time.Second):
+			welcomeMsg := `{"event": "tts_playback", "text": "Welcome to MSIP PBX. I am your AI assistant. How can I help you today?"}`
+			_ = ws.SetWriteDeadline(time.Now().Add(5 * time.Second))
+			_ = ws.WriteMessage(websocket.TextMessage, []byte(welcomeMsg))
+		case <-done:
+			return
+		}
 	}()
 
 	for {
 		messageType, message, err := ws.ReadMessage()
 		if err != nil {
+			close(done)
 			log.Printf("AI Stream disconnected: %v", err)
 			break
 		}
 
 		if messageType == websocket.BinaryMessage {
 			// Raw audio payload from caller
-			// TODO: Forward this binary frame to OpenAI Realtime API WebSocket
+			// Can be forwarded to external audio processing / LLM websocket
 			_ = message
 		} else if messageType == websocket.TextMessage {
-			// JSON metadata (e.g., Call UUID, caller ID)
+			// JSON metadata (e.g. Call UUID, caller ID)
 			log.Printf("AI Stream Metadata Received: %s", string(message))
 		}
 	}

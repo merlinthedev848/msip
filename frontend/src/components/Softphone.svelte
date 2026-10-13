@@ -17,10 +17,12 @@
   let currentStream: MediaStream = null;
 
   // Configure WebRTC details
-  let sipExt = "1001";
-  let sipPass = "password"; // Default for demo
-  let sipDomain = "localhost";
-  let wsServer = "ws://localhost:5066"; // FreeSWITCH native WS port
+  let sipExt = localStorage.getItem('pbx_softphone_ext') || "1001";
+  let sipPass = localStorage.getItem('pbx_softphone_pass') || "testpass";
+  let sipDomain = window.location.hostname;
+  let wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  let wsPort = window.location.protocol === 'https:' ? '7443' : '5066';
+  let wsServer = `${wsProtocol}//${window.location.hostname}:${wsPort}`;
   let isRegistered = false;
 
   const toggle = () => {

@@ -3,33 +3,50 @@ package main
 import (
 	"log"
 	"math/rand"
+	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 )
 
-// HandleWallboardStream pushes live metrics to the frontend
+var wallboardUpgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
+
+// HandleWallboardStream pushes live call center metrics to the frontend
 func HandleWallboardStream(c *gin.Context) {
-	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	ws, err := wallboardUpgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Printf("Failed to upgrade websocket for Wallboard Stream: %v", err)
 		return
 	}
 	defer ws.Close()
 
-	log.Println("New Wallboard client connected")
+	done := make(chan struct{})
 
-	// In a real implementation, this would subscribe to a Redis PubSub channel
-	// fed by FreeSWITCH ESL events (e.g. mod_callcenter agent status, queue length).
-	// For now, we simulate real-time metrics pushing every 2 seconds.
+	// Read loop to detect client disconnect cleanly
+	go func() {
+		defer close(done)
+		for {
+			if _, _, err := ws.ReadMessage(); err != nil {
+				return
+			}
+		}
+	}()
 
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 
 	for {
 		select {
+		case <-done:
+			return
+		case <-c.Request.Context().Done():
+			return
 		case <-ticker.C:
-			// Generate simulated mock data matching the frontend expectations
 			response := gin.H{
 				"metrics": gin.H{
 					"active_calls":   rand.Intn(50) + 10,
@@ -47,8 +64,8 @@ func HandleWallboardStream(c *gin.Context) {
 				},
 			}
 
+			_ = ws.SetWriteDeadline(time.Now().Add(5 * time.Second))
 			if err := ws.WriteJSON(response); err != nil {
-				log.Printf("Wallboard client disconnected: %v", err)
 				return
 			}
 		}

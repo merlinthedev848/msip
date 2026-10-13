@@ -33,7 +33,7 @@
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('pbx_token')}`
         },
-        body: JSON.stringify({ Name: newName, RoomCode: newCode, MaxUsers: parseInt(newMaxUsers), IsActive: true })
+        body: JSON.stringify({ Name: newName, RoomCode: newCode, MaxUsers: Number(newMaxUsers), IsActive: true })
       });
       if (res.ok) {
         isModalOpen = false;
