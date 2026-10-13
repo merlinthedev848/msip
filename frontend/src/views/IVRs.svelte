@@ -22,7 +22,7 @@
 
   async function fetchIVRs() {
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/ivrs`, {
+      const res = await fetch(`/api/v1/ivrs`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });
       if (res.ok) {
@@ -44,7 +44,7 @@
     e.preventDefault();
     isSubmitting = true;
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/ivrs`, {
+      const res = await fetch(`/api/v1/ivrs`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -84,7 +84,7 @@
     e.preventDefault();
     isSubmitting = true;
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/ivrs/${editIvrId}`, {
+      const res = await fetch(`/api/v1/ivrs/${editIvrId}`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -113,7 +113,7 @@
   async function handleDeleteIVR(id) {
     if(!confirm("Are you sure you want to delete this IVR menu?")) return;
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/ivrs/${id}`, {
+      const res = await fetch(`/api/v1/ivrs/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });

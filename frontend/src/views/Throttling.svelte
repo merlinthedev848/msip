@@ -8,7 +8,7 @@
 
   async function fetchRules() {
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/throttling`, {
+      const res = await fetch(`/api/v1/throttling`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });
       if (res.ok) {
@@ -25,7 +25,7 @@
   async function handleCreateRule(e) {
     e.preventDefault();
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/throttling`, {
+      const res = await fetch(`/api/v1/throttling`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -44,7 +44,7 @@
   async function handleDeleteRule(id) {
     if(!confirm("Delete this rule?")) return;
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/throttling/${id}`, {
+      const res = await fetch(`/api/v1/throttling/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });

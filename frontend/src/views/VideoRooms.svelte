@@ -10,7 +10,7 @@
 
   async function fetchRooms() {
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/video-rooms`, {
+      const res = await fetch(`/api/v1/video-rooms`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });
       if (res.ok) {
@@ -27,7 +27,7 @@
   async function handleCreateRoom(e) {
     e.preventDefault();
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/video-rooms`, {
+      const res = await fetch(`/api/v1/video-rooms`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -46,7 +46,7 @@
   async function handleDeleteRoom(id) {
     if(!confirm("Delete this video room?")) return;
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/video-rooms/${id}`, {
+      const res = await fetch(`/api/v1/video-rooms/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });

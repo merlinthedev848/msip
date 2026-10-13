@@ -109,16 +109,43 @@ func sanitizeExtension(e *Extension) {
 	e.PasswordHash = ""
 }
 
+// CORSMiddleware enables universal cross-origin requests for browsers
+func CORSMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE, PATCH")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(http.StatusNoContent)
+			return
+		}
+
+		c.Next()
+	}
+}
+
 // SetupRouter initializes and configures the Gin engine
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
+	r.Use(CORSMiddleware())
+
+	// Normalize /api/v1/ prefix to /api/ so direct backend calls succeed
+	r.Use(func(c *gin.Context) {
+		if strings.HasPrefix(c.Request.URL.Path, "/api/v1/") {
+			c.Request.URL.Path = "/api/" + strings.TrimPrefix(c.Request.URL.Path, "/api/v1/")
+		}
+		c.Next()
+	})
 
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "healthy"})
 	})
 
-	// FreeSWITCH mod_xml_curl dynamic gateway
+	// FreeSWITCH mod_xml_curl dynamic gateway (support both /fs and /fs/curl)
 	r.POST("/fs", HandleFSCurl)
+	r.POST("/fs/curl", HandleFSCurl)
 
 	api := r.Group("/api")
 	{

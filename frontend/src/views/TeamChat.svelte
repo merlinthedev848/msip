@@ -8,7 +8,7 @@
 
   async function fetchChats() {
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/chats`, {
+      const res = await fetch(`/api/v1/chats`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });
       if (res.ok) {
@@ -26,7 +26,7 @@
   async function handleCreateChat(e) {
     e.preventDefault();
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/chats`, {
+      const res = await fetch(`/api/v1/chats`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -45,7 +45,7 @@
   async function handleDeleteChat(id) {
     if(!confirm("Delete this channel?")) return;
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/chats/${id}`, {
+      const res = await fetch(`/api/v1/chats/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });

@@ -31,7 +31,7 @@
 
   function connectWebSocket() {
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    ws = new WebSocket(`${protocol}://${window.location.hostname}:8080/api/v1/wallboard/stream`);
+    ws = new WebSocket(`${protocol}://${window.location.host}/api/v1/wallboard/stream`);
     ws.onopen = () => { isConnected = true; };
     ws.onmessage = (e) => {
       try {

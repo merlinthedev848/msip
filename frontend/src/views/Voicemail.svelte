@@ -7,7 +7,7 @@
   let voicemails = [];
   async function fetchVoicemails() {
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/voicemails`, {
+      const res = await fetch(`/api/v1/voicemails`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });
       if (res.ok) {
@@ -22,7 +22,7 @@
   async function handleDelete(id) {
     if(!confirm("Delete this voicemail?")) return;
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/voicemails/${id}`, {
+      const res = await fetch(`/api/v1/voicemails/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });
@@ -32,7 +32,7 @@
 
   async function handleSimulate() {
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/voicemails`, {
+      const res = await fetch(`/api/v1/voicemails`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

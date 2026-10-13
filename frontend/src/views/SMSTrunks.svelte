@@ -9,7 +9,7 @@
 
   async function fetchSMS() {
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/sms`, {
+      const res = await fetch(`/api/v1/sms`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });
       if (res.ok) {
@@ -26,7 +26,7 @@
   async function handleSendSMS(e) {
     e.preventDefault();
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/sms`, {
+      const res = await fetch(`/api/v1/sms`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -45,7 +45,7 @@
   async function handleDeleteSMS(id) {
     if(!confirm("Delete this message?")) return;
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/sms/${id}`, {
+      const res = await fetch(`/api/v1/sms/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });

@@ -5,7 +5,7 @@
 
   onMount(async () => {
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/extensions`, {
+      const res = await fetch(`/api/v1/extensions`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });
       if (res.ok) {

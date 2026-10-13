@@ -8,7 +8,7 @@
 
   async function fetchCDRs() {
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/cdr`, {
+      const res = await fetch(`/api/v1/cdr`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });
       if (res.ok) {

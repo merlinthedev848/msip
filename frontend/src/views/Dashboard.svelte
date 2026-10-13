@@ -28,7 +28,7 @@
 
   async function fetchStats() {
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/dashboard/stats`, {
+      const res = await fetch(`/api/v1/dashboard/stats`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });
       if (res.ok) {
@@ -40,7 +40,7 @@
 
   function connectWS() {
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    ws = new WebSocket(`${protocol}://${window.location.hostname}:8080/api/v1/wallboard/stream`);
+    ws = new WebSocket(`${protocol}://${window.location.host}/api/v1/wallboard/stream`);
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);

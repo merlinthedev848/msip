@@ -20,7 +20,7 @@
 
   async function fetchRoutes() {
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/outbound-routes`, {
+      const res = await fetch(`/api/v1/outbound-routes`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });
       if (res.ok) {
@@ -32,7 +32,7 @@
 
   async function fetchTrunks() {
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/trunks`, {
+      const res = await fetch(`/api/v1/trunks`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });
       if (res.ok) {
@@ -54,7 +54,7 @@
   async function handleCreateRoute(e) {
     e.preventDefault();
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/outbound-routes`, {
+      const res = await fetch(`/api/v1/outbound-routes`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -81,7 +81,7 @@
   async function handleEditRoute(e) {
     e.preventDefault();
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/outbound-routes/${editRouteId}`, {
+      const res = await fetch(`/api/v1/outbound-routes/${editRouteId}`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -103,7 +103,7 @@
   async function handleDeleteRoute(id) {
     if(!confirm("Delete this outbound route?")) return;
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/outbound-routes/${id}`, {
+      const res = await fetch(`/api/v1/outbound-routes/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });

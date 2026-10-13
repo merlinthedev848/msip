@@ -8,7 +8,7 @@
 
   async function fetchCameras() {
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/cameras`, {
+      const res = await fetch(`/api/v1/cameras`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });
       if (res.ok) {
@@ -25,7 +25,7 @@
   async function handleCreateCamera(e) {
     e.preventDefault();
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/cameras`, {
+      const res = await fetch(`/api/v1/cameras`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -44,7 +44,7 @@
   async function handleDeleteCamera(id) {
     if(!confirm("Delete this camera?")) return;
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/cameras/${id}`, {
+      const res = await fetch(`/api/v1/cameras/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });

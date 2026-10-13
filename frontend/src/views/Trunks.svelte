@@ -24,7 +24,7 @@
 
   async function fetchTrunks() {
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/trunks`, {
+      const res = await fetch(`/api/v1/trunks`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });
       if (res.ok) {
@@ -46,7 +46,7 @@
     e.preventDefault();
     isSubmitting = true;
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/trunks`, {
+      const res = await fetch(`/api/v1/trunks`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -86,7 +86,7 @@
     e.preventDefault();
     isSubmitting = true;
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/trunks/${editTrunkId}`, {
+      const res = await fetch(`/api/v1/trunks/${editTrunkId}`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -114,7 +114,7 @@
   async function handleDeleteTrunk(id) {
     if(!confirm("Are you sure you want to delete this trunk?")) return;
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/trunks/${id}`, {
+      const res = await fetch(`/api/v1/trunks/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });

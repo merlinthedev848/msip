@@ -26,7 +26,7 @@
 
   async function fetchExtensions() {
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/extensions`, {
+      const res = await fetch(`/api/v1/extensions`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });
       if (res.ok) {
@@ -60,7 +60,7 @@
     }
     isSubmitting = true;
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/extensions`, {
+      const res = await fetch(`/api/v1/extensions`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -113,7 +113,7 @@
       if (editExtPassword) {
         payload.PasswordHash = editExtPassword;
       }
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/extensions/${editExtId}`, {
+      const res = await fetch(`/api/v1/extensions/${editExtId}`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -138,7 +138,7 @@
   async function handleDeleteExtension(id) {
     if(!confirm("Are you sure you want to delete this extension?")) return;
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/extensions/${id}`, {
+      const res = await fetch(`/api/v1/extensions/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });

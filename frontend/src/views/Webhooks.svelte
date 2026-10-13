@@ -8,7 +8,7 @@
 
   async function fetchWebhooks() {
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/webhooks`, {
+      const res = await fetch(`/api/v1/webhooks`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });
       if (res.ok) {
@@ -25,7 +25,7 @@
   async function handleCreateWebhook(e) {
     e.preventDefault();
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/webhooks`, {
+      const res = await fetch(`/api/v1/webhooks`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -44,7 +44,7 @@
   async function handleDeleteWebhook(id) {
     if(!confirm("Delete this webhook?")) return;
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/webhooks/${id}`, {
+      const res = await fetch(`/api/v1/webhooks/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });

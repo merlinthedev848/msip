@@ -1,5 +1,6 @@
 <script lang="ts">
   import { navigate } from 'svelte-routing';
+  import { apiFetch } from '../lib/api';
 
   let email = '';
   let password = '';
@@ -12,7 +13,7 @@
     error = '';
 
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/auth/login`, {
+      const res = await apiFetch('/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })

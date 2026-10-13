@@ -19,7 +19,7 @@
 
   async function fetchUsers() {
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/users`, {
+      const res = await fetch(`/api/v1/users`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });
       if (res.ok) {
@@ -36,7 +36,7 @@
   async function handleAddUser(e) {
     e.preventDefault();
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/users`, {
+      const res = await fetch(`/api/v1/users`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -78,7 +78,7 @@
       if (editPassword) {
         payload.PasswordHash = editPassword;
       }
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/users/${editUserId}`, {
+      const res = await fetch(`/api/v1/users/${editUserId}`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -98,7 +98,7 @@
   async function handleDeleteUser(id) {
     if(!confirm("Are you sure you want to delete this admin?")) return;
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/users/${id}`, {
+      const res = await fetch(`/api/v1/users/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });

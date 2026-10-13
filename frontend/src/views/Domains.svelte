@@ -15,7 +15,7 @@
   
   async function fetchDomains() {
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/domains`, {
+      const res = await fetch(`/api/v1/domains`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });
       if (res.ok) {
@@ -32,7 +32,7 @@
   async function handleAddDomain(e) {
     e.preventDefault();
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/domains`, {
+      const res = await fetch(`/api/v1/domains`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -59,7 +59,7 @@
   async function handleEditDomain(e) {
     e.preventDefault();
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/domains/${editDomainId}`, {
+      const res = await fetch(`/api/v1/domains/${editDomainId}`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -81,7 +81,7 @@
   async function handleDeleteDomain(id) {
     if(!confirm("Delete this domain?")) return;
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/domains/${id}`, {
+      const res = await fetch(`/api/v1/domains/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });

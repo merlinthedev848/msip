@@ -7,7 +7,7 @@
 
   async function fetchTokens() {
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/credentials`, {
+      const res = await fetch(`/api/v1/credentials`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });
       if (res.ok) {
@@ -24,7 +24,7 @@
   async function handleCreateToken(e) {
     e.preventDefault();
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/credentials`, {
+      const res = await fetch(`/api/v1/credentials`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -43,7 +43,7 @@
   async function handleDeleteToken(id) {
     if(!confirm("Revoke this token?")) return;
     try {
-      const res = await fetch(`http://${window.location.hostname}:8080/api/v1/credentials/${id}`, {
+      const res = await fetch(`/api/v1/credentials/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${localStorage.getItem('pbx_token')}` }
       });
