@@ -70,6 +70,30 @@ func handleDirectory(c *gin.Context) {
 		effectiveDomain = tenant.Domain
 	}
 
+	cidName := ext.CallerIDName
+	if cidName == "" {
+		if ext.FirstName != "" || ext.LastName != "" {
+			cidName = strings.TrimSpace(ext.FirstName + " " + ext.LastName)
+		} else {
+			cidName = "Extension " + ext.ExtensionNumber
+		}
+	}
+
+	cidNumber := ext.CallerIDNumber
+	if cidNumber == "" {
+		cidNumber = ext.ExtensionNumber
+	}
+
+	outboundCIDNumber := ext.OutboundDID
+	if outboundCIDNumber == "" {
+		outboundCIDNumber = cidNumber
+	}
+
+	vmPassword := ext.VoicemailPIN
+	if vmPassword == "" {
+		vmPassword = ext.ExtensionNumber
+	}
+
 	xmlResponse := fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <document type="freeswitch/xml">
   <section name="directory">
@@ -84,15 +108,26 @@ func handleDirectory(c *gin.Context) {
               <params>
                 <param name="password" value="%s"/>
                 <param name="vm-password" value="%s"/>
+                <param name="vm-mailto" value="%s"/>
+                <param name="vm-email-all-messages" value="%t"/>
               </params>
               <variables>
                 <variable name="toll_allow" value="domestic,international,local"/>
                 <variable name="accountcode" value="%s"/>
                 <variable name="user_context" value="default"/>
-                <variable name="effective_caller_id_name" value="Extension %s"/>
+                <variable name="effective_caller_id_name" value="%s"/>
                 <variable name="effective_caller_id_number" value="%s"/>
                 <variable name="outbound_caller_id_name" value="%s"/>
                 <variable name="outbound_caller_id_number" value="%s"/>
+                <variable name="user_email" value="%s"/>
+                <variable name="mobile_number" value="%s"/>
+                <variable name="forward_always_enabled" value="%t"/>
+                <variable name="forward_always_target" value="%s"/>
+                <variable name="forward_busy_enabled" value="%t"/>
+                <variable name="forward_busy_target" value="%s"/>
+                <variable name="forward_no_answer_enabled" value="%t"/>
+                <variable name="forward_no_answer_target" value="%s"/>
+                <variable name="call_timeout" value="%d"/>
               </variables>
             </user>
           </users>
@@ -104,12 +139,23 @@ func handleDirectory(c *gin.Context) {
 		xmlEscape(effectiveDomain),
 		xmlEscape(ext.ExtensionNumber),
 		xmlEscape(ext.PasswordHash),
-		xmlEscape(ext.ExtensionNumber),
+		xmlEscape(vmPassword),
+		xmlEscape(ext.Email),
+		ext.VoicemailToEmail,
 		xmlEscape(ext.TenantID.String()),
-		xmlEscape(ext.ExtensionNumber),
-		xmlEscape(ext.ExtensionNumber),
-		xmlEscape(tenant.Name),
-		xmlEscape(ext.ExtensionNumber),
+		xmlEscape(cidName),
+		xmlEscape(cidNumber),
+		xmlEscape(cidName),
+		xmlEscape(outboundCIDNumber),
+		xmlEscape(ext.Email),
+		xmlEscape(ext.MobileNumber),
+		ext.ForwardAlwaysEnabled,
+		xmlEscape(ext.ForwardAlwaysTarget),
+		ext.ForwardBusyEnabled,
+		xmlEscape(ext.ForwardBusyTarget),
+		ext.ForwardNoAnswerEnabled,
+		xmlEscape(ext.ForwardNoAnswerTarget),
+		ext.RingTimeoutSeconds,
 	)
 
 	c.Data(http.StatusOK, "text/xml; charset=utf-8", []byte(xmlResponse))

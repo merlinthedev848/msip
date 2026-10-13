@@ -73,6 +73,32 @@ type Extension struct {
 	PasswordHash     string `gorm:"size:255;not null" json:"PasswordHash,omitempty"` // SIP secret/password
 	IsActive         bool   `gorm:"default:true" json:"IsActive"`
 	ProvisioningCode string `gorm:"size:8;uniqueIndex" json:"ProvisioningCode"`
+
+	// User Profile
+	FirstName string `gorm:"size:100" json:"FirstName"`
+	LastName  string `gorm:"size:100" json:"LastName"`
+	Email     string `gorm:"size:255" json:"Email"`
+	Department string `gorm:"size:100" json:"Department"`
+
+	// Telephony & Caller ID
+	CallerIDName   string `gorm:"size:100" json:"CallerIDName"`
+	CallerIDNumber string `gorm:"size:50" json:"CallerIDNumber"`
+	OutboundDID    string `gorm:"size:50" json:"OutboundDID"`
+
+	// Forwarding & Mobile
+	MobileNumber          string `gorm:"size:50" json:"MobileNumber"`
+	ForwardAlwaysEnabled  bool   `gorm:"default:false" json:"ForwardAlwaysEnabled"`
+	ForwardAlwaysTarget   string `gorm:"size:100" json:"ForwardAlwaysTarget"`
+	ForwardBusyEnabled    bool   `gorm:"default:false" json:"ForwardBusyEnabled"`
+	ForwardBusyTarget     string `gorm:"size:100" json:"ForwardBusyTarget"`
+	ForwardNoAnswerEnabled bool  `gorm:"default:false" json:"ForwardNoAnswerEnabled"`
+	ForwardNoAnswerTarget  string `gorm:"size:100" json:"ForwardNoAnswerTarget"`
+	RingTimeoutSeconds    int    `gorm:"default:20" json:"RingTimeoutSeconds"`
+
+	// Voicemail Preferences
+	VoicemailEnabled bool   `gorm:"default:true" json:"VoicemailEnabled"`
+	VoicemailPIN     string `gorm:"size:20" json:"VoicemailPIN"`
+	VoicemailToEmail bool   `gorm:"default:true" json:"VoicemailToEmail"`
 }
 
 type InboundRoute struct {

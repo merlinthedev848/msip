@@ -413,6 +413,24 @@ func SetupRouter() *gin.Engine {
 					record.PasswordHash = input.PasswordHash
 				}
 				record.IsActive = input.IsActive
+				record.FirstName = input.FirstName
+				record.LastName = input.LastName
+				record.Email = input.Email
+				record.Department = input.Department
+				record.CallerIDName = input.CallerIDName
+				record.CallerIDNumber = input.CallerIDNumber
+				record.OutboundDID = input.OutboundDID
+				record.MobileNumber = input.MobileNumber
+				record.ForwardAlwaysEnabled = input.ForwardAlwaysEnabled
+				record.ForwardAlwaysTarget = input.ForwardAlwaysTarget
+				record.ForwardBusyEnabled = input.ForwardBusyEnabled
+				record.ForwardBusyTarget = input.ForwardBusyTarget
+				record.ForwardNoAnswerEnabled = input.ForwardNoAnswerEnabled
+				record.ForwardNoAnswerTarget = input.ForwardNoAnswerTarget
+				record.RingTimeoutSeconds = input.RingTimeoutSeconds
+				record.VoicemailEnabled = input.VoicemailEnabled
+				record.VoicemailPIN = input.VoicemailPIN
+				record.VoicemailToEmail = input.VoicemailToEmail
 
 				if err := DB.Save(&record).Error; err != nil {
 					c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
