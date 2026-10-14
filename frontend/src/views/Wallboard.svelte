@@ -134,7 +134,9 @@
 
   function connectWS() {
     try {
-      ws = new WebSocket(wsUrl('/wallboard/stream'));
+      const token = localStorage.getItem('pbx_token');
+      const streamUrl = wsUrl('/wallboard/stream') + (token ? `?token=${encodeURIComponent(token)}` : '');
+      ws = new WebSocket(streamUrl);
       ws.onopen = () => { wsConnected = true; };
       ws.onmessage = (event) => {
         try {

@@ -377,8 +377,9 @@
                 />
                 <button
                   type="button"
+                  on:click={() => { if (!form.Name) form.Name = 'Main Auto Attendant'; else form.Name += ' (Copy)'; }}
                   title="Generate or Auto-complete"
-                  class="absolute right-2 top-2 text-slate-400 hover:text-slate-600 text-xs px-1"
+                  class="absolute right-2 top-2 text-slate-400 hover:text-slate-600 text-xs px-1 cursor-pointer transition-colors"
                 >
                   •••
                 </button>

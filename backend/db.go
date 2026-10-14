@@ -60,9 +60,10 @@ func InitDB() {
 
 	sqlDB, err := DB.DB()
 	if err == nil {
-		sqlDB.SetMaxIdleConns(10)
-		sqlDB.SetMaxOpenConns(100)
+		sqlDB.SetMaxIdleConns(25)
+		sqlDB.SetMaxOpenConns(150)
 		sqlDB.SetConnMaxLifetime(time.Hour)
+		sqlDB.SetConnMaxIdleTime(15 * time.Minute)
 	}
 
 	// In Postgres, ensure pgcrypto is enabled
@@ -110,6 +111,11 @@ func InitDB() {
 		&QueueMember{},
 		&CallDistributionGroup{},
 		&GroupMember{},
+		&SIPSettings{},
+		&AIAssistant{},
+		&AIBooking{},
+		&AICallSession{},
+		&AITranscriptionSettings{},
 	)
 	if err != nil {
 		log.Fatalf("Failed to migrate database schema: %v", err)
@@ -161,6 +167,45 @@ func SeedDefaults() {
 		}
 		for _, fc := range featureCodes {
 			_ = DB.Create(&fc)
+		}
+
+		// Seed initial SIP & RTP settings
+		defaultSIP := DefaultSIPSettings(defaultTenant.ID)
+		if err := DB.Create(&defaultSIP).Error; err != nil {
+			log.Printf("Error seeding default SIP settings: %v", err)
+		} else {
+			log.Printf("Seeded default SIP & RTP settings for tenant: %s", defaultTenant.ID.String())
+		}
+
+		// Seed initial AI & Transcription Settings
+		defaultAISettings := DefaultAITranscriptionSettings(defaultTenant.ID)
+		_ = DB.Create(&defaultAISettings)
+
+		// Seed default AI Receptionist & Appointment Booking Assistant
+		defaultAssistant := AIAssistant{
+			Base:               Base{ID: uuid.New()},
+			TenantRef:          TenantRef{TenantID: defaultTenant.ID},
+			Name:               "Sarah - AI Virtual Receptionist",
+			Extension:          "890",
+			RoleType:           "receptionist",
+			Greeting:           "Hello! Thank you for calling MSIP Telephony. I am Sarah, your AI virtual receptionist. I can help book appointments, answer questions, or transfer your call to an extension. How may I assist you today?",
+			SystemPrompt:       "You are Sarah, a warm, professional virtual receptionist for an enterprise company using MSIP PBX. You speak clearly and concisely. You can answer business questions (hours: Mon-Fri 8am-6pm), schedule customer appointments, or transfer calls to extensions (1001 for Technical Support, 1002 for Billing). If the caller wants to book an appointment, collect their name, desired date, time, and service type, and confirm the details.",
+			LLMProvider:        "openai",
+			LLMModel:           "gpt-4o",
+			VoiceProvider:      "openai",
+			VoiceName:          "alloy",
+			Language:           "en-US",
+			EnableBooking:      true,
+			EnableTransfer:     true,
+			TransferTarget:     "1001",
+			EnableVoicemail:    true,
+			MaxCallDurationSec: 600,
+			IsActive:           true,
+		}
+		if err := DB.Create(&defaultAssistant).Error; err != nil {
+			log.Printf("Error seeding default AI assistant: %v", err)
+		} else {
+			log.Printf("Seeded default AI assistant: %s (Ext %s)", defaultAssistant.Name, defaultAssistant.Extension)
 		}
 	}
 }

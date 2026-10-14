@@ -194,6 +194,8 @@ type CDR struct {
 	HangupCause    string    `gorm:"size:100" json:"HangupCause"`
 	UUID           string    `gorm:"size:100;uniqueIndex" json:"UUID"`
 	Transcription  string    `gorm:"type:text" json:"Transcription"`
+	Summary        string    `gorm:"type:text" json:"Summary"`
+	Sentiment      string    `gorm:"size:50;default:'neutral'" json:"Sentiment"`
 }
 
 // IVRMenu defines an Auto Attendant menu
@@ -299,11 +301,14 @@ type GroupMember struct {
 type Voicemail struct {
 	Base
 	TenantRef
-	Extension string `gorm:"size:50;not null" json:"Extension"`
-	CallerID  string `gorm:"size:100" json:"CallerID"`
-	Duration  int    `gorm:"default:0" json:"Duration"`
-	FilePath  string `gorm:"size:255;not null" json:"FilePath"`
-	IsRead    bool   `gorm:"default:false" json:"IsRead"`
+	Extension     string `gorm:"size:50;not null" json:"Extension"`
+	CallerID      string `gorm:"size:100" json:"CallerID"`
+	Duration      int    `gorm:"default:0" json:"Duration"`
+	FilePath      string `gorm:"size:255;not null" json:"FilePath"`
+	IsRead        bool   `gorm:"default:false" json:"IsRead"`
+	Transcription string `gorm:"type:text" json:"Transcription"`
+	Summary       string `gorm:"type:text" json:"Summary"`
+	Sentiment     string `gorm:"size:50;default:'neutral'" json:"Sentiment"`
 }
 
 // VideoRoom defines a WebRTC video conferencing room
@@ -391,94 +396,102 @@ type FraudRule struct {
 type TimeCondition struct {
 	Base
 	TenantRef
-	Name              string `gorm:"size:100;not null" json:"Name"`
-	DaysOfWeek        string `gorm:"size:100;default:'Mon,Tue,Wed,Thu,Fri'" json:"DaysOfWeek"`
-	StartTime         string `gorm:"size:10;default:'09:00'" json:"StartTime"`
-	EndTime           string `gorm:"size:10;default:'17:00'" json:"EndTime"`
-	InOfficeDestType  string `gorm:"size:50;default:'EXTENSION'" json:"InOfficeDestType"`
-	InOfficeTarget    string `gorm:"size:100;not null" json:"InOfficeTarget"`
-	OutOfOfficeDestType string `gorm:"size:50;default:'VOICEMAIL'" json:"OutOfOfficeDestType"`
-	OutOfOfficeTarget   string `gorm:"size:100;not null" json:"OutOfOfficeTarget"`
+	Name              string `gorm:"size:100;not null" json:"name"`
+	DaysOfWeek        string `gorm:"size:100;default:'mon-fri'" json:"days_of_week"`
+	TimeStart         string `gorm:"size:10;default:'09:00'" json:"time_start"`
+	TimeEnd           string `gorm:"size:10;default:'17:00'" json:"time_end"`
+	MatchedDestType   string `gorm:"size:50;default:'ivr'" json:"matched_dest_type"`
+	MatchedDestVal    string `gorm:"size:100;not null" json:"matched_dest_val"`
+	UnmatchedDestType string `gorm:"size:50;default:'voicemail'" json:"unmatched_dest_type"`
+	UnmatchedDestVal  string `gorm:"size:100;not null" json:"unmatched_dest_val"`
+	IsActive          bool   `gorm:"default:true" json:"is_active"`
 }
 
 // Holiday defines scheduled holidays
 type Holiday struct {
 	Base
 	TenantRef
-	Name       string `gorm:"size:100;not null" json:"Name"`
-	StartDate  string `gorm:"size:50;not null" json:"StartDate"`
-	EndDate    string `gorm:"size:50;not null" json:"EndDate"`
-	DestType   string `gorm:"size:50;default:'VOICEMAIL'" json:"DestType"`
-	DestTarget string `gorm:"size:100;not null" json:"DestTarget"`
+	Name      string `gorm:"size:100;not null" json:"name"`
+	StartDate string `gorm:"size:50;not null" json:"start_date"`
+	EndDate   string `gorm:"size:50;not null" json:"end_date"`
+	DestType  string `gorm:"size:50;default:'voicemail'" json:"dest_type"`
+	DestVal   string `gorm:"size:100;not null" json:"dest_val"`
+	IsActive  bool   `gorm:"default:true" json:"is_active"`
 }
 
 // OutboundRestriction blocks dialing specific prefixes
 type OutboundRestriction struct {
 	Base
 	TenantRef
-	Name        string `gorm:"size:100;not null" json:"Name"`
-	Pattern     string `gorm:"size:100;not null" json:"Pattern"` // e.g. 0900, 00, +
-	Extensions  string `gorm:"size:255;default:'ALL'" json:"Extensions"` // "ALL" or comma-separated exts
-	Action      string `gorm:"size:50;default:'BLOCK'" json:"Action"` // BLOCK or PIN
+	Name        string `gorm:"size:100;not null" json:"name"`
+	Pattern     string `gorm:"size:100;not null" json:"pattern"` // e.g. 00X., 090X.
+	BarredTypes string `gorm:"size:50;default:'international'" json:"barred_types"`
+	AllowedExts string `gorm:"size:255" json:"allowed_exts"`
+	PinCode     string `gorm:"size:50" json:"pin_code"`
+	IsActive    bool   `gorm:"default:true" json:"is_active"`
 }
 
 // AutoCLIP routes returning callers directly to the extension that last phoned them
 type AutoCLIP struct {
 	Base
 	TenantRef
-	CallerNumber string    `gorm:"size:50;not null;index" json:"CallerNumber"`
-	Extension    string    `gorm:"size:50;not null" json:"Extension"`
-	ExpiresAt    time.Time `json:"ExpiresAt"`
+	CallerNumber      string    `gorm:"size:50;not null;index" json:"caller_number"`
+	OriginalCalleeExt string    `gorm:"size:50;not null" json:"original_callee_ext"`
+	TrunkName         string    `gorm:"size:100;default:'Default SIP Trunk'" json:"trunk_name"`
+	ExpiresAt         time.Time `json:"expires_at"`
 }
 
 // PagingGroup defines intercom/paging broadcast groups
 type PagingGroup struct {
 	Base
 	TenantRef
-	Name      string `gorm:"size:100;not null" json:"Name"`
-	Extension string `gorm:"size:50;not null;uniqueIndex:idx_tenant_paging_ext" json:"Extension"`
-	Members   string `gorm:"type:text;not null" json:"Members"` // comma-separated extensions
-	TwoWay    bool   `gorm:"default:false" json:"TwoWay"` // false=1-way paging, true=2-way intercom
+	Name       string `gorm:"size:100;not null" json:"name"`
+	Number     string `gorm:"size:50;not null;uniqueIndex:idx_tenant_paging_num" json:"number"`
+	DuplexMode string `gorm:"size:20;default:'one-way'" json:"duplex_mode"` // "one-way" or "two-way"
+	Members    string `gorm:"type:text;not null" json:"members"`
 }
 
 // PickupGroup allows users to grab ringing calls with *8
 type PickupGroup struct {
 	Base
 	TenantRef
-	Name    string `gorm:"size:100;not null" json:"Name"`
-	Code    string `gorm:"size:50;not null" json:"Code"` // e.g. *8
-	Members string `gorm:"type:text;not null" json:"Members"` // comma-separated extensions
+	Name    string `gorm:"size:100;not null" json:"name"`
+	Code    string `gorm:"size:50;not null" json:"code"` // e.g. *8
+	Members string `gorm:"type:text;not null" json:"members"`
 }
 
 // AudioPrompt manages MoH playlists, system prompts, and custom audio files
 type AudioPrompt struct {
 	Base
 	TenantRef
-	Name        string `gorm:"size:100;not null" json:"Name"`
-	Category    string `gorm:"size:50;not null" json:"Category"` // "MOH", "SYSTEM", "CUSTOM"
-	FileName    string `gorm:"size:255;not null" json:"FileName"`
-	Description string `gorm:"size:255" json:"Description"`
+	Name        string `gorm:"size:100;not null" json:"name"`
+	Type        string `gorm:"size:50;default:'custom'" json:"type"` // "moh", "custom", "system"
+	Description string `gorm:"size:255" json:"description"`
+	FilePath    string `gorm:"size:255;not null" json:"file_path"`
+	IsDefault   bool   `gorm:"default:false" json:"is_default"`
 }
 
 // FeatureCode lists and configures dialed feature codes
 type FeatureCode struct {
 	Base
 	TenantRef
-	Name        string `gorm:"size:100;not null" json:"Name"`
-	Code        string `gorm:"size:20;not null" json:"Code"`
-	DefaultCode string `gorm:"size:20;not null" json:"DefaultCode"`
-	Description string `gorm:"size:255" json:"Description"`
-	IsActive    bool   `gorm:"default:true" json:"IsActive"`
+	Name        string `gorm:"size:100;not null" json:"name"`
+	Code        string `gorm:"size:20;not null" json:"code"`
+	DefaultCode string `gorm:"size:20;not null" json:"default_code"`
+	Description string `gorm:"size:255" json:"description"`
+	IsActive    bool   `gorm:"default:true" json:"is_active"`
 }
 
 // RecordingRule configures automated call recording
 type RecordingRule struct {
 	Base
 	TenantRef
-	Scope       string `gorm:"size:50;not null" json:"Scope"` // "GLOBAL", "INBOUND", "OUTBOUND", "EXTENSION"
-	Target      string `gorm:"size:100;default:'ALL'" json:"Target"`
-	RecordMode  string `gorm:"size:50;default:'ALWAYS'" json:"RecordMode"` // "ALWAYS", "ON_DEMAND"
-	StorageDays int    `gorm:"default:90" json:"StorageDays"`
+	Name        string `gorm:"size:100;not null" json:"name"`
+	TargetType  string `gorm:"size:50;default:'all'" json:"target_type"` // "all", "extension", "queue", "trunk"
+	TargetID    string `gorm:"size:100" json:"target_id"`
+	Direction   string `gorm:"size:50;default:'both'" json:"direction"` // "inbound", "outbound", "both"
+	StorageDays int    `gorm:"default:90" json:"storage_days"`
+	IsActive    bool   `gorm:"default:true" json:"is_active"`
 }
 
 // ButtonProfile defines programmable DSS/BLF line keys for desk phones
@@ -557,4 +570,231 @@ type Device struct {
 	FirmwareVersion string     `gorm:"size:50" json:"FirmwareVersion"`
 	Status          string     `gorm:"size:50;default:'online'" json:"Status"` // online, offline, provisioning
 	ProfileID       *uuid.UUID `gorm:"type:uuid" json:"ProfileID"`
+}
+
+// SIPSettings holds comprehensive PBX, SIP signaling, RTP media, NAT/ICE, timers, encryption, and QoS configuration
+type SIPSettings struct {
+	Base
+	TenantRef
+
+	// 1. Signaling & Listening Ports
+	UserAgent           string `gorm:"size:100;default:'MSIP-PBX-Core/2.0'" json:"user_agent"`
+	SIPPort             int    `gorm:"default:5060" json:"sip_port"`
+	SIPTLSPort          int    `gorm:"default:5061" json:"sip_tls_port"`
+	ExternalSIPPort     int    `gorm:"default:5080" json:"external_sip_port"`
+	ExternalSIPTLSPort  int    `gorm:"default:5081" json:"external_sip_tls_port"`
+	WSSPort             int    `gorm:"default:7443" json:"wss_port"`
+	TCPKeepAliveSec     int    `gorm:"default:30" json:"tcp_keepalive_sec"`
+	CompactHeaders      bool   `gorm:"default:false" json:"compact_headers"`
+	AllowContactRewrite bool   `gorm:"default:true" json:"allow_contact_rewrite"`
+
+	// 2. RTP Media & Jitter Buffer
+	RTPPortStart          int    `gorm:"default:16384" json:"rtp_port_start"`
+	RTPPortEnd            int    `gorm:"default:32768" json:"rtp_port_end"`
+	RTPTimeoutSec         int    `gorm:"default:30" json:"rtp_timeout_sec"`
+	RTPHoldTimeoutSec     int    `gorm:"default:1800" json:"rtp_hold_timeout_sec"`
+	JitterBufferMode      string `gorm:"size:20;default:'adaptive'" json:"jitter_buffer_mode"`
+	JitterBufferInitialMs int    `gorm:"default:60" json:"jitter_buffer_initial_ms"`
+	JitterBufferMaxMs     int    `gorm:"default:200" json:"jitter_buffer_max_ms"`
+	DTMFMode              string `gorm:"size:20;default:'rfc2833'" json:"dtmf_mode"`
+	DTMFDurationMs        int    `gorm:"default:100" json:"dtmf_duration_ms"`
+	AudioCodecs           string `gorm:"size:200;default:'OPUS,G722,PCMA,PCMU'" json:"audio_codecs"`
+	VideoCodecs           string `gorm:"size:100;default:'VP8,H264'" json:"video_codecs"`
+	EnableCNG             bool   `gorm:"default:true" json:"enable_cng"`
+
+	// 3. NAT, STUN, TURN & ICE Traversal
+	NATMode            string `gorm:"size:20;default:'auto'" json:"nat_mode"`
+	ExternalIPv4       string `gorm:"size:100" json:"external_ipv4"`
+	ExternalIPv6       string `gorm:"size:100" json:"external_ipv6"`
+	LocalNetworks      string `gorm:"size:255;default:'127.0.0.1/32, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16'" json:"local_networks"`
+	STUNServer         string `gorm:"size:255;default:'stun:stun.l.google.com:19302'" json:"stun_server"`
+	TURNServer         string `gorm:"size:255" json:"turn_server"`
+	TURNUser           string `gorm:"size:100" json:"turn_user"`
+	TURNPassword       string `gorm:"size:100" json:"turn_password"`
+	EnableICE          bool   `gorm:"default:true" json:"enable_ice"`
+	AggressiveICE      bool   `gorm:"default:true" json:"aggressive_ice"`
+	NATPingIntervalSec int    `gorm:"default:20" json:"nat_ping_interval_sec"`
+
+	// 4. SIP Session Timers & Registration TTL
+	SessionExpiresSec  int    `gorm:"default:1800" json:"session_expires_sec"`
+	MinSESec           int    `gorm:"default:120" json:"min_se_sec"`
+	SessionRefresher   string `gorm:"size:20;default:'auto'" json:"session_refresher"`
+	RegisterMinSec     int    `gorm:"default:60" json:"register_min_sec"`
+	RegisterMaxSec     int    `gorm:"default:3600" json:"register_max_sec"`
+	RegisterDefaultSec int    `gorm:"default:3600" json:"register_default_sec"`
+	RegisterRetrySec   int    `gorm:"default:30" json:"register_retry_sec"`
+	MaxChannels        int    `gorm:"default:250" json:"max_channels"`
+
+	// 5. Security, TLS & SRTP Encryption
+	SRTPMode            string `gorm:"size:20;default:'optional'" json:"srtp_mode"`
+	SRTPSuites          string `gorm:"size:255;default:'AEAD_AES_256_GCM,AES_CM_128_HMAC_SHA1_80,AES_CM_128_HMAC_SHA1_32'" json:"srtp_suites"`
+	TLSVersionMin       string `gorm:"size:10;default:'1.2'" json:"tls_version_min"`
+	TLSVerifyPeer       bool   `gorm:"default:false" json:"tls_verify_peer"`
+	AuthRealm           string `gorm:"size:100;default:'msip.local'" json:"auth_realm"`
+	ChallengeAllInvites bool   `gorm:"default:true" json:"challenge_all_invites"`
+
+	// 6. Quality of Service (QoS) & DSCP Marking
+	DSCPAudio     int `gorm:"default:46" json:"dscp_audio"`
+	DSCPVideo     int `gorm:"default:34" json:"dscp_video"`
+	DSCPSignaling int `gorm:"default:26" json:"dscp_signaling"`
+}
+
+// DefaultSIPSettings returns a pre-configured SIPSettings instance with industry best-practice values
+func DefaultSIPSettings(tenantID uuid.UUID) SIPSettings {
+	return SIPSettings{
+		Base:                Base{ID: uuid.New()},
+		TenantRef:           TenantRef{TenantID: tenantID},
+		UserAgent:           "MSIP-PBX-Core/2.0",
+		SIPPort:             5060,
+		SIPTLSPort:          5061,
+		ExternalSIPPort:     5080,
+		ExternalSIPTLSPort:  5081,
+		WSSPort:             7443,
+		TCPKeepAliveSec:     30,
+		CompactHeaders:      false,
+		AllowContactRewrite: true,
+
+		RTPPortStart:          16384,
+		RTPPortEnd:            32768,
+		RTPTimeoutSec:         30,
+		RTPHoldTimeoutSec:     1800,
+		JitterBufferMode:      "adaptive",
+		JitterBufferInitialMs: 60,
+		JitterBufferMaxMs:     200,
+		DTMFMode:              "rfc2833",
+		DTMFDurationMs:        100,
+		AudioCodecs:           "OPUS,G722,PCMA,PCMU",
+		VideoCodecs:           "VP8,H264",
+		EnableCNG:             true,
+
+		NATMode:            "auto",
+		ExternalIPv4:       "",
+		ExternalIPv6:       "",
+		LocalNetworks:      "127.0.0.1/32, 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16",
+		STUNServer:         "stun:stun.l.google.com:19302",
+		TURNServer:         "",
+		TURNUser:           "",
+		TURNPassword:       "",
+		EnableICE:          true,
+		AggressiveICE:      true,
+		NATPingIntervalSec: 20,
+
+		SessionExpiresSec:  1800,
+		MinSESec:           120,
+		SessionRefresher:   "auto",
+		RegisterMinSec:     60,
+		RegisterMaxSec:     3600,
+		RegisterDefaultSec: 3600,
+		RegisterRetrySec:   30,
+		MaxChannels:        250,
+
+		SRTPMode:            "optional",
+		SRTPSuites:          "AEAD_AES_256_GCM,AES_CM_128_HMAC_SHA1_80,AES_CM_128_HMAC_SHA1_32",
+		TLSVersionMin:       "1.2",
+		TLSVerifyPeer:       false,
+		AuthRealm:           "msip.local",
+		ChallengeAllInvites: true,
+
+		DSCPAudio:     46,
+		DSCPVideo:     34,
+		DSCPSignaling: 26,
+	}
+}
+
+// AIAssistant defines a conversational AI telephone agent for virtual reception, booking, and natural language IVR
+type AIAssistant struct {
+	Base
+	TenantRef
+	Name               string `gorm:"size:100;not null" json:"name"`
+	Extension          string `gorm:"size:50;not null;uniqueIndex:idx_tenant_ai_ext" json:"extension"`
+	RoleType           string `gorm:"size:50;default:'receptionist'" json:"role_type"` // receptionist, booking, ivr, support
+	Greeting           string `gorm:"size:500" json:"greeting"`
+	SystemPrompt       string `gorm:"type:text" json:"system_prompt"`
+	LLMProvider        string `gorm:"size:50;default:'openai'" json:"llm_provider"` // openai, claude, gemini, ollama
+	LLMModel           string `gorm:"size:100;default:'gpt-4o'" json:"llm_model"`
+	VoiceProvider      string `gorm:"size:50;default:'openai'" json:"voice_provider"` // openai, elevenlabs, deepgram, system
+	VoiceName          string `gorm:"size:50;default:'alloy'" json:"voice_name"`
+	Language           string `gorm:"size:20;default:'en-US'" json:"language"`
+	EnableBooking      bool   `gorm:"default:true" json:"enable_booking"`
+	EnableTransfer     bool   `gorm:"default:true" json:"enable_transfer"`
+	TransferTarget     string `gorm:"size:50;default:'1001'" json:"transfer_target"`
+	EnableVoicemail    bool   `gorm:"default:true" json:"enable_voicemail"`
+	MaxCallDurationSec int    `gorm:"default:600" json:"max_call_duration_sec"`
+	IsActive           bool   `gorm:"default:true" json:"is_active"`
+}
+
+// AIBooking manages appointments scheduled by the conversational AI agent
+type AIBooking struct {
+	Base
+	TenantRef
+	AssistantID     uuid.UUID `gorm:"type:uuid;index" json:"assistant_id"`
+	AssistantName   string    `gorm:"size:100" json:"assistant_name"`
+	CallerNumber    string    `gorm:"size:50;not null" json:"caller_number"`
+	CallerName      string    `gorm:"size:100;not null" json:"caller_name"`
+	ServiceType     string    `gorm:"size:100;default:'General Appointment'" json:"service_type"`
+	BookingDate     string    `gorm:"size:20;not null" json:"booking_date"` // YYYY-MM-DD
+	BookingTime     string    `gorm:"size:10;not null" json:"booking_time"` // HH:MM
+	DurationMinutes int       `gorm:"default:30" json:"duration_minutes"`
+	Status          string    `gorm:"size:50;default:'confirmed'" json:"status"` // confirmed, pending, completed, cancelled
+	Notes           string    `gorm:"type:text" json:"notes"`
+	CallUUID        string    `gorm:"size:100" json:"call_uuid"`
+}
+
+// AICallSession tracks transcripts, summaries, sentiment, and executed tools for AI calls
+type AICallSession struct {
+	Base
+	TenantRef
+	AssistantID   uuid.UUID `gorm:"type:uuid;index" json:"assistant_id"`
+	AssistantName string    `gorm:"size:100" json:"assistant_name"`
+	CallUUID      string    `gorm:"size:100;index" json:"call_uuid"`
+	CallerNumber  string    `gorm:"size:50" json:"caller_number"`
+	Summary       string    `gorm:"type:text" json:"summary"`
+	Sentiment     string    `gorm:"size:50;default:'neutral'" json:"sentiment"` // positive, neutral, negative
+	ActionTaken   string    `gorm:"size:50;default:'conversation'" json:"action_taken"` // booking_created, transferred, message_taken, info_provided
+	MessagesJSON  string    `gorm:"type:text" json:"messages_json"`
+	DurationSec   int       `gorm:"default:0" json:"duration_sec"`
+}
+
+// AITranscriptionSettings holds global configuration for STT transcription, TTS synthesis, and LLM backends
+type AITranscriptionSettings struct {
+	Base
+	TenantRef
+	AutoTranscribeVoicemail  bool   `gorm:"default:true" json:"auto_transcribe_voicemail"`
+	AutoTranscribeRecordings bool   `gorm:"default:true" json:"auto_transcribe_recordings"`
+	STTProvider              string `gorm:"size:50;default:'whisper'" json:"stt_provider"` // whisper, deepgram, google, vosk
+	STTModel                 string `gorm:"size:50;default:'whisper-1'" json:"stt_model"`
+	STTAPIKey                string `gorm:"size:255" json:"stt_api_key"`
+	TTSProvider              string `gorm:"size:50;default:'openai'" json:"tts_provider"` // openai, elevenlabs, deepgram, system
+	TTSAPIKey                string `gorm:"size:255" json:"tts_api_key"`
+	TTSDefaultVoice          string `gorm:"size:50;default:'alloy'" json:"tts_default_voice"`
+	LLMProvider              string `gorm:"size:50;default:'openai'" json:"llm_provider"` // openai, claude, gemini, ollama
+	LLMAPIKey                string `gorm:"size:255" json:"llm_api_key"`
+	LLMDefaultModel          string `gorm:"size:100;default:'gpt-4o'" json:"llm_default_model"`
+	LLMBaseURL               string `gorm:"size:255" json:"llm_base_url"` // for local Ollama/vLLM http://localhost:11434/v1
+	SentimentAnalysis        bool   `gorm:"default:true" json:"sentiment_analysis"`
+	EmailTranscripts         bool   `gorm:"default:false" json:"email_transcripts"`
+	NotificationEmail        string `gorm:"size:150" json:"notification_email"`
+}
+
+// DefaultAITranscriptionSettings returns recommended default settings for AI & transcription
+func DefaultAITranscriptionSettings(tenantID uuid.UUID) AITranscriptionSettings {
+	return AITranscriptionSettings{
+		Base:                     Base{ID: uuid.New()},
+		TenantRef:                TenantRef{TenantID: tenantID},
+		AutoTranscribeVoicemail:  true,
+		AutoTranscribeRecordings: true,
+		STTProvider:              "whisper",
+		STTModel:                 "whisper-1",
+		STTAPIKey:                "",
+		TTSProvider:              "openai",
+		TTSAPIKey:                "",
+		TTSDefaultVoice:          "alloy",
+		LLMProvider:              "openai",
+		LLMAPIKey:                "",
+		LLMDefaultModel:          "gpt-4o",
+		LLMBaseURL:               "https://api.openai.com/v1",
+		SentimentAnalysis:        true,
+		EmailTranscripts:         false,
+		NotificationEmail:        "",
+	}
 }

@@ -1994,6 +1994,24 @@
             ]
         },
         {
+            "endpoint": "/api/v1/diagnostics/ping",
+            "method": "POST",
+            "input_headers": [
+                "Authorization",
+                "Content-Type",
+                "Accept"
+            ],
+            "backend": [
+                {
+                    "url_pattern": "/api/diagnostics/ping",
+                    "method": "POST",
+                    "host": [
+                        "http://pbx_backend:8081"
+                    ]
+                }
+            ]
+        },
+        {
             "endpoint": "/api/v1/outbound-restrictions",
             "method": "GET",
             "input_headers": [
@@ -2077,6 +2095,24 @@
                 {
                     "url_pattern": "/api/autoclip",
                     "method": "GET",
+                    "host": [
+                        "http://pbx_backend:8081"
+                    ]
+                }
+            ]
+        },
+        {
+            "endpoint": "/api/v1/autoclip",
+            "method": "POST",
+            "input_headers": [
+                "Authorization",
+                "Content-Type",
+                "Accept"
+            ],
+            "backend": [
+                {
+                    "url_pattern": "/api/autoclip",
+                    "method": "POST",
                     "host": [
                         "http://pbx_backend:8081"
                     ]
@@ -2664,6 +2700,114 @@
             "method": "DELETE",
             "input_headers": ["Authorization", "Content-Type", "Accept"],
             "backend": [{ "url_pattern": "/api/queues/{id}", "method": "DELETE", "host": ["http://pbx_backend:8081"] }]
+        },
+        {
+            "endpoint": "/api/v1/sip-settings",
+            "method": "GET",
+            "input_headers": ["Authorization", "Content-Type", "Accept"],
+            "backend": [{ "url_pattern": "/api/sip-settings", "method": "GET", "host": ["http://pbx_backend:8081"] }]
+        },
+        {
+            "endpoint": "/api/v1/sip-settings",
+            "method": "PUT",
+            "input_headers": ["Authorization", "Content-Type", "Accept"],
+            "backend": [{ "url_pattern": "/api/sip-settings", "method": "PUT", "host": ["http://pbx_backend:8081"] }]
+        },
+        {
+            "endpoint": "/api/v1/sip-settings/apply",
+            "method": "POST",
+            "input_headers": ["Authorization", "Content-Type", "Accept"],
+            "backend": [{ "url_pattern": "/api/sip-settings/apply", "method": "POST", "host": ["http://pbx_backend:8081"] }]
+        },
+        {
+            "endpoint": "/api/v1/sip-settings/reset",
+            "method": "POST",
+            "input_headers": ["Authorization", "Content-Type", "Accept"],
+            "backend": [{ "url_pattern": "/api/sip-settings/reset", "method": "POST", "host": ["http://pbx_backend:8081"] }]
+        },
+        {
+            "endpoint": "/api/v1/ai/assistants",
+            "method": "GET",
+            "input_headers": ["Authorization", "Content-Type", "Accept"],
+            "backend": [{ "url_pattern": "/api/ai/assistants", "method": "GET", "host": ["http://pbx_backend:8081"] }]
+        },
+        {
+            "endpoint": "/api/v1/ai/assistants",
+            "method": "POST",
+            "input_headers": ["Authorization", "Content-Type", "Accept"],
+            "backend": [{ "url_pattern": "/api/ai/assistants", "method": "POST", "host": ["http://pbx_backend:8081"] }]
+        },
+        {
+            "endpoint": "/api/v1/ai/assistants/{id}",
+            "method": "PUT",
+            "input_headers": ["Authorization", "Content-Type", "Accept"],
+            "backend": [{ "url_pattern": "/api/ai/assistants/{id}", "method": "PUT", "host": ["http://pbx_backend:8081"] }]
+        },
+        {
+            "endpoint": "/api/v1/ai/assistants/{id}",
+            "method": "DELETE",
+            "input_headers": ["Authorization", "Content-Type", "Accept"],
+            "backend": [{ "url_pattern": "/api/ai/assistants/{id}", "method": "DELETE", "host": ["http://pbx_backend:8081"] }]
+        },
+        {
+            "endpoint": "/api/v1/ai/bookings",
+            "method": "GET",
+            "input_headers": ["Authorization", "Content-Type", "Accept"],
+            "backend": [{ "url_pattern": "/api/ai/bookings", "method": "GET", "host": ["http://pbx_backend:8081"] }]
+        },
+        {
+            "endpoint": "/api/v1/ai/bookings",
+            "method": "POST",
+            "input_headers": ["Authorization", "Content-Type", "Accept"],
+            "backend": [{ "url_pattern": "/api/ai/bookings", "method": "POST", "host": ["http://pbx_backend:8081"] }]
+        },
+        {
+            "endpoint": "/api/v1/ai/bookings/{id}",
+            "method": "PUT",
+            "input_headers": ["Authorization", "Content-Type", "Accept"],
+            "backend": [{ "url_pattern": "/api/ai/bookings/{id}", "method": "PUT", "host": ["http://pbx_backend:8081"] }]
+        },
+        {
+            "endpoint": "/api/v1/ai/bookings/{id}",
+            "method": "DELETE",
+            "input_headers": ["Authorization", "Content-Type", "Accept"],
+            "backend": [{ "url_pattern": "/api/ai/bookings/{id}", "method": "DELETE", "host": ["http://pbx_backend:8081"] }]
+        },
+        {
+            "endpoint": "/api/v1/ai/sessions",
+            "method": "GET",
+            "input_headers": ["Authorization", "Content-Type", "Accept"],
+            "backend": [{ "url_pattern": "/api/ai/sessions", "method": "GET", "host": ["http://pbx_backend:8081"] }]
+        },
+        {
+            "endpoint": "/api/v1/ai/settings",
+            "method": "GET",
+            "input_headers": ["Authorization", "Content-Type", "Accept"],
+            "backend": [{ "url_pattern": "/api/ai/settings", "method": "GET", "host": ["http://pbx_backend:8081"] }]
+        },
+        {
+            "endpoint": "/api/v1/ai/settings",
+            "method": "PUT",
+            "input_headers": ["Authorization", "Content-Type", "Accept"],
+            "backend": [{ "url_pattern": "/api/ai/settings", "method": "PUT", "host": ["http://pbx_backend:8081"] }]
+        },
+        {
+            "endpoint": "/api/v1/ai/simulate",
+            "method": "POST",
+            "input_headers": ["Authorization", "Content-Type", "Accept"],
+            "backend": [{ "url_pattern": "/api/ai/simulate", "method": "POST", "host": ["http://pbx_backend:8081"] }]
+        },
+        {
+            "endpoint": "/api/v1/voicemails/{id}/transcribe",
+            "method": "POST",
+            "input_headers": ["Authorization", "Content-Type", "Accept"],
+            "backend": [{ "url_pattern": "/api/voicemails/{id}/transcribe", "method": "POST", "host": ["http://pbx_backend:8081"] }]
+        },
+        {
+            "endpoint": "/api/v1/cdrs/{id}/transcribe",
+            "method": "POST",
+            "input_headers": ["Authorization", "Content-Type", "Accept"],
+            "backend": [{ "url_pattern": "/api/cdrs/{id}/transcribe", "method": "POST", "host": ["http://pbx_backend:8081"] }]
         }
     ]
 }

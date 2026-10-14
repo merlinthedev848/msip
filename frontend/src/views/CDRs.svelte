@@ -253,12 +253,14 @@
           <div class="flex space-x-1.5">
             <button
               type="button"
-              class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded text-[11px] font-semibold text-slate-700 flex items-center space-x-1"
+              on:click={() => { dateRange = 'Today'; loadData(); }}
+              title="Reset date filter to Today"
+              class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded text-[11px] font-semibold text-slate-700 flex items-center space-x-1 transition-colors"
             >
               <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              <span>Select</span>
+              <span>Today</span>
             </button>
             <select
               id="f-date"

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -199,6 +200,21 @@ func handleDialplan(c *gin.Context) {
 	var videoRooms []VideoRoom
 	tenantFilter(DB.Session(&gorm.Session{})).Where("is_active = ?", true).Find(&videoRooms)
 
+	var distGroups []CallDistributionGroup
+	tenantFilter(DB.Session(&gorm.Session{})).Preload("Members").Find(&distGroups)
+
+	var callQueues []CallQueue
+	tenantFilter(DB.Session(&gorm.Session{})).Preload("Members").Find(&callQueues)
+
+	var pagingGroups []PagingGroup
+	tenantFilter(DB.Session(&gorm.Session{})).Find(&pagingGroups)
+
+	var pickupGroups []PickupGroup
+	tenantFilter(DB.Session(&gorm.Session{})).Find(&pickupGroups)
+
+	var aiAssistants []AIAssistant
+	tenantFilter(DB.Session(&gorm.Session{})).Where("is_active = ?", true).Find(&aiAssistants)
+
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <document type="freeswitch/xml">
@@ -206,7 +222,6 @@ func handleDialplan(c *gin.Context) {
     <context name="%s">
 `, xmlEscape(context)))
 
-	// If context is "public" (inbound trunk carrier calls) or if context is "default":
 	// Inbound DID Routes
 	for _, ir := range inboundRoutes {
 		sb.WriteString(fmt.Sprintf(`
@@ -216,7 +231,8 @@ func handleDialplan(c *gin.Context) {
           <action application="set" data="domain_name=${domain_name}"/>
 `, xmlEscape(ir.DIDNumber), xmlEscape(ir.DIDNumber), xmlEscape(ir.DIDNumber)))
 
-		switch strings.ToUpper(ir.DestinationType) {
+		destType := strings.ToUpper(ir.DestinationType)
+		switch destType {
 		case "IVR":
 			sb.WriteString(fmt.Sprintf(`          <action application="answer"/>
           <action application="sleep" data="1000"/>
@@ -225,6 +241,18 @@ func handleDialplan(c *gin.Context) {
 		case "VOICEMAIL":
 			sb.WriteString(fmt.Sprintf(`          <action application="answer"/>
           <action application="voicemail" data="default ${domain_name} %s"/>
+`, xmlEscape(ir.DestinationTarget)))
+		case "QUEUE":
+			sb.WriteString(fmt.Sprintf(`          <action application="answer"/>
+          <action application="callcenter" data="%s@${domain_name}"/>
+`, xmlEscape(ir.DestinationTarget)))
+		case "GROUP", "RING_GROUP":
+			sb.WriteString(fmt.Sprintf(`          <action application="transfer" data="%s XML default"/>
+`, xmlEscape(ir.DestinationTarget)))
+		case "AI", "AI_ASSISTANT":
+			sb.WriteString(fmt.Sprintf(`          <action application="answer"/>
+          <action application="uuid_audio_fork" data="${uuid} ws://pbx_backend:8081/api/ai/stream?assistant_id=%s mono 8k"/>
+          <action application="park"/>
 `, xmlEscape(ir.DestinationTarget)))
 		default: // EXTENSION
 			sb.WriteString(fmt.Sprintf(`          <action application="bridge" data="user/%s@${domain_name}"/>
@@ -294,6 +322,23 @@ func handleDialplan(c *gin.Context) {
       </extension>
 `)
 
+		// Dynamic AI Assistants (e.g. extension 890 or custom numbers)
+		for _, asst := range aiAssistants {
+			if asst.ExtensionNumber != "" {
+				sb.WriteString(fmt.Sprintf(`
+      <!-- Dynamic AI Assistant: %s (%s) -->
+      <extension name="ai_assistant_%s">
+        <condition field="destination_number" expression="^%s$">
+          <action application="answer"/>
+          <action application="set" data="ai_assistant_id=%s"/>
+          <action application="uuid_audio_fork" data="${uuid} ws://pbx_backend:8081/api/ai/stream?assistant_id=%s mono 8k"/>
+          <action application="park"/>
+        </condition>
+      </extension>
+`, xmlEscape(asst.Name), xmlEscape(asst.ExtensionNumber), xmlEscape(asst.ID.String()[:8]), xmlEscape(asst.ExtensionNumber), xmlEscape(asst.ID.String()), xmlEscape(asst.ID.String())))
+			}
+		}
+
 		// Dynamic Video Rooms
 		for _, vr := range videoRooms {
 			sb.WriteString(fmt.Sprintf(`
@@ -307,29 +352,99 @@ func handleDialplan(c *gin.Context) {
 `, xmlEscape(vr.Name), xmlEscape(vr.RoomCode), xmlEscape(vr.RoomCode), xmlEscape(vr.RoomCode)))
 		}
 
-		// Dynamic IVR Menus & Ring Groups
-		for _, ivr := range ivrs {
-			if ivr.Greeting == "ring_group" || strings.HasPrefix(ivr.Name, "Ring Group:") {
-				var targets []string
-				for _, choice := range ivr.Choices {
-					if choice.Destination != "" {
-						targets = append(targets, fmt.Sprintf("user/%s@${domain_name}", choice.Destination))
-					}
+		// Call Distribution Groups (Ring Groups)
+		for _, grp := range distGroups {
+			var targets []string
+			for _, m := range grp.Members {
+				if m.Extension != "" {
+					targets = append(targets, fmt.Sprintf("[leg_delay_start=%d]user/%s@${domain_name}", m.DelaySec, m.Extension))
 				}
-				if len(targets) > 0 {
-					bridgeTargets := strings.Join(targets, ",")
-					sb.WriteString(fmt.Sprintf(`
-      <!-- Ring Group Route: %s -->
-      <extension name="ring_group_%s">
+			}
+			if len(targets) > 0 {
+				bridgeTargets := strings.Join(targets, ",")
+				timeout := grp.NoAnswerTimeout
+				if timeout <= 0 {
+					timeout = 20
+				}
+				sb.WriteString(fmt.Sprintf(`
+      <!-- Call Distribution Group: %s (%s) -->
+      <extension name="dist_group_%s">
         <condition field="destination_number" expression="^%s$">
           <action application="set" data="hangup_after_bridge=true"/>
-          <action application="set" data="call_timeout=30"/>
+          <action application="set" data="call_timeout=%d"/>
+          <action application="set" data="effective_caller_id_name=%s${effective_caller_id_name}"/>
           <action application="bridge" data="%s"/>
         </condition>
       </extension>
-`, xmlEscape(ivr.Name), xmlEscape(ivr.Extension), xmlEscape(ivr.Extension), xmlEscape(bridgeTargets)))
-					continue
+`, xmlEscape(grp.Name), xmlEscape(grp.InternalNumber), xmlEscape(grp.InternalNumber), xmlEscape(grp.InternalNumber), timeout, xmlEscape(grp.CallerNamePrefix), xmlEscape(bridgeTargets)))
+			}
+		}
+
+		// ACD Call Queues
+		for _, q := range callQueues {
+			extNum := q.Extension
+			if extNum == "" {
+				extNum = q.InternalNumber
+			}
+			if extNum != "" {
+				sb.WriteString(fmt.Sprintf(`
+      <!-- ACD Call Queue: %s (Ext %s) -->
+      <extension name="queue_%s">
+        <condition field="destination_number" expression="^%s$">
+          <action application="answer"/>
+          <action application="set" data="hangup_after_bridge=true"/>
+          <action application="callcenter" data="%s@default"/>
+        </condition>
+      </extension>
+`, xmlEscape(q.Name), xmlEscape(extNum), xmlEscape(extNum), xmlEscape(extNum), xmlEscape(q.Name)))
+			}
+		}
+
+		// Paging & Intercom Groups
+		for _, pg := range pagingGroups {
+			exts := strings.Split(pg.Members, ",")
+			var targets []string
+			for _, e := range exts {
+				e = strings.TrimSpace(e)
+				if e != "" {
+					targets = append(targets, fmt.Sprintf("[sip_auto_answer=true]user/%s@${domain_name}", e))
 				}
+			}
+			if len(targets) > 0 {
+				sb.WriteString(fmt.Sprintf(`
+      <!-- Paging / Intercom Group: %s (%s) -->
+      <extension name="paging_%s">
+        <condition field="destination_number" expression="^%s$">
+          <action application="answer"/>
+          <action application="set" data="conference_auto_outcall_timeout=15"/>
+          <action application="conference_set_auto_outcall" data="%s"/>
+          <action application="conference" data="paging_%s@default+flags{waste}"/>
+        </condition>
+      </extension>
+`, xmlEscape(pg.Name), xmlEscape(pg.Number), xmlEscape(pg.Number), xmlEscape(pg.Number), strings.Join(targets, ","), xmlEscape(pg.Number)))
+			}
+		}
+
+		// Call Pickup (*8)
+		for _, pick := range pickupGroups {
+			code := pick.Code
+			if code == "" {
+				code = "*8"
+			}
+			sb.WriteString(fmt.Sprintf(`
+      <!-- Call Pickup: %s (%s) -->
+      <extension name="pickup_%s">
+        <condition field="destination_number" expression="^%s$">
+          <action application="intercept" data="${uuid_dump()}"/>
+        </condition>
+      </extension>
+`, xmlEscape(pick.Name), xmlEscape(code), xmlEscape(code), xmlEscape(strings.ReplaceAll(code, "*", "\\*"))))
+		}
+
+		// Dynamic IVR Menus
+		for _, ivr := range ivrs {
+			if ivr.Greeting == "ring_group" || strings.HasPrefix(ivr.Name, "Ring Group:") {
+				continue
 			}
 
 			sb.WriteString(fmt.Sprintf(`
@@ -393,6 +508,8 @@ func handleConfiguration(c *gin.Context) {
 	keyName := c.PostForm("key_value")
 
 	switch keyName {
+	case "switch.conf":
+		handleSwitchConfig(c)
 	case "ivr.conf":
 		handleIVRConfig(c)
 	case "acl.conf":
@@ -408,6 +525,42 @@ func handleConfiguration(c *gin.Context) {
 	default:
 		c.String(http.StatusOK, notFoundXML())
 	}
+}
+
+func handleSwitchConfig(c *gin.Context) {
+	var settings SIPSettings
+	if err := DB.First(&settings).Error; err != nil {
+		settings = DefaultSIPSettings(uuid.Nil)
+	}
+
+	xmlResponse := fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<document type="freeswitch/xml">
+  <section name="configuration" description="Core Configuration">
+    <configuration name="switch.conf" description="Core Settings">
+      <settings>
+        <param name="rtp-start-port" value="%d"/>
+        <param name="rtp-end-port" value="%d"/>
+        <param name="switchname" value="%s"/>
+        <param name="max-sessions" value="%d"/>
+        <param name="sessions-per-second" value="100"/>
+        <param name="rtp-timeout-sec" value="%d"/>
+        <param name="rtp-hold-timeout-sec" value="%d"/>
+        <param name="tcp-keepalive" value="%d"/>
+        <param name="loglevel" value="info"/>
+      </settings>
+    </configuration>
+  </section>
+</document>`,
+		settings.RTPPortStart,
+		settings.RTPPortEnd,
+		xmlEscape(settings.UserAgent),
+		settings.MaxChannels,
+		settings.RTPTimeoutSec,
+		settings.RTPHoldTimeoutSec,
+		settings.TCPKeepAliveSec,
+	)
+
+	c.Data(http.StatusOK, "text/xml; charset=utf-8", []byte(xmlResponse))
 }
 
 func handleIVRConfig(c *gin.Context) {
@@ -515,18 +668,73 @@ func handleACLConfig(c *gin.Context) {
 }
 
 func handleSofiaConfig(c *gin.Context) {
+	var settings SIPSettings
+	if err := DB.First(&settings).Error; err != nil {
+		settings = DefaultSIPSettings(uuid.Nil)
+	}
+
 	var trunks []Trunk
 	DB.Find(&trunks)
 
 	var sb strings.Builder
-	sb.WriteString(`<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+	sb.WriteString(fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <document type="freeswitch/xml">
   <section name="configuration" description="Sofia Gateways">
     <configuration name="sofia.conf" description="Sofia Endpoints">
       <profiles>
+        <profile name="internal">
+          <settings>
+            <param name="user-agent-string" value="%s"/>
+            <param name="sip-port" value="%d"/>
+            <param name="tls-sip-port" value="%d"/>
+            <param name="ws-binding" value=":%d"/>
+            <param name="inbound-codec-prefs" value="%s"/>
+            <param name="outbound-codec-prefs" value="%s"/>
+            <param name="enable-ice" value="%t"/>
+            <param name="dtmf-type" value="%s"/>
+            <param name="session-timeout" value="%d"/>
+            <param name="minimum-session-expires" value="%d"/>
+            <param name="inbound-reg-min-secs" value="%d"/>
+            <param name="inbound-reg-max-secs" value="%d"/>
+            <param name="inbound-reg-default-secs" value="%d"/>
+            <param name="rtp-cng" value="%t"/>
+            <param name="apply-nat-acl" value="lan"/>
+            <param name="context" value="default"/>
+            <param name="dialplan" value="XML"/>
+          </settings>
+        </profile>
         <profile name="external">
+          <settings>
+            <param name="user-agent-string" value="%s"/>
+            <param name="sip-port" value="%d"/>
+            <param name="tls-sip-port" value="%d"/>
+            <param name="inbound-codec-prefs" value="%s"/>
+            <param name="outbound-codec-prefs" value="%s"/>
+            <param name="context" value="public"/>
+            <param name="dialplan" value="XML"/>
+          </settings>
           <gateways>
-`)
+`,
+		xmlEscape(settings.UserAgent),
+		settings.SIPPort,
+		settings.SIPTLSPort,
+		settings.WSSPort,
+		xmlEscape(settings.AudioCodecs),
+		xmlEscape(settings.AudioCodecs),
+		settings.EnableICE,
+		xmlEscape(settings.DTMFMode),
+		settings.SessionExpiresSec,
+		settings.MinSESec,
+		settings.RegisterMinSec,
+		settings.RegisterMaxSec,
+		settings.RegisterDefaultSec,
+		settings.EnableCNG,
+		xmlEscape(settings.UserAgent),
+		settings.ExternalSIPPort,
+		settings.ExternalSIPTLSPort,
+		xmlEscape(settings.AudioCodecs),
+		xmlEscape(settings.AudioCodecs),
+	))
 
 	for _, trunk := range trunks {
 		reg := "false"
@@ -562,6 +770,9 @@ func handleSofiaConfig(c *gin.Context) {
 }
 
 func handleCallCenterConfig(c *gin.Context) {
+	var queues []CallQueue
+	DB.Preload("Members").Find(&queues)
+
 	var sb strings.Builder
 	sb.WriteString(`<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <document type="freeswitch/xml">
@@ -571,27 +782,75 @@ func handleCallCenterConfig(c *gin.Context) {
         <param name="odbc-dsn" value=""/>
       </settings>
       <queues>
-        <queue name="support_tier_1@default">
-          <param name="strategy" value="longest-idle-agent"/>
+`)
+
+	allAgents := make(map[string]QueueMember)
+	for _, q := range queues {
+		strategy := "longest-idle-agent"
+		switch strings.ToLower(q.RingStrategy) {
+		case "round robin":
+			strategy = "round-robin"
+		case "least recent":
+			strategy = "least-recent-agent"
+		case "top down":
+			strategy = "top-down"
+		case "ring all":
+			strategy = "ring-all"
+		}
+
+		timeout := q.NoAnswerTimeout
+		if timeout <= 0 {
+			timeout = 20
+		}
+		retryDelay := q.MemberRetryDelay
+		if retryDelay <= 0 {
+			retryDelay = 10
+		}
+
+		sb.WriteString(fmt.Sprintf(`        <queue name="%s@default">
+          <param name="strategy" value="%s"/>
           <param name="moh-sound" value="local_stream://default"/>
           <param name="time-base-score" value="system"/>
           <param name="max-wait-time" value="300"/>
-          <param name="max-wait-time-with-no-agent" value="30"/>
+          <param name="max-wait-time-with-no-agent" value="%d"/>
+          <param name="agent-no-answer-status" value="Logged Out"/>
           <param name="tier-rules-apply" value="false"/>
+          <param name="ring-delay" value="%d"/>
         </queue>
-        <queue name="sales_global@default">
-          <param name="strategy" value="round-robin"/>
-          <param name="moh-sound" value="local_stream://default"/>
-          <param name="time-base-score" value="system"/>
-          <param name="max-wait-time" value="300"/>
-        </queue>
-        <queue name="billing@default">
-          <param name="strategy" value="top-down"/>
-          <param name="moh-sound" value="local_stream://default"/>
-          <param name="time-base-score" value="system"/>
-          <param name="max-wait-time" value="180"/>
-        </queue>
-      </queues>
+`, xmlEscape(q.Name), strategy, timeout, retryDelay))
+
+		for _, m := range q.Members {
+			if !m.Disabled && m.Extension != "" {
+				allAgents[m.Extension] = m
+			}
+		}
+	}
+
+	sb.WriteString(`      </queues>
+      <agents>
+`)
+	for ext := range allAgents {
+		sb.WriteString(fmt.Sprintf(`        <agent name="%s@default" type="callback" contact="[leg_timeout=20]user/%s@$${domain}" status="Logged Out" max-no-answer="3" wrap-up-time="10" reject-delay-time="10" busy-delay-time="10"/>
+`, xmlEscape(ext), xmlEscape(ext)))
+	}
+
+	sb.WriteString(`      </agents>
+      <tiers>
+`)
+	for _, q := range queues {
+		for _, m := range q.Members {
+			if !m.Disabled && m.Extension != "" {
+				penalty := m.Penalty
+				if penalty <= 0 {
+					penalty = 1
+				}
+				sb.WriteString(fmt.Sprintf(`        <tier agent="%s@default" queue="%s@default" level="1" position="%d"/>
+`, xmlEscape(m.Extension), xmlEscape(q.Name), penalty))
+			}
+		}
+	}
+
+	sb.WriteString(`      </tiers>
     </configuration>
   </section>
 </document>`)

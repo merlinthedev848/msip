@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
@@ -232,6 +233,26 @@ func SetupRouter() *gin.Engine {
 			if err := DB.Create(&cdr).Error; err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save CDR"})
 				return
+			}
+
+			// Autonomous AutoCLIP Recording: When an outbound call connects, remember callee -> caller mapping
+			if (context == "outbound" || context == "default") && callerIDNumber != "" && destination != "" && billsec > 0 {
+				autoClipExpiry := time.Now().Add(7 * 24 * time.Hour)
+				var existing AutoCLIP
+				if err := DB.Where("tenant_id = ? AND caller_number = ?", tenantID, destination).First(&existing).Error; err == nil {
+					existing.OriginalCalleeExt = callerIDNumber
+					existing.ExpiresAt = autoClipExpiry
+					DB.Save(&existing)
+				} else {
+					DB.Create(&AutoCLIP{
+						Base:              Base{ID: uuid.New()},
+						TenantRef:         TenantRef{TenantID: tenantID},
+						CallerNumber:      destination,
+						OriginalCalleeExt: callerIDNumber,
+						TrunkName:         "Default SIP Trunk",
+						ExpiresAt:         autoClipExpiry,
+					})
+				}
 			}
 
 			if destination == "*88" {
@@ -1722,6 +1743,7 @@ func SetupRouter() *gin.Engine {
 			RegisterCallControlRoutes(v1)
 			RegisterPortalRoutes(v1)
 			RegisterReportingRoutes(v1)
+			RegisterAIRoutes(v1)
 		}
 	}
 
@@ -1735,6 +1757,19 @@ func main() {
 	}
 
 	InitDB()
+
+	// CLI Entry Point check: support invocation via external cron / systemd timer
+	if len(os.Args) > 1 && (os.Args[1] == "--worker-once" || os.Args[1] == "cron" || os.Args[1] == "worker") {
+		log.Println("[CLI] Executing autonomous maintenance sweep via CLI entry point...")
+		if err := RunMaintenanceCycle(); err != nil {
+			log.Fatalf("[CLI] Autonomous maintenance sweep failed: %v", err)
+		}
+		log.Println("[CLI] Autonomous maintenance sweep completed successfully.")
+		return
+	}
+
+	// Launch autonomous background maintenance worker daemon
+	go StartBackgroundWorker(context.Background())
 
 	r := SetupRouter()
 

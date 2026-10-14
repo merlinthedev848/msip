@@ -53,6 +53,10 @@ func setupTestEnvironment(t *testing.T) {
 	DB.Exec("DELETE FROM fraud_rules")
 	DB.Exec("DELETE FROM users")
 	DB.Exec("DELETE FROM tenants")
+	DB.Exec("DELETE FROM ai_assistants")
+	DB.Exec("DELETE FROM ai_bookings")
+	DB.Exec("DELETE FROM ai_call_sessions")
+	DB.Exec("DELETE FROM ai_transcription_settings")
 
 	// Seed Tenant A
 	tA := Tenant{ID: uuid.New(), Name: "Tenant Alpha", Domain: "alpha.pbx.local"}
@@ -617,3 +621,424 @@ func TestRingGroupsAndQueuesCRUD(t *testing.T) {
 		t.Fatalf("expected 200 deleting queue, got %d", wDelQ.Code)
 	}
 }
+
+func TestAutoCLIPLifecycleAndBackgroundWorker(t *testing.T) {
+	setupTestEnvironment(t)
+
+	// Create AutoCLIP entry
+	clipPayload := `{
+		"caller_number": "07987654321",
+		"original_callee_ext": "1001"
+	}`
+	wCreate := performRequest(testRouter, "POST", "/api/autoclip", []byte(clipPayload), adminToken)
+	if wCreate.Code != http.StatusCreated {
+		t.Fatalf("expected 201 for autoclip create, got %d: %s", wCreate.Code, wCreate.Body.String())
+	}
+
+	// Verify GET /api/autoclip returns records
+	wGet := performRequest(testRouter, "GET", "/api/autoclip", nil, adminToken)
+	if wGet.Code != http.StatusOK {
+		t.Fatalf("expected 200 for GET /api/autoclip, got %d", wGet.Code)
+	}
+	if !strings.Contains(wGet.Body.String(), "07987654321") {
+		t.Fatalf("expected autoclip record in response: %s", wGet.Body.String())
+	}
+
+	// Test background maintenance cycle execution
+	if err := RunMaintenanceCycle(); err != nil {
+		t.Fatalf("expected maintenance cycle to succeed: %v", err)
+	}
+}
+
+func TestDiagnosticsPing(t *testing.T) {
+	setupTestEnvironment(t)
+
+	pingBody := `{"host": "127.0.0.1"}`
+	w := performRequest(testRouter, "POST", "/api/diagnostics/ping", []byte(pingBody), adminToken)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 for diagnostics ping, got %d: %s", w.Code, w.Body.String())
+	}
+	if !strings.Contains(w.Body.String(), "127.0.0.1") {
+		t.Fatalf("expected host in response: %s", w.Body.String())
+	}
+}
+
+func TestSIPSettingsCRUDAndValidation(t *testing.T) {
+	setupTestEnvironment(t)
+
+	// 1. GET /api/sip-settings (should auto-provision defaults)
+	wGet := performRequest(testRouter, "GET", "/api/sip-settings", nil, adminToken)
+	if wGet.Code != http.StatusOK {
+		t.Fatalf("expected 200 for GET /api/sip-settings, got %d: %s", wGet.Code, wGet.Body.String())
+	}
+	var settings SIPSettings
+	if err := json.Unmarshal(wGet.Body.Bytes(), &settings); err != nil {
+		t.Fatalf("failed to unmarshal SIP settings: %v", err)
+	}
+	if settings.SIPPort != 5060 || settings.RTPPortStart != 16384 || settings.RTPPortEnd != 32768 {
+		t.Fatalf("unexpected default settings values: %+v", settings)
+	}
+
+	// 2. PUT /api/sip-settings with validation error (RTP start >= RTP end)
+	badPayload := `{
+		"user_agent": "Test-PBX",
+		"sip_port": 5060,
+		"sip_tls_port": 5061,
+		"external_sip_port": 5080,
+		"wss_port": 7443,
+		"rtp_port_start": 30000,
+		"rtp_port_end": 20000,
+		"jitter_buffer_initial_ms": 60,
+		"jitter_buffer_max_ms": 200,
+		"min_se_sec": 120,
+		"session_expires_sec": 1800,
+		"register_min_sec": 60,
+		"register_max_sec": 3600
+	}`
+	wBad := performRequest(testRouter, "PUT", "/api/sip-settings", []byte(badPayload), adminToken)
+	if wBad.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for inverted RTP range, got %d: %s", wBad.Code, wBad.Body.String())
+	}
+
+	// 3. PUT /api/sip-settings with valid updates
+	validPayload := `{
+		"user_agent": "Custom-Carrier-PBX/3.0",
+		"sip_port": 5060,
+		"sip_tls_port": 5061,
+		"external_sip_port": 5080,
+		"wss_port": 7443,
+		"rtp_port_start": 20000,
+		"rtp_port_end": 40000,
+		"rtp_timeout_sec": 45,
+		"jitter_buffer_mode": "adaptive",
+		"jitter_buffer_initial_ms": 80,
+		"jitter_buffer_max_ms": 250,
+		"dtmf_mode": "rfc2833",
+		"audio_codecs": "OPUS,G722,PCMA",
+		"enable_cng": true,
+		"nat_mode": "manual",
+		"external_ipv4": "198.51.100.25",
+		"min_se_sec": 120,
+		"session_expires_sec": 1800,
+		"register_min_sec": 60,
+		"register_max_sec": 3600,
+		"register_default_sec": 1800,
+		"dscp_audio": 46,
+		"dscp_video": 34,
+		"dscp_signaling": 26
+	}`
+	wPut := performRequest(testRouter, "PUT", "/api/sip-settings", []byte(validPayload), adminToken)
+	if wPut.Code != http.StatusOK {
+		t.Fatalf("expected 200 for valid PUT /api/sip-settings, got %d: %s", wPut.Code, wPut.Body.String())
+	}
+	var updated SIPSettings
+	json.Unmarshal(wPut.Body.Bytes(), &updated)
+	if updated.UserAgent != "Custom-Carrier-PBX/3.0" || updated.RTPPortStart != 20000 || updated.RTPPortEnd != 40000 {
+		t.Fatalf("updated values did not persist: %+v", updated)
+	}
+
+	// 4. POST /api/sip-settings/apply
+	wApply := performRequest(testRouter, "POST", "/api/sip-settings/apply", nil, adminToken)
+	if wApply.Code != http.StatusOK {
+		t.Fatalf("expected 200 for apply, got %d: %s", wApply.Code, wApply.Body.String())
+	}
+	if !strings.Contains(wApply.Body.String(), "applied") {
+		t.Fatalf("expected applied confirmation, got: %s", wApply.Body.String())
+	}
+
+	// 5. POST /api/sip-settings/reset
+	wReset := performRequest(testRouter, "POST", "/api/sip-settings/reset", nil, adminToken)
+	if wReset.Code != http.StatusOK {
+		t.Fatalf("expected 200 for reset, got %d: %s", wReset.Code, wReset.Body.String())
+	}
+	var resetResp struct {
+		Status   string      `json:"status"`
+		Settings SIPSettings `json:"settings"`
+	}
+	json.Unmarshal(wReset.Body.Bytes(), &resetResp)
+	if resetResp.Settings.RTPPortStart != 16384 || resetResp.Settings.RTPPortEnd != 32768 {
+		t.Fatalf("expected default RTP ports after reset, got start=%d end=%d", resetResp.Settings.RTPPortStart, resetResp.Settings.RTPPortEnd)
+	}
+}
+
+func TestFreeSWITCHSwitchConfGeneration(t *testing.T) {
+	setupTestEnvironment(t)
+
+	form := "section=configuration&key_value=switch.conf"
+	req, _ := http.NewRequest("POST", "/fs", strings.NewReader(form))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	w := httptest.NewRecorder()
+	testRouter.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 from /fs switch.conf, got %d", w.Code)
+	}
+	body := w.Body.String()
+	if !strings.Contains(body, "rtp-start-port") || !strings.Contains(body, "rtp-end-port") {
+		t.Fatalf("expected switch.conf with RTP ports, got: %s", body)
+	}
+}
+
+func TestAIAssistantsCRUD(t *testing.T) {
+	setupTestEnvironment(t)
+
+	// 1. Create Assistant
+	payload := map[string]interface{}{
+		"name":             "Jessica - AI Receptionist",
+		"extension_number": "891",
+		"role_description": "Virtual Front Desk",
+		"system_prompt":    "You are an AI receptionist. Help callers book appointments.",
+		"greeting_message": "Hello, how can I direct your call?",
+		"llm_provider":     "openai",
+		"llm_model":        "gpt-4o",
+		"voice_id":         "nova",
+		"enable_booking":   true,
+		"enable_transfer":  true,
+		"transfer_target":  "1001",
+		"is_active":        true,
+	}
+	wCreate := performRequest(testRouter, "POST", "/api/ai/assistants", payload, adminToken)
+	if wCreate.Code != http.StatusCreated {
+		t.Fatalf("expected 201 for creating assistant, got %d: %s", wCreate.Code, wCreate.Body.String())
+	}
+	var created AIAssistant
+	if err := json.Unmarshal(wCreate.Body.Bytes(), &created); err != nil {
+		t.Fatalf("failed to decode created assistant: %v", err)
+	}
+	if created.ID == uuid.Nil || created.ExtensionNumber != "891" {
+		t.Fatalf("unexpected created assistant data: %+v", created)
+	}
+
+	// 2. List Assistants
+	wList := performRequest(testRouter, "GET", "/api/ai/assistants", nil, adminToken)
+	if wList.Code != http.StatusOK {
+		t.Fatalf("expected 200 for listing assistants, got %d", wList.Code)
+	}
+	var listResp struct {
+		Assistants []AIAssistant `json:"assistants"`
+	}
+	json.Unmarshal(wList.Body.Bytes(), &listResp)
+	if len(listResp.Assistants) == 0 {
+		t.Fatalf("expected at least 1 assistant, got %d", len(listResp.Assistants))
+	}
+
+	// 3. Update Assistant
+	payload["greeting_message"] = "Welcome to MSIP Enterprise. How may I help?"
+	wUpdate := performRequest(testRouter, "PUT", fmt.Sprintf("/api/ai/assistants/%s", created.ID), payload, adminToken)
+	if wUpdate.Code != http.StatusOK {
+		t.Fatalf("expected 200 for updating assistant, got %d", wUpdate.Code)
+	}
+
+	// 4. Delete Assistant
+	wDel := performRequest(testRouter, "DELETE", fmt.Sprintf("/api/ai/assistants/%s", created.ID), nil, adminToken)
+	if wDel.Code != http.StatusOK {
+		t.Fatalf("expected 200 for deleting assistant, got %d", wDel.Code)
+	}
+}
+
+func TestAIBookingsCRUD(t *testing.T) {
+	setupTestEnvironment(t)
+
+	// 1. Create Booking
+	bookingData := map[string]interface{}{
+		"caller_name":      "Alice Walker",
+		"caller_number":    "+15559876543",
+		"service_type":     "Consultation",
+		"booking_date":     "2026-10-25",
+		"booking_time":     "15:30",
+		"duration_minutes": 30,
+		"status":           "confirmed",
+		"notes":            "Follow-up discussion",
+	}
+	wCreate := performRequest(testRouter, "POST", "/api/ai/bookings", bookingData, adminToken)
+	if wCreate.Code != http.StatusCreated {
+		t.Fatalf("expected 201 for creating booking, got %d: %s", wCreate.Code, wCreate.Body.String())
+	}
+	var created AIBooking
+	json.Unmarshal(wCreate.Body.Bytes(), &created)
+	if created.ID == uuid.Nil || created.CallerName != "Alice Walker" {
+		t.Fatalf("unexpected booking created: %+v", created)
+	}
+
+	// 2. List Bookings
+	wList := performRequest(testRouter, "GET", "/api/ai/bookings", nil, adminToken)
+	if wList.Code != http.StatusOK {
+		t.Fatalf("expected 200 for listing bookings, got %d", wList.Code)
+	}
+	var listResp struct {
+		Bookings []AIBooking `json:"bookings"`
+	}
+	json.Unmarshal(wList.Body.Bytes(), &listResp)
+	if len(listResp.Bookings) == 0 {
+		t.Fatalf("expected bookings list to contain at least 1 item")
+	}
+
+	// 3. Update Status
+	bookingData["status"] = "completed"
+	wUpdate := performRequest(testRouter, "PUT", fmt.Sprintf("/api/ai/bookings/%s", created.ID), bookingData, adminToken)
+	if wUpdate.Code != http.StatusOK {
+		t.Fatalf("expected 200 for updating booking, got %d", wUpdate.Code)
+	}
+
+	// 4. Delete Booking
+	wDel := performRequest(testRouter, "DELETE", fmt.Sprintf("/api/ai/bookings/%s", created.ID), nil, adminToken)
+	if wDel.Code != http.StatusOK {
+		t.Fatalf("expected 200 for deleting booking, got %d", wDel.Code)
+	}
+}
+
+func TestAISimulatorAndTools(t *testing.T) {
+	setupTestEnvironment(t)
+
+	// Seed assistant
+	asst := AIAssistant{
+		Base:            Base{ID: uuid.New()},
+		TenantRef:       TenantRef{TenantID: tenantA},
+		Name:            "Sarah Receptionist",
+		ExtensionNumber: "890",
+		EnableBooking:   true,
+		EnableTransfer:  true,
+		TransferTarget:  "1001",
+		IsActive:        true,
+	}
+	DB.Create(&asst)
+
+	// Test appointment booking tool invocation
+	simPayload := map[string]interface{}{
+		"assistant_id":  asst.ID.String(),
+		"caller_number": "+15553334444",
+		"messages": []map[string]string{
+			{"role": "user", "content": "I would like to book an appointment tomorrow at 14:00 for Dental Service"},
+		},
+	}
+	wSim := performRequest(testRouter, "POST", "/api/ai/simulate", simPayload, adminToken)
+	if wSim.Code != http.StatusOK {
+		t.Fatalf("expected 200 from AI simulator, got %d: %s", wSim.Code, wSim.Body.String())
+	}
+	var simResp struct {
+		Reply     string       `json:"reply"`
+		ToolCalls []AIToolCall `json:"tool_calls"`
+	}
+	json.Unmarshal(wSim.Body.Bytes(), &simResp)
+	if simResp.Reply == "" {
+		t.Fatalf("expected AI simulator reply, got empty string")
+	}
+	if len(simResp.ToolCalls) == 0 || simResp.ToolCalls[0].Name != "book_appointment" {
+		t.Fatalf("expected tool call 'book_appointment', got: %+v", simResp.ToolCalls)
+	}
+
+	// Verify booking was persisted to DB
+	var booking AIBooking
+	if err := DB.Where("caller_number = ?", "+15553334444").First(&booking).Error; err != nil {
+		t.Fatalf("expected appointment record to be created in DB: %v", err)
+	}
+
+	// Test call transfer tool invocation
+	transferPayload := map[string]interface{}{
+		"assistant_id":  asst.ID.String(),
+		"caller_number": "+15553334444",
+		"messages": []map[string]string{
+			{"role": "user", "content": "Please transfer me to sales extension 1001"},
+		},
+	}
+	wTransfer := performRequest(testRouter, "POST", "/api/ai/simulate", transferPayload, adminToken)
+	if wTransfer.Code != http.StatusOK {
+		t.Fatalf("expected 200 from AI simulator, got %d", wTransfer.Code)
+	}
+	var transferResp struct {
+		ToolCalls []AIToolCall `json:"tool_calls"`
+	}
+	json.Unmarshal(wTransfer.Body.Bytes(), &transferResp)
+	if len(transferResp.ToolCalls) == 0 || transferResp.ToolCalls[0].Name != "transfer_call" {
+		t.Fatalf("expected tool call 'transfer_call', got: %+v", transferResp.ToolCalls)
+	}
+}
+
+func TestAIVoicemailAndCDRTranscription(t *testing.T) {
+	setupTestEnvironment(t)
+
+	// 1. Voicemail Transcription
+	vm := Voicemail{
+		Base:      Base{ID: uuid.New()},
+		TenantRef: TenantRef{TenantID: tenantA},
+		Extension: "1001",
+		CallerID:  "+15552221111",
+		Duration:  42,
+		FilePath:  "/var/lib/pbx/voicemail/default/1001/msg_0001.wav",
+	}
+	DB.Create(&vm)
+
+	wVM := performRequest(testRouter, "POST", fmt.Sprintf("/api/voicemails/%s/transcribe", vm.ID), nil, adminToken)
+	if wVM.Code != http.StatusOK {
+		t.Fatalf("expected 200 for voicemail transcription, got %d: %s", wVM.Code, wVM.Body.String())
+	}
+	var vmResp struct {
+		Transcription string `json:"transcription"`
+		Summary       string `json:"summary"`
+		Sentiment     string `json:"sentiment"`
+	}
+	json.Unmarshal(wVM.Body.Bytes(), &vmResp)
+	if vmResp.Transcription == "" || vmResp.Summary == "" {
+		t.Fatalf("expected non-empty transcription and summary, got: %+v", vmResp)
+	}
+
+	// 2. CDR Transcription
+	cdr := CDR{
+		Base:           Base{ID: uuid.New()},
+		TenantRef:      TenantRef{TenantID: tenantA},
+		UUID:           "test-call-uuid-987",
+		CallerIDNumber: "+15552221111",
+		CallerIDName:   "Test Caller",
+		Destination:    "1001",
+		Duration:       60,
+		Billsec:        55,
+		HangupCause:    "NORMAL_CLEARING",
+	}
+	DB.Create(&cdr)
+
+	wCDR := performRequest(testRouter, "POST", fmt.Sprintf("/api/cdrs/%s/transcribe", cdr.ID), nil, adminToken)
+	if wCDR.Code != http.StatusOK {
+		t.Fatalf("expected 200 for CDR transcription, got %d: %s", wCDR.Code, wCDR.Body.String())
+	}
+	var cdrResp struct {
+		Transcription string `json:"transcription"`
+		Summary       string `json:"summary"`
+		Sentiment     string `json:"sentiment"`
+	}
+	json.Unmarshal(wCDR.Body.Bytes(), &cdrResp)
+	if cdrResp.Transcription == "" || cdrResp.Summary == "" {
+		t.Fatalf("expected non-empty CDR transcription and summary, got: %+v", cdrResp)
+	}
+}
+
+func TestFreeSWITCHAIDialplan(t *testing.T) {
+	setupTestEnvironment(t)
+
+	// Seed assistant with extension 890
+	asst := AIAssistant{
+		Base:            Base{ID: uuid.New()},
+		TenantRef:       TenantRef{TenantID: tenantA},
+		Name:            "Sarah AI",
+		ExtensionNumber: "890",
+		IsActive:        true,
+	}
+	DB.Create(&asst)
+
+	form := "section=dialplan&context=default"
+	req, _ := http.NewRequest("POST", "/fs", strings.NewReader(form))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	w := httptest.NewRecorder()
+	testRouter.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 from /fs dialplan, got %d", w.Code)
+	}
+	body := w.Body.String()
+	if !strings.Contains(body, "ai_assistant_") || !strings.Contains(body, "^890$") {
+		t.Fatalf("expected FreeSWITCH dialplan to contain dynamic AI assistant extension 890, got: %s", body)
+	}
+	if !strings.Contains(body, "ws://pbx_backend:8081/api/ai/stream") {
+		t.Fatalf("expected FreeSWITCH dialplan to contain AI WebSocket audio fork stream, got: %s", body)
+	}
+}
+

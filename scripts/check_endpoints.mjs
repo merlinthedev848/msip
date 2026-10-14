@@ -5,6 +5,7 @@ function walk(dir) {
   let results = [];
   const list = fs.readdirSync(dir);
   for (const file of list) {
+    if (file === 'vendor' || file === 'node_modules' || file === '.git' || file === 'dist') continue;
     const full = path.join(dir, file);
     const stat = fs.statSync(full);
     if (stat.isDirectory()) {

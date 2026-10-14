@@ -41,6 +41,9 @@
   import Sites from './views/Sites.svelte';
   import Diverts from './views/Diverts.svelte';
   import Devices from './views/Devices.svelte';
+  import SIPSettings from './views/SIPSettings.svelte';
+  import AIAssistants from './views/AIAssistants.svelte';
+  import AIBookings from './views/AIBookings.svelte';
   
   import Login from './views/Login.svelte';
   import Softphone from './components/Softphone.svelte';
@@ -52,9 +55,12 @@
 
   let searchQuery = '';
   let showSearchResults = false;
+  let sidebarCollapsed = false;
 
   const searchablePages = [
     { name: 'Dashboard & Metrics', path: '/', category: 'Overview' },
+    { name: 'AI Virtual Receptionists & Voice AI', path: '/ai-assistants', category: 'Voice' },
+    { name: 'AI Appointment Bookings & Calendar', path: '/ai-bookings', category: 'Voice' },
     { name: 'Extensions (SIP Endpoints)', path: '/extensions', category: 'Telephony' },
     { name: 'Call Detail Records (CDRs / Logs)', path: '/call-logs', category: 'Telephony' },
     { name: 'Digital Receptionists (IVR)', path: '/digital-receptionists', category: 'Voice' },
@@ -89,7 +95,8 @@
     { name: 'Call Diverts & Forwarding', path: '/diverts', category: 'Routing' },
     { name: 'Devices & Hardware Handsets', path: '/devices', category: 'Hardware' },
     { name: 'Multi-Tenant Domains', path: '/domains', category: 'Tenancy' },
-    { name: 'Git Version History', path: '/versioning', category: 'System' }
+    { name: 'Git Version History', path: '/versioning', category: 'System' },
+    { name: 'Advanced SIP & RTP Settings', path: '/sip-settings', category: 'System' }
   ];
 
   $: filteredSearch = searchQuery.trim() 
@@ -206,7 +213,18 @@
     '/diverts': Diverts,
     '/forwarding': Diverts,
     '/devices': Devices,
-    '/handsets': Devices
+    '/handsets': Devices,
+    '/sip-settings': SIPSettings,
+    '/sip': SIPSettings,
+    '/rtp': SIPSettings,
+    '/pbx-settings': SIPSettings,
+    '/ai-assistants': AIAssistants,
+    '/ai-assistant': AIAssistants,
+    '/ai-receptionist': AIAssistants,
+    '/ai': AIAssistants,
+    '/ai-bookings': AIBookings,
+    '/bookings': AIBookings,
+    '/appointments': AIBookings
   };
 
   $: normalizedPath = (currentPath.endsWith('/') && currentPath.length > 1) ? currentPath.slice(0, -1) : currentPath;
@@ -227,7 +245,12 @@
     <header class="h-[50px] bg-white border-b border-slate-200 flex items-center justify-between px-4 z-30 flex-shrink-0 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
       <!-- Left: Hamburger / Brand Label -->
       <div class="flex items-center space-x-3">
-        <button type="button" class="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded transition-colors" title="Toggle Navigation">
+        <button 
+          type="button" 
+          on:click={() => sidebarCollapsed = !sidebarCollapsed} 
+          class="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded transition-colors" 
+          title="Toggle Navigation"
+        >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
@@ -299,7 +322,7 @@
 
     <!-- Main Workspace Layout -->
     <div class="flex-1 flex overflow-hidden">
-      <Sidebar />
+      <Sidebar collapsed={sidebarCollapsed} />
 
       <!-- Main Canvas (Always permanent clean light background) -->
       <main class="flex-1 overflow-y-auto bg-[#EEF2F6] text-slate-800 p-5 md:p-6 transition-colors">

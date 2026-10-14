@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"gorm.io/gorm"
 )
 
 var wallboardUpgrader = websocket.Upgrader{
@@ -25,6 +27,22 @@ func HandleWallboardStream(c *gin.Context) {
 		return
 	}
 	defer ws.Close()
+
+	// Parse optional JWT from query parameter for multi-tenant isolation
+	var tenantID uuid.UUID
+	tokenStr := c.Query("token")
+	if tokenStr != "" {
+		token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
+			return jwtSecret, nil
+		})
+		if err == nil && token.Valid {
+			if claims, ok := token.Claims.(jwt.MapClaims); ok {
+				if tIDStr, ok := claims["tenant_id"].(string); ok {
+					tenantID, _ = uuid.Parse(tIDStr)
+				}
+			}
+		}
+	}
 
 	done := make(chan struct{})
 
@@ -48,37 +66,61 @@ func HandleWallboardStream(c *gin.Context) {
 		case <-c.Request.Context().Done():
 			return
 		case <-ticker.C:
+			filterTenant := func(tx *gorm.DB) *gorm.DB {
+				if tenantID != uuid.Nil {
+					return tx.Where("tenant_id = ?", tenantID)
+				}
+				return tx
+			}
+
 			var activeExts int64
-			DB.Model(&Extension{}).Where("is_active = ?", true).Count(&activeExts)
+			filterTenant(DB.Model(&Extension{})).Where("is_active = ?", true).Count(&activeExts)
 
 			var todayCalls int64
-			DB.Model(&CDR{}).Where("created_at >= ?", time.Now().Add(-24*time.Hour)).Count(&todayCalls)
+			filterTenant(DB.Model(&CDR{})).Where("created_at >= ?", time.Now().Add(-24*time.Hour)).Count(&todayCalls)
 
 			var answeredCalls int64
-			DB.Model(&CDR{}).Where("created_at >= ? AND disposition = ?", time.Now().Add(-24*time.Hour), "ANSWERED").Count(&answeredCalls)
+			filterTenant(DB.Model(&CDR{})).Where("created_at >= ? AND hangup_cause = ?", time.Now().Add(-24*time.Hour), "NORMAL_CLEARING").Count(&answeredCalls)
 
 			var avgDuration float64
-			DB.Model(&CDR{}).Where("created_at >= ? AND disposition = ?", time.Now().Add(-24*time.Hour), "ANSWERED").Select("COALESCE(AVG(duration), 0)").Scan(&avgDuration)
+			filterTenant(DB.Model(&CDR{})).Where("created_at >= ? AND billsec > 0", time.Now().Add(-24*time.Hour)).Select("COALESCE(AVG(duration), 0)").Scan(&avgDuration)
 
 			sla := 100
 			if todayCalls > 0 {
 				sla = int((answeredCalls * 100) / todayCalls)
+				if sla > 100 {
+					sla = 100
+				}
 			}
 
-			// Find real Ring Groups
-			var ivrs []IVRMenu
-			DB.Preload("Choices").Where("greeting = ? OR name LIKE ?", "ring_group", "Ring Group:%").Find(&ivrs)
-
 			queueStats := make([]gin.H, 0)
-			for _, ivr := range ivrs {
-				displayName := strings.TrimPrefix(ivr.Name, "Ring Group: ")
-				if displayName == "" {
-					displayName = ivr.Name
+
+			// 1. Real Call Queues (ACD Queues)
+			var queues []CallQueue
+			filterTenant(DB.Preload("Members")).Find(&queues)
+			for _, q := range queues {
+				activeAgents := 0
+				for _, m := range q.Members {
+					if !m.Disabled {
+						activeAgents++
+					}
 				}
 				queueStats = append(queueStats, gin.H{
-					"name":    fmt.Sprintf("%s (Ext %s)", displayName, ivr.Extension),
+					"name":    fmt.Sprintf("%s (Ext %s)", q.Name, q.Extension),
 					"waiting": 0,
-					"agents":  len(ivr.Choices),
+					"agents":  activeAgents,
+					"sla":     sla,
+				})
+			}
+
+			// 2. Real Call Distribution Groups (Ring Groups)
+			var distGroups []CallDistributionGroup
+			filterTenant(DB.Preload("Members")).Find(&distGroups)
+			for _, g := range distGroups {
+				queueStats = append(queueStats, gin.H{
+					"name":    fmt.Sprintf("%s (Ext %s)", g.Name, g.InternalNumber),
+					"waiting": 0,
+					"agents":  len(g.Members),
 					"sla":     sla,
 				})
 			}
