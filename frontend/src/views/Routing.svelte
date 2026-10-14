@@ -29,6 +29,8 @@
   let availableExts: any[] = [];
   let availableIvrs: any[] = [];
   let availableGroups: any[] = [];
+  let availableQueues: any[] = [];
+  let availableAssistants: any[] = [];
   let availableTimeConds: any[] = [];
   let loading = true;
   let loadError = '';
@@ -61,16 +63,22 @@
     loading = true;
     loadError = '';
     try {
-      const [routeData, extData, ivrData, timeData] = await Promise.all([
+      const [routeData, extData, ivrData, timeData, groupData, queueData, aiData] = await Promise.all([
         api.get<{ routes: InboundRouteItem[] }>('/inbound-routes'),
         api.get<{ extensions: any[] }>('/extensions').catch(() => ({ extensions: [] })),
         api.get<{ ivrs: any[] }>('/ivrs').catch(() => ({ ivrs: [] })),
-        api.get<{ conditions: any[] }>('/time-conditions').catch(() => ({ conditions: [] }))
+        api.get<{ conditions: any[] }>('/time-conditions').catch(() => ({ conditions: [] })),
+        api.get<{ ring_groups: any[] }>('/ring-groups').catch(() => ({ ring_groups: [] })),
+        api.get<{ queues: any[] }>('/queues').catch(() => ({ queues: [] })),
+        api.get<{ assistants: any[] }>('/ai/assistants').catch(() => ({ assistants: [] }))
       ]);
       routes = routeData.routes || [];
       availableExts = extData.extensions || [];
       availableIvrs = ivrData.ivrs || [];
       availableTimeConds = timeData.conditions || [];
+      availableGroups = groupData.ring_groups || [];
+      availableQueues = queueData.queues || [];
+      availableAssistants = aiData.assistants || [];
     } catch (e: any) {
       loadError = e.message;
     } finally {
@@ -291,8 +299,9 @@
           <label for="route-dtype" class="label">Primary Destination Type</label>
           <select id="route-dtype" class="input font-semibold" bind:value={form.DestinationType}>
             <option value="EXTENSION">Extension (Desk Phone / User)</option>
+            <option value="AI_ASSISTANT">AI Virtual Receptionist (Conversational AI)</option>
             <option value="IVR">Digital Receptionist (Auto Attendant IVR)</option>
-            <option value="RING_GROUP">Ring Group</option>
+            <option value="RING_GROUP">Ring Group (Hunt Group)</option>
             <option value="QUEUE">Call Queue / Wallboard</option>
             <option value="VOICEMAIL">Voicemail Mailbox</option>
           </select>
@@ -300,16 +309,46 @@
 
         <div>
           <label for="route-target" class="label">Primary Target *</label>
-          {#if form.DestinationType === 'EXTENSION' && availableExts.length > 0}
+          {#if form.DestinationType === 'EXTENSION'}
             <select id="route-target" class="input font-mono" bind:value={form.DestinationTarget}>
+              <option value="">Select Extension...</option>
               {#each availableExts as ext}
-                <option value={ext.ExtensionNumber}>{ext.ExtensionNumber} ({ext.FirstName || ''} {ext.LastName || ''})</option>
+                <option value={ext.ExtensionNumber}>{ext.ExtensionNumber} - {ext.DisplayName || `${ext.FirstName || ''} ${ext.LastName || ''}`.trim() || 'User'}</option>
               {/each}
             </select>
-          {:else if form.DestinationType === 'IVR' && availableIvrs.length > 0}
+          {:else if form.DestinationType === 'AI_ASSISTANT'}
             <select id="route-target" class="input font-mono" bind:value={form.DestinationTarget}>
+              <option value="">Select AI Receptionist...</option>
+              {#each availableAssistants as asst}
+                <option value={asst.ExtensionNumber || asst.Extension || '890'}>🤖 {asst.Name} (Ext {asst.ExtensionNumber || asst.Extension || '890'})</option>
+              {/each}
+            </select>
+          {:else if form.DestinationType === 'IVR'}
+            <select id="route-target" class="input font-mono" bind:value={form.DestinationTarget}>
+              <option value="">Select IVR Menu...</option>
               {#each availableIvrs as ivr}
-                <option value={ivr.Extension}>{ivr.Name} (Ext {ivr.Extension})</option>
+                <option value={ivr.Extension || ivr.Name}>{ivr.Name} (Ext {ivr.Extension})</option>
+              {/each}
+            </select>
+          {:else if form.DestinationType === 'RING_GROUP'}
+            <select id="route-target" class="input font-mono" bind:value={form.DestinationTarget}>
+              <option value="">Select Ring Group...</option>
+              {#each availableGroups as grp}
+                <option value={grp.InternalNumber || grp.Name}>👥 {grp.Name} (Ext {grp.InternalNumber})</option>
+              {/each}
+            </select>
+          {:else if form.DestinationType === 'QUEUE'}
+            <select id="route-target" class="input font-mono" bind:value={form.DestinationTarget}>
+              <option value="">Select Call Queue...</option>
+              {#each availableQueues as q}
+                <option value={q.InternalNumber || q.Extension || q.Name}>⏳ {q.Name} (Ext {q.InternalNumber || q.Extension})</option>
+              {/each}
+            </select>
+          {:else if form.DestinationType === 'VOICEMAIL'}
+            <select id="route-target" class="input font-mono" bind:value={form.DestinationTarget}>
+              <option value="*98">General Company Voicemail (*98)</option>
+              {#each availableExts as ext}
+                <option value={ext.ExtensionNumber}>Voicemail Box {ext.ExtensionNumber} ({ext.DisplayName || 'User'})</option>
               {/each}
             </select>
           {:else}
@@ -328,13 +367,36 @@
             <select id="route-fb-type" class="input" bind:value={form.FallbackDestType}>
               <option value="VOICEMAIL">Voicemail</option>
               <option value="EXTENSION">Colleague Extension</option>
+              <option value="AI_ASSISTANT">AI Virtual Receptionist</option>
               <option value="IVR">Auto Attendant (IVR)</option>
               <option value="HANGUP">Terminate Call</option>
             </select>
           </div>
           <div>
             <label for="route-fb-target" class="label">Failover Target</label>
-            <input id="route-fb-target" class="input mono" bind:value={form.FallbackDestTarget} placeholder="e.g. 1001" />
+            {#if form.FallbackDestType === 'EXTENSION' || form.FallbackDestType === 'VOICEMAIL'}
+              <select id="route-fb-target" class="input font-mono" bind:value={form.FallbackDestTarget}>
+                {#each availableExts as ext}
+                  <option value={ext.ExtensionNumber}>Ext {ext.ExtensionNumber} ({ext.DisplayName || 'User'})</option>
+                {/each}
+              </select>
+            {:else if form.FallbackDestType === 'AI_ASSISTANT'}
+              <select id="route-fb-target" class="input font-mono" bind:value={form.FallbackDestTarget}>
+                {#each availableAssistants as asst}
+                  <option value={asst.ExtensionNumber || asst.Extension || '890'}>🤖 {asst.Name} (Ext {asst.ExtensionNumber || asst.Extension || '890'})</option>
+                {/each}
+              </select>
+            {:else if form.FallbackDestType === 'IVR'}
+              <select id="route-fb-target" class="input font-mono" bind:value={form.FallbackDestTarget}>
+                {#each availableIvrs as ivr}
+                  <option value={ivr.Extension || ivr.Name}>{ivr.Name} (Ext {ivr.Extension})</option>
+                {/each}
+              </select>
+            {:else if form.FallbackDestType === 'HANGUP'}
+              <input id="route-fb-target" class="input mono text-slate-400" value="Hang Up (Normal Disconnect)" disabled />
+            {:else}
+              <input id="route-fb-target" class="input mono" bind:value={form.FallbackDestTarget} placeholder="e.g. 1001" />
+            {/if}
           </div>
         </div>
 

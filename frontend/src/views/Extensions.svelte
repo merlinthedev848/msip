@@ -48,6 +48,14 @@
     VoicemailEnabled: boolean;
     VoicemailPIN: string;
     VoicemailToEmail: boolean;
+    SIPTransport?: string;
+    SRTPMode?: string;
+    Codecs?: string;
+    DTMFMode?: string;
+    NATMode?: string;
+    CallRecording?: string;
+    MaxConcurrentCalls?: number;
+    RingTimeoutSeconds?: number;
     CreatedAt: string;
   }
 
@@ -65,6 +73,11 @@
   let editingExt: ExtensionItem | null = null;
   let generatedPasswordModal: string = '';
 
+  // Handset Key Search & Pagination
+  let keySearch = '';
+  let keyPageSize = 10;
+  let keyCurrentPage = 1;
+
   // Handset Key Modal state
   let keyModalOpen = false;
   let editingKeyIndex: number = -1;
@@ -75,7 +88,7 @@
     description: ''
   };
 
-  // Main Form Data matching Screenshot 1
+  // Main Form Data matching Screenshot 1 + Advanced SIP
   let form = {
     ID: '',
     FirstName: '',
@@ -103,8 +116,26 @@
     ExternalNoAnswerAction: 'Not Set',
     ExternalOnBusyAction: 'Unknown',
     HandsetKeys: [] as HandsetKey[],
-    Password: ''
+    Password: '',
+    // Advanced Settings
+    VoicemailEnabled: true,
+    VoicemailPIN: '1234',
+    VoicemailToEmail: true,
+    SIPTransport: 'UDP',
+    SRTPMode: 'optional',
+    Codecs: 'OPUS, G.722, PCMA, PCMU',
+    DTMFMode: 'rfc2833',
+    NATMode: 'auto-nat',
+    CallRecording: 'disabled',
+    MaxConcurrentCalls: 4,
+    RingTimeoutSeconds: 20
   };
+
+  $: filteredHandsetKeys = form.HandsetKeys.filter(k =>
+    !keySearch.trim() || `${k.key} ${k.label} ${k.type} ${k.description}`.toLowerCase().includes(keySearch.trim().toLowerCase())
+  );
+  $: totalKeyPages = Math.ceil(filteredHandsetKeys.length / keyPageSize) || 1;
+  $: paginatedHandsetKeys = filteredHandsetKeys.slice((keyCurrentPage - 1) * keyPageSize, keyCurrentPage * keyPageSize);
 
   function generatePassword(length = 14): string {
     const charset = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$';
@@ -171,7 +202,18 @@
       ExternalNoAnswerAction: 'Not Set',
       ExternalOnBusyAction: 'Unknown',
       HandsetKeys: [],
-      Password: autoPass
+      Password: autoPass,
+      VoicemailEnabled: true,
+      VoicemailPIN: '1234',
+      VoicemailToEmail: true,
+      SIPTransport: 'UDP',
+      SRTPMode: 'optional',
+      Codecs: 'OPUS, G.722, PCMA, PCMU',
+      DTMFMode: 'rfc2833',
+      NATMode: 'auto-nat',
+      CallRecording: 'disabled',
+      MaxConcurrentCalls: 4,
+      RingTimeoutSeconds: 20
     };
     currentView = 'edit';
   }
@@ -214,7 +256,18 @@
       ExternalNoAnswerAction: ext.ExternalNoAnswerAction || 'Not Set',
       ExternalOnBusyAction: ext.ExternalOnBusyAction || 'Unknown',
       HandsetKeys: parsedKeys,
-      Password: ''
+      Password: '',
+      VoicemailEnabled: ext.VoicemailEnabled ?? true,
+      VoicemailPIN: ext.VoicemailPIN || '1234',
+      VoicemailToEmail: ext.VoicemailToEmail ?? true,
+      SIPTransport: ext.SIPTransport || 'UDP',
+      SRTPMode: ext.SRTPMode || 'optional',
+      Codecs: ext.Codecs || 'OPUS, G.722, PCMA, PCMU',
+      DTMFMode: ext.DTMFMode || 'rfc2833',
+      NATMode: ext.NATMode || 'auto-nat',
+      CallRecording: ext.CallRecording || 'disabled',
+      MaxConcurrentCalls: ext.MaxConcurrentCalls || 4,
+      RingTimeoutSeconds: ext.RingTimeoutSeconds || 20
     };
     currentView = 'edit';
   }
@@ -264,7 +317,18 @@
         ExternalNoAnswerTimeout: Number(form.ExternalNoAnswerTimeout),
         ExternalNoAnswerAction: form.ExternalNoAnswerAction,
         ExternalOnBusyAction: form.ExternalOnBusyAction,
-        HandsetButtons: JSON.stringify(form.HandsetKeys)
+        HandsetButtons: JSON.stringify(form.HandsetKeys),
+        VoicemailEnabled: form.VoicemailEnabled,
+        VoicemailPIN: form.VoicemailPIN.trim(),
+        VoicemailToEmail: form.VoicemailToEmail,
+        SIPTransport: form.SIPTransport,
+        SRTPMode: form.SRTPMode,
+        Codecs: form.Codecs.trim(),
+        DTMFMode: form.DTMFMode,
+        NATMode: form.NATMode,
+        CallRecording: form.CallRecording,
+        MaxConcurrentCalls: Number(form.MaxConcurrentCalls),
+        RingTimeoutSeconds: Number(form.RingTimeoutSeconds)
       };
 
       if (form.Password) {
@@ -896,6 +960,107 @@
         </div>
       </div>
 
+      <!-- CARD: Advanced Telephony, SIP & Media Settings -->
+      <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+        <div class="px-5 py-3 border-b border-slate-100 font-bold text-xs text-slate-800 flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <svg class="w-4 h-4 text-[#0284C7]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span>Advanced SIP, Codecs & Voicemail Settings</span>
+          </div>
+          <span class="text-[11px] text-slate-400 font-normal">Industry-standard FreeSWITCH & 3CX compatible parameters</span>
+        </div>
+        <div class="p-5 grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">SIP Transport Protocol</label>
+            <select bind:value={form.SIPTransport} class="w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-[#0284C7] focus:outline-none font-medium">
+              <option value="UDP">UDP (Standard Telephony)</option>
+              <option value="TCP">TCP (Reliable Stream)</option>
+              <option value="TLS">TLS (Encrypted SIP Signaling)</option>
+              <option value="WSS">WSS (WebRTC Browser / Softphone)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">SRTP Media Encryption</label>
+            <select bind:value={form.SRTPMode} class="w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-[#0284C7] focus:outline-none">
+              <option value="disabled">Disabled (Plain RTP)</option>
+              <option value="optional">Optional (Negotiate SRTP if supported)</option>
+              <option value="mandatory">Mandatory (Require SRTP Crypto)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">DTMF Signaling Mode</label>
+            <select bind:value={form.DTMFMode} class="w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-[#0284C7] focus:outline-none">
+              <option value="rfc2833">RFC 2833 (RTP Event / Standard)</option>
+              <option value="info">SIP INFO</option>
+              <option value="inband">Inband Audio Tones</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">NAT Traversal Mode</label>
+            <select bind:value={form.NATMode} class="w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-[#0284C7] focus:outline-none">
+              <option value="auto-nat">Auto-NAT (Comedia & Force rport)</option>
+              <option value="force-rport">Force rport Only</option>
+              <option value="never">Never (Local LAN only)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Call Recording Policy</label>
+            <select bind:value={form.CallRecording} class="w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-[#0284C7] focus:outline-none">
+              <option value="disabled">Disabled (Do Not Record)</option>
+              <option value="always">Always Record All Calls</option>
+              <option value="external_only">Record External Calls Only</option>
+              <option value="inbound_only">Record Inbound Calls Only</option>
+              <option value="on_demand">On-Demand via Star Code (*1)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Concurrent Channel Limit</label>
+            <select bind:value={form.MaxConcurrentCalls} class="w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-[#0284C7] focus:outline-none font-bold">
+              <option value={1}>1 Line (Call Waiting Off)</option>
+              <option value={2}>2 Concurrent Calls</option>
+              <option value={4}>4 Concurrent Calls (Standard)</option>
+              <option value={8}>8 Concurrent Calls</option>
+              <option value={16}>16 Concurrent Calls (Operator Desk)</option>
+            </select>
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Permitted Audio Codecs (In Priority Order)</label>
+            <input type="text" bind:value={form.Codecs} placeholder="OPUS, G.722, PCMA, PCMU" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-[#0284C7] focus:outline-none font-mono" />
+            <p class="text-[11px] text-slate-400 mt-1">FreeSWITCH prioritizes codecs left-to-right. OPUS provides HD wideband audio with adaptive bitrates.</p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Ring Timeout (Seconds)</label>
+            <input type="number" min="5" max="120" bind:value={form.RingTimeoutSeconds} class="w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-xs focus:ring-1 focus:ring-[#0284C7] focus:outline-none font-bold" />
+          </div>
+
+          <!-- Voicemail Sub-section -->
+          <div class="md:col-span-3 pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 p-3 rounded-lg">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Voicemail PIN</label>
+              <input type="password" bind:value={form.VoicemailPIN} placeholder="1234" class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded text-xs font-mono" />
+            </div>
+            <div class="flex items-center space-x-2 pt-4">
+              <input type="checkbox" id="ext-vm-en" bind:checked={form.VoicemailEnabled} class="rounded border-slate-300 text-sky-600 focus:ring-sky-500" />
+              <label for="ext-vm-en" class="text-xs font-semibold text-slate-800">Voicemail Mailbox Active</label>
+            </div>
+            <div class="flex items-center space-x-2 pt-4">
+              <input type="checkbox" id="ext-vm-email" bind:checked={form.VoicemailToEmail} class="rounded border-slate-300 text-sky-600 focus:ring-sky-500" />
+              <label for="ext-vm-email" class="text-xs font-semibold text-slate-800">Email WAV Audio to User</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- CARD 3: Handset Buttons (Matching Screenshot 1 Bottom Card) -->
       <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
         <div class="px-5 py-3 border-b border-slate-100 font-bold text-xs text-slate-800">
@@ -924,16 +1089,16 @@
           <div class="flex items-center justify-between text-xs text-slate-500 mb-3">
             <div class="flex items-center space-x-1.5">
               <span>Show</span>
-              <select class="border border-slate-300 rounded px-2 py-1 text-xs bg-white">
-                <option>10</option>
-                <option>25</option>
-                <option>50</option>
+              <select bind:value={keyPageSize} on:change={() => keyCurrentPage = 1} class="border border-slate-300 rounded px-2 py-1 text-xs bg-white">
+                <option value={10}>10</option>
+                <option value={25}>25</option>
+                <option value={50}>50</option>
               </select>
               <span>entries</span>
             </div>
             <div class="flex items-center space-x-1.5">
               <span>Search:</span>
-              <input type="text" class="border border-slate-300 rounded px-2 py-1 text-xs bg-white w-40" />
+              <input type="text" bind:value={keySearch} on:input={() => keyCurrentPage = 1} placeholder="Filter keys..." class="border border-slate-300 rounded px-2 py-1 text-xs bg-white w-40" />
             </div>
           </div>
 
@@ -950,7 +1115,7 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100 bg-white">
-                {#each form.HandsetKeys as k, idx}
+                {#each paginatedHandsetKeys as k, idx}
                   <tr class="hover:bg-slate-50 transition-colors">
                     <td class="px-4 py-2.5 font-bold text-slate-900">{k.key}</td>
                     <td class="px-4 py-2.5 text-slate-800">{k.label}</td>
@@ -962,7 +1127,7 @@
                       <div class="inline-flex items-center space-x-2">
                         <button
                           type="button"
-                          on:click={() => editKey(idx)}
+                          on:click={() => editKey((keyCurrentPage - 1) * keyPageSize + idx)}
                           class="p-1 text-slate-500 hover:text-[#0284C7]"
                           title="Edit Key"
                         >
@@ -970,7 +1135,7 @@
                         </button>
                         <button
                           type="button"
-                          on:click={() => removeKey(idx)}
+                          on:click={() => removeKey((keyCurrentPage - 1) * keyPageSize + idx)}
                           class="p-1 text-slate-500 hover:text-rose-600"
                           title="Remove Key"
                         >
@@ -980,10 +1145,10 @@
                     </td>
                   </tr>
                 {/each}
-                {#if form.HandsetKeys.length === 0}
+                {#if filteredHandsetKeys.length === 0}
                   <tr>
                     <td colspan="5" class="px-4 py-6 text-center text-slate-400 bg-slate-50/50">
-                      No data available in table
+                      {keySearch ? 'No matching keys found' : 'No data available in table'}
                     </td>
                   </tr>
                 {/if}
@@ -992,10 +1157,24 @@
           </div>
 
           <div class="flex items-center justify-between text-xs text-slate-500 mt-3">
-            <div>Showing {form.HandsetKeys.length > 0 ? 1 : 0} to {form.HandsetKeys.length} of {form.HandsetKeys.length} entries</div>
+            <div>Showing {filteredHandsetKeys.length > 0 ? (keyCurrentPage - 1) * keyPageSize + 1 : 0} to {Math.min(keyCurrentPage * keyPageSize, filteredHandsetKeys.length)} of {filteredHandsetKeys.length} entries</div>
             <div class="flex space-x-1">
-              <button type="button" class="px-2 py-1 border border-slate-300 rounded text-slate-400 hover:bg-slate-50" disabled>Previous</button>
-              <button type="button" class="px-2 py-1 border border-slate-300 rounded text-slate-400 hover:bg-slate-50" disabled>Next</button>
+              <button
+                type="button"
+                on:click={() => { if (keyCurrentPage > 1) keyCurrentPage--; }}
+                class="px-2 py-1 border border-slate-300 rounded {keyCurrentPage > 1 ? 'text-slate-700 hover:bg-slate-50 cursor-pointer' : 'text-slate-300 cursor-not-allowed'}"
+                disabled={keyCurrentPage <= 1}
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                on:click={() => { if (keyCurrentPage < totalKeyPages) keyCurrentPage++; }}
+                class="px-2 py-1 border border-slate-300 rounded {keyCurrentPage < totalKeyPages ? 'text-slate-700 hover:bg-slate-50 cursor-pointer' : 'text-slate-300 cursor-not-allowed'}"
+                disabled={keyCurrentPage >= totalKeyPages}
+              >
+                Next
+              </button>
             </div>
           </div>
         </div>

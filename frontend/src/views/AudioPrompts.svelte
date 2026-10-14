@@ -32,6 +32,10 @@
 
   let prompts: AudioPrompt[] = [];
   let recordingRules: RecordingRule[] = [];
+  let availableExtensions: { id: string; number: string; label: string }[] = [];
+  let availableQueues: { id: string; number: string; label: string }[] = [];
+  let availableTrunks: { id: string; number: string; label: string }[] = [];
+
   let loading = true;
   let loadError = '';
   let saving = false;
@@ -72,12 +76,33 @@
     loading = true;
     loadError = '';
     try {
-      const [pRes, rRes] = await Promise.all([
-        api.get<{ prompts: AudioPrompt[] }>('/audio-prompts'),
-        api.get<{ rules: RecordingRule[] }>('/recording-rules')
+      const [pRes, rRes, extRes, qRes, trunkRes] = await Promise.all([
+        api.get<{ prompts: AudioPrompt[] }>('/audio-prompts').catch(() => ({ prompts: [] })),
+        api.get<{ rules: RecordingRule[] }>('/recording-rules').catch(() => ({ rules: [] })),
+        api.get<{ extensions: any[] }>('/extensions').catch(() => ({ extensions: [] })),
+        api.get<{ queues: any[] }>('/queues').catch(() => ({ queues: [] })),
+        api.get<{ trunks: any[] }>('/trunks').catch(() => ({ trunks: [] }))
       ]);
       prompts = pRes.prompts || [];
       recordingRules = rRes.rules || [];
+
+      availableExtensions = (extRes.extensions || []).map((e: any) => ({
+        id: e.ID,
+        number: e.ExtensionNumber,
+        label: `Ext ${e.ExtensionNumber} (${e.DisplayName || 'User'})`
+      }));
+
+      availableQueues = (qRes.queues || []).map((q: any) => ({
+        id: q.ID,
+        number: q.Extension || q.Name,
+        label: `Queue: ${q.Name} (${q.Extension || ''})`
+      }));
+
+      availableTrunks = (trunkRes.trunks || []).map((t: any) => ({
+        id: t.ID,
+        number: t.ProviderName,
+        label: `Trunk: ${t.ProviderName} (${t.SIPServer})`
+      }));
     } catch (e: any) {
       loadError = e.message;
     } finally {
@@ -539,15 +564,49 @@
         </select>
       </div>
       <div>
-        <label for="rr-tid" class="block font-medium text-slate-700 mb-1">Target Number / ID</label>
-        <input
-          id="rr-tid"
-          type="text"
-          bind:value={ruleForm.target_id}
-          placeholder={ruleForm.target_type === 'all' ? 'All (Global)' : 'e.g. 1001 or 600'}
-          disabled={ruleForm.target_type === 'all'}
-          class="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:border-sky-500 font-mono disabled:bg-slate-100"
-        />
+        <label for="rr-tid" class="block font-medium text-slate-700 mb-1">Target Selection</label>
+        {#if ruleForm.target_type === 'extension'}
+          <select
+            id="rr-tid"
+            bind:value={ruleForm.target_id}
+            class="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:border-sky-500 bg-white"
+          >
+            <option value="">-- Select Extension --</option>
+            {#each availableExtensions as ext}
+              <option value={ext.number}>{ext.label}</option>
+            {/each}
+          </select>
+        {:else if ruleForm.target_type === 'queue'}
+          <select
+            id="rr-tid"
+            bind:value={ruleForm.target_id}
+            class="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:border-sky-500 bg-white"
+          >
+            <option value="">-- Select Queue --</option>
+            {#each availableQueues as q}
+              <option value={q.number}>{q.label}</option>
+            {/each}
+          </select>
+        {:else if ruleForm.target_type === 'trunk'}
+          <select
+            id="rr-tid"
+            bind:value={ruleForm.target_id}
+            class="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:border-sky-500 bg-white"
+          >
+            <option value="">-- Select SIP Trunk --</option>
+            {#each availableTrunks as t}
+              <option value={t.number}>{t.label}</option>
+            {/each}
+          </select>
+        {:else}
+          <input
+            id="rr-tid"
+            type="text"
+            disabled
+            value="All Endpoints (Tenant-Wide Policy)"
+            class="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:border-sky-500 font-mono disabled:bg-slate-100 italic text-slate-500"
+          />
+        {/if}
       </div>
     </div>
 

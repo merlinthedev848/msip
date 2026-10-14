@@ -32,6 +32,10 @@
   let numbers: TelephoneNumber[] = [];
   let availableExts: ExtensionOption[] = [];
   let availableIvrs: IVROption[] = [];
+  let availableGroups: any[] = [];
+  let availableQueues: any[] = [];
+  let availableAssistants: any[] = [];
+  let availableTrunks: any[] = [];
 
   let loading = true;
   let loadError = '';
@@ -57,14 +61,22 @@
     loading = true;
     loadError = '';
     try {
-      const [numRes, extRes, ivrRes] = await Promise.all([
+      const [numRes, extRes, ivrRes, grpRes, qRes, aiRes, trunkRes] = await Promise.all([
         api.get<{ telephone_numbers: TelephoneNumber[] }>('/telephone-numbers'),
-        api.get<{ extensions: ExtensionOption[] }>('/extensions'),
-        api.get<{ ivrs: IVROption[] }>('/ivrs')
+        api.get<{ extensions: ExtensionOption[] }>('/extensions').catch(() => ({ extensions: [] })),
+        api.get<{ ivrs: IVROption[] }>('/ivrs').catch(() => ({ ivrs: [] })),
+        api.get<{ ring_groups: any[] }>('/ring-groups').catch(() => ({ ring_groups: [] })),
+        api.get<{ queues: any[] }>('/queues').catch(() => ({ queues: [] })),
+        api.get<{ assistants: any[] }>('/ai/assistants').catch(() => ({ assistants: [] })),
+        api.get<{ trunks: any[] }>('/trunks').catch(() => ({ trunks: [] }))
       ]);
       numbers = numRes.telephone_numbers || [];
       availableExts = extRes.extensions || [];
       availableIvrs = ivrRes.ivrs || [];
+      availableGroups = grpRes.ring_groups || [];
+      availableQueues = qRes.queues || [];
+      availableAssistants = aiRes.assistants || [];
+      availableTrunks = trunkRes.trunks || [];
     } catch (e: any) {
       loadError = e.message;
     } finally {
@@ -279,6 +291,7 @@
           class="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:border-sky-500 bg-white"
         >
           <option value="extension">User Extension</option>
+          <option value="ai">AI Virtual Receptionist (Conversational AI)</option>
           <option value="ivr">Auto Attendant Menu (IVR)</option>
           <option value="group">Ring Group</option>
           <option value="queue">Call Center Queue</option>
@@ -293,8 +306,20 @@
             bind:value={form.DestinationTarget}
             class="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:border-sky-500 bg-white"
           >
+            <option value="">Select Extension...</option>
             {#each availableExts as ext}
               <option value={ext.ExtensionNumber}>Ext {ext.ExtensionNumber} ({ext.DisplayName || 'User'})</option>
+            {/each}
+          </select>
+        {:else if form.DestinationType === 'ai'}
+          <select
+            id="tn-desttarget"
+            bind:value={form.DestinationTarget}
+            class="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:border-sky-500 bg-white"
+          >
+            <option value="">Select AI Receptionist...</option>
+            {#each availableAssistants as asst}
+              <option value={asst.ExtensionNumber || asst.Extension || '890'}>🤖 {asst.Name} (Ext {asst.ExtensionNumber || asst.Extension || '890'})</option>
             {/each}
           </select>
         {:else if form.DestinationType === 'ivr'}
@@ -303,8 +328,42 @@
             bind:value={form.DestinationTarget}
             class="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:border-sky-500 bg-white"
           >
+            <option value="">Select IVR Menu...</option>
             {#each availableIvrs as ivr}
               <option value={ivr.Extension || ivr.Name}>{ivr.Name}</option>
+            {/each}
+          </select>
+        {:else if form.DestinationType === 'group'}
+          <select
+            id="tn-desttarget"
+            bind:value={form.DestinationTarget}
+            class="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:border-sky-500 bg-white"
+          >
+            <option value="">Select Ring Group...</option>
+            {#each availableGroups as grp}
+              <option value={grp.InternalNumber || grp.Name}>👥 {grp.Name} (Ext {grp.InternalNumber})</option>
+            {/each}
+          </select>
+        {:else if form.DestinationType === 'queue'}
+          <select
+            id="tn-desttarget"
+            bind:value={form.DestinationTarget}
+            class="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:border-sky-500 bg-white"
+          >
+            <option value="">Select Call Queue...</option>
+            {#each availableQueues as q}
+              <option value={q.InternalNumber || q.Extension || q.Name}>⏳ {q.Name} (Ext {q.InternalNumber || q.Extension})</option>
+            {/each}
+          </select>
+        {:else if form.DestinationType === 'voicemail'}
+          <select
+            id="tn-desttarget"
+            bind:value={form.DestinationTarget}
+            class="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:border-sky-500 bg-white"
+          >
+            <option value="*98">General Company Voicemail (*98)</option>
+            {#each availableExts as ext}
+              <option value={ext.ExtensionNumber}>Voicemail Box {ext.ExtensionNumber} ({ext.DisplayName || 'User'})</option>
             {/each}
           </select>
         {:else}
@@ -321,14 +380,27 @@
     </div>
 
     <div>
-      <label for="tn-prov" class="block font-medium text-slate-700 mb-1">SIP Trunk Provider</label>
-      <input
-        id="tn-prov"
-        type="text"
-        bind:value={form.Provider}
-        placeholder="e.g. Primary Carrier Gateway"
-        class="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:border-sky-500"
-      />
+      <label for="tn-prov" class="block font-medium text-slate-700 mb-1">SIP Trunk Provider Gateway</label>
+      {#if availableTrunks.length > 0}
+        <select
+          id="tn-prov"
+          bind:value={form.Provider}
+          class="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:border-sky-500 bg-white font-medium"
+        >
+          <option value="">Default Gateway</option>
+          {#each availableTrunks as trk}
+            <option value={trk.ProviderName}>{trk.ProviderName} ({trk.SIPServer})</option>
+          {/each}
+        </select>
+      {:else}
+        <input
+          id="tn-prov"
+          type="text"
+          bind:value={form.Provider}
+          placeholder="e.g. Primary Carrier Gateway"
+          class="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:border-sky-500"
+        />
+      {/if}
     </div>
 
     <div class="flex items-center space-x-2 pt-2">

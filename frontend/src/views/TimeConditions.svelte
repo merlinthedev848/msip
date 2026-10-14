@@ -44,6 +44,9 @@
   let holidays: Holiday[] = [];
   let availableExts: OptionItem[] = [];
   let availableIvrs: OptionItem[] = [];
+  let availableRingGroups: OptionItem[] = [];
+  let availableQueues: OptionItem[] = [];
+  let availableAi: OptionItem[] = [];
 
   let loading = true;
   let loadError = '';
@@ -89,11 +92,14 @@
     loading = true;
     loadError = '';
     try {
-      const [tcRes, holRes, extRes, ivrRes] = await Promise.all([
-        api.get<{ time_conditions: TimeCondition[] }>('/time-conditions'),
-        api.get<{ holidays: Holiday[] }>('/holidays'),
-        api.get<{ extensions: any[] }>('/extensions'),
-        api.get<{ ivrs: any[] }>('/ivrs')
+      const [tcRes, holRes, extRes, ivrRes, rgRes, qRes, aiRes] = await Promise.all([
+        api.get<{ time_conditions: TimeCondition[] }>('/time-conditions').catch(() => ({ time_conditions: [] })),
+        api.get<{ holidays: Holiday[] }>('/holidays').catch(() => ({ holidays: [] })),
+        api.get<{ extensions: any[] }>('/extensions').catch(() => ({ extensions: [] })),
+        api.get<{ ivrs: any[] }>('/ivrs').catch(() => ({ ivrs: [] })),
+        api.get<{ ring_groups: any[] }>('/ring-groups').catch(() => ({ ring_groups: [] })),
+        api.get<{ queues: any[] }>('/queues').catch(() => ({ queues: [] })),
+        api.get<{ assistants: any[] }>('/ai/assistants').catch(() => ({ assistants: [] }))
       ]);
 
       conditions = tcRes.time_conditions || [];
@@ -108,7 +114,25 @@
       availableIvrs = (ivrRes.ivrs || []).map((i: any) => ({
         id: i.ID,
         number: i.Extension || i.Name,
-        label: `IVR: ${i.Name}`
+        label: `IVR: ${i.Name} (${i.Extension || 'No Ext'})`
+      }));
+
+      availableRingGroups = (rgRes.ring_groups || []).map((rg: any) => ({
+        id: rg.ID,
+        number: rg.ExtensionNumber || rg.Name,
+        label: `Ring Group: ${rg.Name} (${rg.ExtensionNumber})`
+      }));
+
+      availableQueues = (qRes.queues || []).map((q: any) => ({
+        id: q.ID,
+        number: q.Extension || q.Name,
+        label: `Queue: ${q.Name} (${q.Extension || ''})`
+      }));
+
+      availableAi = (aiRes.assistants || []).map((a: any) => ({
+        id: a.ID,
+        number: a.Extension || a.Name,
+        label: `🤖 AI: ${a.Name} (${a.Extension || ''})`
       }));
     } catch (e: any) {
       loadError = e.message;
@@ -522,21 +546,24 @@
       </div>
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label for="tc-mtype" class="block text-emerald-800 mb-1">Destination Type</label>
+          <label for="tc-mtype" class="block text-emerald-800 mb-1 font-semibold">Destination Type</label>
           <select
             id="tc-mtype"
             bind:value={condForm.matched_dest_type}
             class="w-full px-2.5 py-1.5 border border-emerald-300 rounded bg-white text-xs"
           >
             <option value="ivr">Digital Receptionist (IVR)</option>
+            <option value="ai">🤖 AI Virtual Receptionist</option>
             <option value="extension">Extension Handset</option>
             <option value="ringgroup">Ring Group</option>
             <option value="queue">Call Center Queue</option>
+            <option value="voicemail">Voicemail Box</option>
+            <option value="hangup">Disconnect Call</option>
           </select>
         </div>
         <div>
-          <label for="tc-mval" class="block text-emerald-800 mb-1">Target Number / Choice</label>
-          {#if condForm.matched_dest_type === 'extension'}
+          <label for="tc-mval" class="block text-emerald-800 mb-1 font-semibold">Target Choice</label>
+          {#if condForm.matched_dest_type === 'extension' || condForm.matched_dest_type === 'voicemail'}
             <select
               id="tc-mval"
               bind:value={condForm.matched_dest_val}
@@ -556,12 +583,50 @@
                 <option value={ivr.number}>{ivr.label}</option>
               {/each}
             </select>
+          {:else if condForm.matched_dest_type === 'ai'}
+            <select
+              id="tc-mval"
+              bind:value={condForm.matched_dest_val}
+              class="w-full px-2.5 py-1.5 border border-emerald-300 rounded bg-white text-xs"
+            >
+              {#each availableAi as ai}
+                <option value={ai.number}>{ai.label}</option>
+              {/each}
+            </select>
+          {:else if condForm.matched_dest_type === 'ringgroup'}
+            <select
+              id="tc-mval"
+              bind:value={condForm.matched_dest_val}
+              class="w-full px-2.5 py-1.5 border border-emerald-300 rounded bg-white text-xs"
+            >
+              {#each availableRingGroups as rg}
+                <option value={rg.number}>{rg.label}</option>
+              {/each}
+            </select>
+          {:else if condForm.matched_dest_type === 'queue'}
+            <select
+              id="tc-mval"
+              bind:value={condForm.matched_dest_val}
+              class="w-full px-2.5 py-1.5 border border-emerald-300 rounded bg-white text-xs"
+            >
+              {#each availableQueues as q}
+                <option value={q.number}>{q.label}</option>
+              {/each}
+            </select>
+          {:else if condForm.matched_dest_type === 'hangup'}
+            <input
+              id="tc-mval"
+              type="text"
+              disabled
+              value="Terminates Call Immediately"
+              class="w-full px-2.5 py-1.5 border border-slate-200 rounded bg-slate-100 text-slate-500 text-xs italic"
+            />
           {:else}
             <input
               id="tc-mval"
               type="text"
               bind:value={condForm.matched_dest_val}
-              placeholder="e.g. 8000 or 600"
+              placeholder="Destination value"
               class="w-full px-2.5 py-1.5 border border-emerald-300 rounded bg-white text-xs"
             />
           {/if}
@@ -577,26 +642,90 @@
       </div>
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label for="tc-umtype" class="block text-amber-800 mb-1">Destination Type</label>
+          <label for="tc-umtype" class="block text-amber-800 mb-1 font-semibold">Destination Type</label>
           <select
             id="tc-umtype"
             bind:value={condForm.unmatched_dest_type}
             class="w-full px-2.5 py-1.5 border border-amber-300 rounded bg-white text-xs"
           >
             <option value="voicemail">General Voicemail Box</option>
+            <option value="ai">🤖 AI Virtual Receptionist (Night Service)</option>
             <option value="extension">Night Service Extension</option>
+            <option value="ivr">After-Hours IVR Announcement</option>
+            <option value="ringgroup">After-Hours Ring Group</option>
+            <option value="queue">After-Hours Queue</option>
             <option value="hangup">Disconnect Call</option>
           </select>
         </div>
         <div>
-          <label for="tc-umval" class="block text-amber-800 mb-1">Target Box / Extension</label>
-          <input
-            id="tc-umval"
-            type="text"
-            bind:value={condForm.unmatched_dest_val}
-            placeholder="e.g. 1001"
-            class="w-full px-2.5 py-1.5 border border-amber-300 rounded bg-white text-xs"
-          />
+          <label for="tc-umval" class="block text-amber-800 mb-1 font-semibold">Target Box / Extension</label>
+          {#if condForm.unmatched_dest_type === 'voicemail' || condForm.unmatched_dest_type === 'extension'}
+            <select
+              id="tc-umval"
+              bind:value={condForm.unmatched_dest_val}
+              class="w-full px-2.5 py-1.5 border border-amber-300 rounded bg-white text-xs"
+            >
+              {#each availableExts as ext}
+                <option value={ext.number}>{ext.label}</option>
+              {/each}
+            </select>
+          {:else if condForm.unmatched_dest_type === 'ai'}
+            <select
+              id="tc-umval"
+              bind:value={condForm.unmatched_dest_val}
+              class="w-full px-2.5 py-1.5 border border-amber-300 rounded bg-white text-xs"
+            >
+              {#each availableAi as ai}
+                <option value={ai.number}>{ai.label}</option>
+              {/each}
+            </select>
+          {:else if condForm.unmatched_dest_type === 'ivr'}
+            <select
+              id="tc-umval"
+              bind:value={condForm.unmatched_dest_val}
+              class="w-full px-2.5 py-1.5 border border-amber-300 rounded bg-white text-xs"
+            >
+              {#each availableIvrs as ivr}
+                <option value={ivr.number}>{ivr.label}</option>
+              {/each}
+            </select>
+          {:else if condForm.unmatched_dest_type === 'ringgroup'}
+            <select
+              id="tc-umval"
+              bind:value={condForm.unmatched_dest_val}
+              class="w-full px-2.5 py-1.5 border border-amber-300 rounded bg-white text-xs"
+            >
+              {#each availableRingGroups as rg}
+                <option value={rg.number}>{rg.label}</option>
+              {/each}
+            </select>
+          {:else if condForm.unmatched_dest_type === 'queue'}
+            <select
+              id="tc-umval"
+              bind:value={condForm.unmatched_dest_val}
+              class="w-full px-2.5 py-1.5 border border-amber-300 rounded bg-white text-xs"
+            >
+              {#each availableQueues as q}
+                <option value={q.number}>{q.label}</option>
+              {/each}
+            </select>
+          {:else if condForm.unmatched_dest_type === 'hangup'}
+            <input
+              id="tc-umval"
+              type="text"
+              disabled
+              value="Terminates Call Immediately"
+              class="w-full px-2.5 py-1.5 border border-slate-200 rounded bg-slate-100 text-slate-500 text-xs italic"
+            />
+          {:else}
+            <input
+              id="tc-umval"
+              type="text"
+              bind:value={condForm.unmatched_dest_val}
+              placeholder="e.g. 1001"
+              class="w-full px-2.5 py-1.5 border border-amber-300 rounded bg-white text-xs"
+            />
+          {/if}
         </div>
       </div>
     </div>
@@ -668,27 +797,90 @@
       </div>
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label for="h-dtype" class="block text-purple-800 mb-1">Routing Destination</label>
+          <label for="h-dtype" class="block text-purple-800 mb-1 font-semibold">Routing Destination</label>
           <select
             id="h-dtype"
             bind:value={holidayForm.dest_type}
             class="w-full px-2.5 py-1.5 border border-purple-300 rounded bg-white text-xs"
           >
             <option value="voicemail">Holiday Voicemail Greeting</option>
+            <option value="ai">🤖 AI Virtual Receptionist (Holiday Desk)</option>
             <option value="ivr">Holiday IVR Announcement</option>
             <option value="extension">On-Call Duty Extension</option>
+            <option value="ringgroup">Emergency Ring Group</option>
+            <option value="queue">Emergency Queue</option>
             <option value="hangup">Disconnect Call</option>
           </select>
         </div>
         <div>
-          <label for="h-dval" class="block text-purple-800 mb-1">Target Value / Box</label>
-          <input
-            id="h-dval"
-            type="text"
-            bind:value={holidayForm.dest_val}
-            placeholder="e.g. 1001 or holiday_prompt"
-            class="w-full px-2.5 py-1.5 border border-purple-300 rounded bg-white text-xs"
-          />
+          <label for="h-dval" class="block text-purple-800 mb-1 font-semibold">Target Choice</label>
+          {#if holidayForm.dest_type === 'extension' || holidayForm.dest_type === 'voicemail'}
+            <select
+              id="h-dval"
+              bind:value={holidayForm.dest_val}
+              class="w-full px-2.5 py-1.5 border border-purple-300 rounded bg-white text-xs"
+            >
+              {#each availableExts as ext}
+                <option value={ext.number}>{ext.label}</option>
+              {/each}
+            </select>
+          {:else if holidayForm.dest_type === 'ai'}
+            <select
+              id="h-dval"
+              bind:value={holidayForm.dest_val}
+              class="w-full px-2.5 py-1.5 border border-purple-300 rounded bg-white text-xs"
+            >
+              {#each availableAi as ai}
+                <option value={ai.number}>{ai.label}</option>
+              {/each}
+            </select>
+          {:else if holidayForm.dest_type === 'ivr'}
+            <select
+              id="h-dval"
+              bind:value={holidayForm.dest_val}
+              class="w-full px-2.5 py-1.5 border border-purple-300 rounded bg-white text-xs"
+            >
+              {#each availableIvrs as ivr}
+                <option value={ivr.number}>{ivr.label}</option>
+              {/each}
+            </select>
+          {:else if holidayForm.dest_type === 'ringgroup'}
+            <select
+              id="h-dval"
+              bind:value={holidayForm.dest_val}
+              class="w-full px-2.5 py-1.5 border border-purple-300 rounded bg-white text-xs"
+            >
+              {#each availableRingGroups as rg}
+                <option value={rg.number}>{rg.label}</option>
+              {/each}
+            </select>
+          {:else if holidayForm.dest_type === 'queue'}
+            <select
+              id="h-dval"
+              bind:value={holidayForm.dest_val}
+              class="w-full px-2.5 py-1.5 border border-purple-300 rounded bg-white text-xs"
+            >
+              {#each availableQueues as q}
+                <option value={q.number}>{q.label}</option>
+              {/each}
+            </select>
+          {:else if holidayForm.dest_type === 'hangup'}
+            <input
+              id="h-dval"
+              type="text"
+              disabled
+              value="Terminates Call Immediately"
+              class="w-full px-2.5 py-1.5 border border-slate-200 rounded bg-slate-100 text-slate-500 text-xs italic"
+            />
+          {:else}
+            <input
+              id="h-dval"
+              type="text"
+              bind:value={holidayForm.dest_val}
+              placeholder="e.g. 1001 or holiday_prompt"
+              class="w-full px-2.5 py-1.5 border border-purple-300 rounded bg-white text-xs"
+            />
+          {/if}
         </div>
       </div>
     </div>

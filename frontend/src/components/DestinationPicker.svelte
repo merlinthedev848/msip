@@ -8,9 +8,10 @@
   const dispatch = createEventDispatcher();
 
   let modalOpen = false;
-  let activeCategory: 'extension' | 'menu' | 'queue' | 'group' | 'voicemail' | 'external' | 'hangup' = 'extension';
+  let activeCategory: 'extension' | 'ai' | 'group' | 'queue' | 'menu' | 'voicemail' | 'external' | 'hangup' = 'extension';
 
   let extensions: any[] = [];
+  let aiAssistants: any[] = [];
   let menus: any[] = [];
   let queues: any[] = [];
   let groups: any[] = [];
@@ -18,13 +19,15 @@
 
   onMount(async () => {
     try {
-      const [extRes, ivrRes, qRes, rgRes] = await Promise.all([
+      const [extRes, aiRes, ivrRes, qRes, rgRes] = await Promise.all([
         api.get<{ extensions: any[] }>('/extensions').catch(() => ({ extensions: [] })),
+        api.get<{ assistants: any[] }>('/ai/assistants').catch(() => ({ assistants: [] })),
         api.get<{ ivrs: any[] }>('/ivrs').catch(() => ({ ivrs: [] })),
         api.get<{ queues: any[] }>('/queues').catch(() => ({ queues: [] })),
         api.get<{ ring_groups: any[] }>('/ring-groups').catch(() => ({ ring_groups: [] }))
       ]);
       extensions = extRes.extensions || [];
+      aiAssistants = aiRes.assistants || [];
       menus = ivrRes.ivrs || [];
       queues = qRes.queues || [];
       groups = rgRes.ring_groups || [];
@@ -39,6 +42,7 @@
 
   function getIcon(val: string): string {
     if (!val || val === 'Not Set' || val === 'Unknown') return '?';
+    if (val.toLowerCase().includes('ai') || val.toLowerCase().includes('sarah') || val.toLowerCase().includes('receptionist')) return '🤖';
     if (val.toLowerCase().includes('end call') || val.toLowerCase().includes('hangup')) return '🛑';
     if (val.toLowerCase().includes('menu') || val.toLowerCase().includes('ivr')) return '≡';
     if (val.toLowerCase().includes('group') || val.toLowerCase().includes('hunt')) return '👥';
@@ -109,6 +113,13 @@
         </button>
         <button
           type="button"
+          on:click={() => activeCategory = 'ai'}
+          class="px-3 py-2 font-semibold border-b-2 whitespace-nowrap {activeCategory === 'ai' ? 'border-[#0284C7] text-[#0284C7] bg-white rounded-t' : 'border-transparent text-slate-600 hover:text-slate-900'}"
+        >
+          AI Assistant
+        </button>
+        <button
+          type="button"
           on:click={() => activeCategory = 'group'}
           class="px-3 py-2 font-semibold border-b-2 whitespace-nowrap {activeCategory === 'group' ? 'border-[#0284C7] text-[#0284C7] bg-white rounded-t' : 'border-transparent text-slate-600 hover:text-slate-900'}"
         >
@@ -170,6 +181,29 @@
             {/each}
             {#if extensions.length === 0}
               <div class="col-span-2 text-center py-6 text-slate-400 text-xs">No extensions configured</div>
+            {/if}
+          </div>
+
+        {:else if activeCategory === 'ai'}
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {#each aiAssistants as asst}
+              <button
+                type="button"
+                on:click={() => choose(`AI: ${asst.Name} (Ext ${asst.ExtensionNumber || asst.Extension || '890'})`)}
+                class="p-2.5 text-left border rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition-colors flex items-center justify-between group"
+              >
+                <div>
+                  <div class="font-bold text-xs text-indigo-900 group-hover:text-indigo-600 flex items-center space-x-1">
+                    <span>🤖</span>
+                    <span>{asst.Name}</span>
+                  </div>
+                  <div class="text-[11px] text-slate-500">Ext {asst.ExtensionNumber || asst.Extension || '890'} • {asst.RoleDescription || asst.RoleType || 'Virtual Receptionist'}</div>
+                </div>
+                <span class="text-xs text-indigo-400 group-hover:text-indigo-600">→</span>
+              </button>
+            {/each}
+            {#if aiAssistants.length === 0}
+              <div class="col-span-2 text-center py-6 text-slate-400 text-xs">No AI assistants configured yet. Visit AI & Voice Intelligence to activate one.</div>
             {/if}
           </div>
 

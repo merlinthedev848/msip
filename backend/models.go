@@ -129,6 +129,15 @@ type Extension struct {
 	VoicemailEnabled bool   `gorm:"default:true" json:"VoicemailEnabled"`
 	VoicemailPIN     string `gorm:"size:20" json:"VoicemailPIN"`
 	VoicemailToEmail bool   `gorm:"default:true" json:"VoicemailToEmail"`
+
+	// Advanced SIP, Codec & Media Encryption Settings
+	SIPTransport       string `gorm:"size:20;default:'UDP'" json:"SIPTransport"`       // UDP, TCP, TLS, WSS
+	SRTPMode           string `gorm:"size:20;default:'optional'" json:"SRTPMode"`      // disabled, optional, mandatory
+	Codecs             string `gorm:"size:100;default:'OPUS,G722,PCMA,PCMU'" json:"Codecs"`
+	DTMFMode           string `gorm:"size:20;default:'rfc2833'" json:"DTMFMode"`       // rfc2833, info, inband
+	NATMode            string `gorm:"size:20;default:'auto-nat'" json:"NATMode"`       // auto-nat, force-rport, never
+	CallRecording      string `gorm:"size:30;default:'disabled'" json:"CallRecording"` // disabled, always, external_only, inbound_only, on_demand
+	MaxConcurrentCalls int    `gorm:"default:4" json:"MaxConcurrentCalls"`
 }
 
 type InboundRoute struct {
@@ -177,8 +186,12 @@ type Trunk struct {
 	Codecs         string `gorm:"size:100;default:'PCMU,PCMA,G722'" json:"Codecs"`
 	FromDomain     string `gorm:"size:100" json:"FromDomain"`
 	OutboundProxy  string `gorm:"size:100" json:"OutboundProxy"`
-	CallerIDNumber string `gorm:"size:50" json:"CallerIDNumber"`
-	IsActive       bool   `gorm:"default:true" json:"IsActive"`
+	CallerIDNumber     string `gorm:"size:50" json:"CallerIDNumber"`
+	DTMFMode           string `gorm:"size:20;default:'rfc2833'" json:"DTMFMode"` // rfc2833, info, inband
+	QualifyFrequency   int    `gorm:"default:60" json:"QualifyFrequency"`       // seconds between SIP OPTIONS pings (0 to disable)
+	RegistrationExpiry int    `gorm:"default:3600" json:"RegistrationExpiry"`   // registration expiry in seconds
+	DirectMedia        bool   `gorm:"default:false" json:"DirectMedia"`         // RTP direct media / bypass PBX
+	IsActive           bool   `gorm:"default:true" json:"IsActive"`
 }
 
 // CDR stores Call Detail Records pushed by FreeSWITCH

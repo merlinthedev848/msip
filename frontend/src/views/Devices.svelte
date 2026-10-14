@@ -89,6 +89,27 @@
     modalOpen = true;
   }
 
+  const BRAND_PRESETS = [
+    'Yealink T46U (16-Line Gigabit IP Phone)',
+    'Yealink T48U (7-inch Touchscreen Executive)',
+    'Yealink T54W (Built-in Bluetooth & Wi-Fi)',
+    'Yealink T33G (Entry-Level 4-Line Phone)',
+    'Yealink W73P (Cordless DECT Handset & Base)',
+    'Grandstream GRP2614 (Carrier-Grade Dual-Screen)',
+    'Grandstream GRP2615 (10-Line Professional)',
+    'Grandstream GXP2170 (12-Line Enterprise)',
+    'Grandstream HT802 (2-Port Analog Telephone Adapter)',
+    'Fanvil X6U (High-End 20-Line Phone)',
+    'Fanvil V64 (Prime Business Phone with Wi-Fi)',
+    'Fanvil i10V (SIP Video Intercom / Door Station)',
+    'Poly VVX 450 (12-Line IP Desk Phone)',
+    'Poly Edge E450 (8-Key Color IP Phone)',
+    'Cisco 8841 (Gigabit Multiplatform Firmware)',
+    'Cisco 8851 (Multiplatform with Bluetooth/USB)',
+    'Snom D785 (Dual Display Desk Phone)',
+    'Generic HD SIP Phone'
+  ];
+
   async function rebootDevice(d: Device) {
     if (!confirm(`Send remote SIP check-sync reboot signal to handset ${d.BrandModel} (${d.MACAddress})?`)) return;
     try {
@@ -102,7 +123,6 @@
   async function save(e: Event) {
     e.preventDefault();
     if (!form.MACAddress.trim()) return toast.error('MAC address is required');
-    if (!form.ExtensionNumber.trim()) return toast.error('Assigned extension is required');
 
     saving = true;
     try {
@@ -276,11 +296,17 @@
         <input
           id="dev-brand"
           type="text"
+          list="brand-presets-list"
           bind:value={form.BrandModel}
-          placeholder="e.g. Yealink T46U, Grandstream GRP2614"
+          placeholder="Select preset or type model"
           required
           class="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:border-sky-500"
         />
+        <datalist id="brand-presets-list">
+          {#each BRAND_PRESETS as preset}
+            <option value={preset}></option>
+          {/each}
+        </datalist>
       </div>
       <div>
         <label for="dev-ext" class="block font-medium text-slate-700 mb-1">Assigned Extension</label>
@@ -289,11 +315,26 @@
           bind:value={form.ExtensionNumber}
           class="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:border-sky-500 bg-white"
         >
+          <option value="">-- Unassigned (Hot-Desking Pool) --</option>
           {#each availableExts as ext}
             <option value={ext.ExtensionNumber}>Ext {ext.ExtensionNumber} ({ext.DisplayName || 'User'})</option>
           {/each}
         </select>
       </div>
+    </div>
+
+    <!-- Provisioning Guide Pill -->
+    <div class="p-3 bg-sky-50/70 border border-sky-200 rounded-lg text-xs space-y-1">
+      <div class="font-semibold text-sky-900 flex items-center">
+        <svg class="w-3.5 h-3.5 mr-1 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        Auto-Provisioning URL (HTTP/HTTPS)
+      </div>
+      <p class="text-sky-700">Enter this configuration URL in your handset's Auto-Provision / Upgrade menu:</p>
+      <code class="block bg-white px-2 py-1 border border-sky-300 rounded text-sky-900 font-mono text-[11px] select-all">
+        {window.location.origin}/provision/
+      </code>
     </div>
 
     <div class="grid grid-cols-2 gap-4">

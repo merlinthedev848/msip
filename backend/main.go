@@ -489,6 +489,28 @@ func SetupRouter() *gin.Engine {
 				record.VoicemailPIN = input.VoicemailPIN
 				record.VoicemailToEmail = input.VoicemailToEmail
 
+				if input.SIPTransport != "" {
+					record.SIPTransport = input.SIPTransport
+				}
+				if input.SRTPMode != "" {
+					record.SRTPMode = input.SRTPMode
+				}
+				if input.Codecs != "" {
+					record.Codecs = input.Codecs
+				}
+				if input.DTMFMode != "" {
+					record.DTMFMode = input.DTMFMode
+				}
+				if input.NATMode != "" {
+					record.NATMode = input.NATMode
+				}
+				if input.CallRecording != "" {
+					record.CallRecording = input.CallRecording
+				}
+				if input.MaxConcurrentCalls > 0 {
+					record.MaxConcurrentCalls = input.MaxConcurrentCalls
+				}
+
 				if err := DB.Save(&record).Error; err != nil {
 					c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 					return
@@ -590,6 +612,16 @@ func SetupRouter() *gin.Engine {
 				if input.CallerIDNumber != "" {
 					record.CallerIDNumber = input.CallerIDNumber
 				}
+				if input.DTMFMode != "" {
+					record.DTMFMode = input.DTMFMode
+				}
+				if input.QualifyFrequency >= 0 {
+					record.QualifyFrequency = input.QualifyFrequency
+				}
+				if input.RegistrationExpiry > 0 {
+					record.RegistrationExpiry = input.RegistrationExpiry
+				}
+				record.DirectMedia = input.DirectMedia
 				record.Register = input.Register
 				record.IsActive = input.IsActive
 				DB.Save(&record)

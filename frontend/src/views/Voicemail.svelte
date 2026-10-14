@@ -6,6 +6,7 @@
   import Card from '../components/ui/Card.svelte';
   import Button from '../components/ui/Button.svelte';
   import Badge from '../components/ui/Badge.svelte';
+  import Modal from '../components/ui/Modal.svelte';
   import EmptyState from '../components/ui/EmptyState.svelte';
 
   interface VoicemailItem {
@@ -26,12 +27,55 @@
   let loadError = '';
   let search = '';
   let transcribing: Record<string, boolean> = {};
-  let expandedVoicemail: string | null = null;
+  let playingAudioId: string | null = null;
+
+  // Voicemail Server & AI Settings Modal
+  let settingsModalOpen = false;
+  let settingsSaving = false;
+  let settingsForm = {
+    auto_transcribe_voicemail: true,
+    stt_provider: 'whisper',
+    sentiment_analysis: true,
+    email_transcripts: false,
+    notification_email: ''
+  };
 
   $: filtered = voicemails.filter(v => 
     !search.trim() || 
     `${v.Extension} ${v.CallerID} ${v.Transcription || ''} ${v.Summary || ''}`.toLowerCase().includes(search.trim().toLowerCase())
   );
+
+  async function openSettings() {
+    try {
+      const res = await api.get<{ settings: any }>('/ai/settings');
+      if (res.settings) {
+        settingsForm = {
+          auto_transcribe_voicemail: res.settings.auto_transcribe_voicemail ?? true,
+          stt_provider: res.settings.stt_provider || 'whisper',
+          sentiment_analysis: res.settings.sentiment_analysis ?? true,
+          email_transcripts: res.settings.email_transcripts ?? false,
+          notification_email: res.settings.notification_email || ''
+        };
+      }
+    } catch {
+      // Use defaults if not found
+    }
+    settingsModalOpen = true;
+  }
+
+  async function saveSettings(e: Event) {
+    e.preventDefault();
+    settingsSaving = true;
+    try {
+      await api.put('/ai/settings', settingsForm);
+      toast.success('Voicemail server & AI settings saved');
+      settingsModalOpen = false;
+    } catch (err: any) {
+      toastError(err);
+    } finally {
+      settingsSaving = false;
+    }
+  }
 
   async function load() {
     loading = true;
@@ -96,7 +140,16 @@
 </script>
 
 <PageHeader title="Voicemail Server" description="Stored audio messages, Whisper AI transcription, and caller sentiment analysis.">
-  <Button variant="secondary" on:click={load}>Refresh</Button>
+  <div class="flex gap-2">
+    <Button variant="secondary" on:click={openSettings}>
+      <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+      Server & AI Settings
+    </Button>
+    <Button variant="secondary" on:click={load}>Refresh</Button>
+  </div>
 </PageHeader>
 
 <Card padded={false} title="Mailbox Messages" subtitle="{voicemails.length} recordings with AI transcriptions">
@@ -177,9 +230,24 @@
                     </button>
                   </div>
                 {/if}
+
+                {#if playingAudioId === v.ID}
+                  <div class="mt-2 p-2 bg-slate-100 rounded flex items-center gap-2">
+                    <audio controls class="h-8 w-full max-w-xs" src="/api/v1/voicemails/{v.ID}/audio" preload="none">
+                      Your browser does not support the audio player.
+                    </audio>
+                  </div>
+                {/if}
               </td>
               <td class="text-xs text-slate-500 whitespace-nowrap align-top pt-3">{formatDateTime(v.CreatedAt)}</td>
               <td class="text-right space-x-3 whitespace-nowrap align-top pt-3">
+                <button 
+                  type="button" 
+                  class="link-action text-sky-600 hover:text-sky-800"
+                  on:click={() => playingAudioId = playingAudioId === v.ID ? null : v.ID}
+                >
+                  {playingAudioId === v.ID ? 'Hide Audio' : 'Play Audio'}
+                </button>
                 {#if !v.Transcription}
                   <button 
                     type="button" 
@@ -202,3 +270,98 @@
     </div>
   {/if}
 </Card>
+
+<!-- Voicemail Server & AI Settings Modal -->
+<Modal
+  open={settingsModalOpen}
+  title="Voicemail Server & AI Transcription Settings"
+  on:close={() => settingsModalOpen = false}
+>
+  <form on:submit={saveSettings} class="space-y-4 text-xs">
+    <div class="space-y-3 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+      <div class="flex items-start space-x-3">
+        <input
+          id="vm-auto-transcribe"
+          type="checkbox"
+          bind:checked={settingsForm.auto_transcribe_voicemail}
+          class="mt-1 h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+        />
+        <div>
+          <label for="vm-auto-transcribe" class="font-semibold text-slate-800 cursor-pointer">
+            Auto-Transcribe New Voicemails with AI (Whisper)
+          </label>
+          <p class="text-slate-500 text-[11px] mt-0.5">
+            Immediately run speech-to-text upon voicemail completion and generate executive summaries.
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-start space-x-3">
+        <input
+          id="vm-sentiment"
+          type="checkbox"
+          bind:checked={settingsForm.sentiment_analysis}
+          class="mt-1 h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+        />
+        <div>
+          <label for="vm-sentiment" class="font-semibold text-slate-800 cursor-pointer">
+            Perform Sentiment Analysis
+          </label>
+          <p class="text-slate-500 text-[11px] mt-0.5">
+            Classify voicemail tone as positive, neutral, or urgent/negative for supervisor review.
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-start space-x-3">
+        <input
+          id="vm-email-transcripts"
+          type="checkbox"
+          bind:checked={settingsForm.email_transcripts}
+          class="mt-1 h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+        />
+        <div>
+          <label for="vm-email-transcripts" class="font-semibold text-slate-800 cursor-pointer">
+            Email Audio & Transcript to Recipient
+          </label>
+          <p class="text-slate-500 text-[11px] mt-0.5">
+            Dispatch MP3 attachment and full text transcript to the extension user's email address.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <label for="vm-stt" class="block font-medium text-slate-700 mb-1">Speech Recognition (STT) Provider</label>
+      <select
+        id="vm-stt"
+        bind:value={settingsForm.stt_provider}
+        class="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:border-sky-500 bg-white"
+      >
+        <option value="whisper">OpenAI Whisper (Cloud / Local)</option>
+        <option value="deepgram">Deepgram Nova-2 (Ultra-fast)</option>
+        <option value="google">Google Cloud Speech-to-Text</option>
+        <option value="vosk">Vosk (On-Premise / Offline)</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="vm-admin-email" class="block font-medium text-slate-700 mb-1">Central Compliance Notification Email (Optional)</label>
+      <input
+        id="vm-admin-email"
+        type="email"
+        bind:value={settingsForm.notification_email}
+        placeholder="voicemail-archive@company.com"
+        class="w-full px-3 py-2 border border-slate-200 rounded-md focus:outline-none focus:border-sky-500 font-mono"
+      />
+      <p class="text-[11px] text-slate-500 mt-1">Receive carbon-copy (BCC) transcripts for compliance audits.</p>
+    </div>
+
+    <div class="flex justify-end space-x-3 pt-3 border-t border-slate-200">
+      <Button variant="secondary" type="button" on:click={() => settingsModalOpen = false}>Cancel</Button>
+      <Button variant="primary" type="submit" disabled={settingsSaving}>
+        {settingsSaving ? 'Saving...' : 'Save Voicemail Settings'}
+      </Button>
+    </div>
+  </form>
+</Modal>

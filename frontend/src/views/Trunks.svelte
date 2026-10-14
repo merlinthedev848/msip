@@ -23,6 +23,10 @@
     FromDomain: string;
     OutboundProxy: string;
     CallerIDNumber: string;
+    DTMFMode?: string;
+    QualifyFrequency?: number;
+    RegistrationExpiry?: number;
+    DirectMedia?: boolean;
     IsActive: boolean;
   }
 
@@ -50,6 +54,10 @@
     FromDomain: '',
     OutboundProxy: '',
     CallerIDNumber: '',
+    DTMFMode: 'rfc2833',
+    QualifyFrequency: 60,
+    RegistrationExpiry: 3600,
+    DirectMedia: false,
     IsActive: true
   };
 
@@ -87,6 +95,10 @@
       FromDomain: '',
       OutboundProxy: '',
       CallerIDNumber: '',
+      DTMFMode: 'rfc2833',
+      QualifyFrequency: 60,
+      RegistrationExpiry: 3600,
+      DirectMedia: false,
       IsActive: true
     };
     modalOpen = true;
@@ -109,6 +121,10 @@
       FromDomain: t.FromDomain || '',
       OutboundProxy: t.OutboundProxy || '',
       CallerIDNumber: t.CallerIDNumber || '',
+      DTMFMode: t.DTMFMode || 'rfc2833',
+      QualifyFrequency: t.QualifyFrequency ?? 60,
+      RegistrationExpiry: t.RegistrationExpiry ?? 3600,
+      DirectMedia: t.DirectMedia ?? false,
       IsActive: t.IsActive ?? true
     };
     modalOpen = true;
@@ -134,6 +150,10 @@
         FromDomain: form.FromDomain.trim() || form.SIPServer.trim(),
         OutboundProxy: form.OutboundProxy.trim(),
         CallerIDNumber: form.CallerIDNumber.trim(),
+        DTMFMode: form.DTMFMode,
+        QualifyFrequency: Number(form.QualifyFrequency) || 0,
+        RegistrationExpiry: Number(form.RegistrationExpiry) || 3600,
+        DirectMedia: form.DirectMedia,
         IsActive: form.IsActive
       };
 
@@ -358,13 +378,33 @@
         </div>
 
         <div>
-          <label for="trunk-from-domain" class="label">SIP From Domain</label>
-          <input id="trunk-from-domain" class="input mono" bind:value={form.FromDomain} placeholder="Domain sent in SIP From header" />
+          <label for="trunk-dtmf" class="label">DTMF Signaling Mode</label>
+          <select id="trunk-dtmf" class="input" bind:value={form.DTMFMode}>
+            <option value="rfc2833">RFC 2833 / RFC 4733 (Out-of-band RTP Events - Recommended)</option>
+            <option value="info">SIP INFO (Application/DTMF-Relay)</option>
+            <option value="inband">Inband Audio (Tone within audio stream)</option>
+          </select>
+          <p class="text-[11px] text-slate-500 mt-1">Tone delivery protocol for IVRs and carrier touch-tones.</p>
         </div>
 
         <div>
-          <label for="trunk-proxy" class="label">Outbound Proxy (Optional)</label>
-          <input id="trunk-proxy" class="input mono" bind:value={form.OutboundProxy} placeholder="e.g. sip-proxy.carrier.com" />
+          <label for="trunk-qualify" class="label">Qualify Keepalive Interval (seconds)</label>
+          <input id="trunk-qualify" type="number" min="0" max="600" class="input mono" bind:value={form.QualifyFrequency} placeholder="60" />
+          <p class="text-[11px] text-slate-500 mt-1">Frequency of SIP OPTIONS keepalive pings (0 to disable).</p>
+        </div>
+
+        <div>
+          <label for="trunk-expiry" class="label">Registration Expiry (seconds)</label>
+          <input id="trunk-expiry" type="number" min="60" max="86400" class="input mono" bind:value={form.RegistrationExpiry} placeholder="3600" />
+          <p class="text-[11px] text-slate-500 mt-1">SIP Registration TTL requested from upstream carrier.</p>
+        </div>
+
+        <div class="sm:col-span-2 flex items-center space-x-2 pt-2 border-t border-slate-200">
+          <input id="trunk-direct-media" type="checkbox" bind:checked={form.DirectMedia} class="rounded border-slate-300 text-sky-600 focus:ring-sky-500" />
+          <div>
+            <label for="trunk-direct-media" class="text-xs font-semibold text-slate-800 cursor-pointer">Direct Media / RTP Audio Bypass (Re-INVITE)</label>
+            <p class="text-[11px] text-slate-500">Allows audio stream to travel directly between carrier and endpoint, reducing PBX server load.</p>
+          </div>
         </div>
       </div>
     {/if}

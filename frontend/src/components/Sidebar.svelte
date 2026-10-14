@@ -101,6 +101,22 @@
     }
   ];
 
+  // Auto-expand accordion when a child route is active
+  $: if (currentPath) {
+    let changed = false;
+    navItems.forEach(item => {
+      if (item.children && item.children.some(c => c.path === currentPath)) {
+        if (!item.expanded) {
+          item.expanded = true;
+          changed = true;
+        }
+      }
+    });
+    if (changed) {
+      navItems = [...navItems];
+    }
+  }
+
   function toggleItem(index: number) {
     if (navItems[index].children) {
       navItems[index].expanded = !navItems[index].expanded;
