@@ -224,7 +224,7 @@ func SeedDefaults() {
 		}
 		hash, _ := bcrypt.GenerateFromPassword([]byte("admin123"), bcrypt.DefaultCost)
 		defaultUser := User{
-			Base:         Base{ID: uuid.New()},
+			ID:           uuid.New(),
 			TenantID:     tenant.ID,
 			Email:        "admin@pbx.local",
 			PasswordHash: string(hash),
