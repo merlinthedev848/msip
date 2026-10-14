@@ -707,13 +707,18 @@ type AIAssistant struct {
 	TenantRef
 	Name               string `gorm:"size:100;not null" json:"name"`
 	Extension          string `gorm:"size:50;not null;uniqueIndex:idx_tenant_ai_ext" json:"extension"`
+	ExtensionNumber    string `gorm:"size:50" json:"extension_number,omitempty"`
 	RoleType           string `gorm:"size:50;default:'receptionist'" json:"role_type"` // receptionist, booking, ivr, support
+	RoleDescription    string `gorm:"size:255" json:"role_description,omitempty"`
 	Greeting           string `gorm:"size:500" json:"greeting"`
+	GreetingMessage    string `gorm:"size:500" json:"greeting_message,omitempty"`
 	SystemPrompt       string `gorm:"type:text" json:"system_prompt"`
 	LLMProvider        string `gorm:"size:50;default:'openai'" json:"llm_provider"` // openai, claude, gemini, ollama
 	LLMModel           string `gorm:"size:100;default:'gpt-4o'" json:"llm_model"`
 	VoiceProvider      string `gorm:"size:50;default:'openai'" json:"voice_provider"` // openai, elevenlabs, deepgram, system
+	TTSProvider        string `gorm:"size:50" json:"tts_provider,omitempty"`
 	VoiceName          string `gorm:"size:50;default:'alloy'" json:"voice_name"`
+	VoiceID            string `gorm:"size:50" json:"voice_id,omitempty"`
 	Language           string `gorm:"size:20;default:'en-US'" json:"language"`
 	EnableBooking      bool   `gorm:"default:true" json:"enable_booking"`
 	EnableTransfer     bool   `gorm:"default:true" json:"enable_transfer"`
@@ -721,6 +726,43 @@ type AIAssistant struct {
 	EnableVoicemail    bool   `gorm:"default:true" json:"enable_voicemail"`
 	MaxCallDurationSec int    `gorm:"default:600" json:"max_call_duration_sec"`
 	IsActive           bool   `gorm:"default:true" json:"is_active"`
+}
+
+func (a *AIAssistant) EffectiveGreeting() string {
+	if a.Greeting != "" {
+		return a.Greeting
+	}
+	if a.GreetingMessage != "" {
+		return a.GreetingMessage
+	}
+	return "Hello! How may I assist you today?"
+}
+
+func (a *AIAssistant) EffectiveVoice() string {
+	if a.VoiceName != "" {
+		return a.VoiceName
+	}
+	if a.VoiceID != "" {
+		return a.VoiceID
+	}
+	return "alloy"
+}
+
+func (a *AIAssistant) EffectiveVoiceProvider() string {
+	if a.VoiceProvider != "" {
+		return a.VoiceProvider
+	}
+	if a.TTSProvider != "" {
+		return a.TTSProvider
+	}
+	return "openai"
+}
+
+func (a *AIAssistant) EffectiveExtension() string {
+	if a.Extension != "" {
+		return a.Extension
+	}
+	return a.ExtensionNumber
 }
 
 // AIBooking manages appointments scheduled by the conversational AI agent

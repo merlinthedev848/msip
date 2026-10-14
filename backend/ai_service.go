@@ -242,12 +242,44 @@ func RegisterAIRoutes(v1 *gin.RouterGroup) {
 			return
 		}
 		input.TenantID = getTenantID(c)
+		if input.Extension == "" && input.ExtensionNumber != "" {
+			input.Extension = input.ExtensionNumber
+		}
+		if input.ExtensionNumber == "" && input.Extension != "" {
+			input.ExtensionNumber = input.Extension
+		}
+		if input.Greeting == "" && input.GreetingMessage != "" {
+			input.Greeting = input.GreetingMessage
+		}
+		if input.GreetingMessage == "" && input.Greeting != "" {
+			input.GreetingMessage = input.Greeting
+		}
+		if input.VoiceProvider == "" && input.TTSProvider != "" {
+			input.VoiceProvider = input.TTSProvider
+		}
+		if input.TTSProvider == "" && input.VoiceProvider != "" {
+			input.TTSProvider = input.VoiceProvider
+		}
+		if input.VoiceName == "" && input.VoiceID != "" {
+			input.VoiceName = input.VoiceID
+		}
+		if input.VoiceID == "" && input.VoiceName != "" {
+			input.VoiceID = input.VoiceName
+		}
+		if input.RoleType == "" && input.RoleDescription != "" {
+			input.RoleType = input.RoleDescription
+		}
+		if input.RoleDescription == "" && input.RoleType != "" {
+			input.RoleDescription = input.RoleType
+		}
+
 		if input.Name == "" || input.Extension == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Assistant Name and Extension are required"})
 			return
 		}
 		if input.Greeting == "" {
 			input.Greeting = "Hello! I am your AI telephony assistant. How can I help you today?"
+			input.GreetingMessage = input.Greeting
 		}
 
 		if err := DB.Create(&input).Error; err != nil {
@@ -271,15 +303,38 @@ func RegisterAIRoutes(v1 *gin.RouterGroup) {
 			return
 		}
 
+		if input.Extension == "" && input.ExtensionNumber != "" {
+			input.Extension = input.ExtensionNumber
+		}
+		if input.Greeting == "" && input.GreetingMessage != "" {
+			input.Greeting = input.GreetingMessage
+		}
+		if input.VoiceProvider == "" && input.TTSProvider != "" {
+			input.VoiceProvider = input.TTSProvider
+		}
+		if input.VoiceName == "" && input.VoiceID != "" {
+			input.VoiceName = input.VoiceID
+		}
+		if input.RoleType == "" && input.RoleDescription != "" {
+			input.RoleType = input.RoleDescription
+		}
+
 		record.Name = input.Name
-		record.Extension = input.Extension
+		if input.Extension != "" {
+			record.Extension = input.Extension
+			record.ExtensionNumber = input.Extension
+		}
 		record.RoleType = input.RoleType
+		record.RoleDescription = input.RoleType
 		record.Greeting = input.Greeting
+		record.GreetingMessage = input.Greeting
 		record.SystemPrompt = input.SystemPrompt
 		record.LLMProvider = input.LLMProvider
 		record.LLMModel = input.LLMModel
 		record.VoiceProvider = input.VoiceProvider
+		record.TTSProvider = input.VoiceProvider
 		record.VoiceName = input.VoiceName
+		record.VoiceID = input.VoiceName
 		record.Language = input.Language
 		record.EnableBooking = input.EnableBooking
 		record.EnableTransfer = input.EnableTransfer

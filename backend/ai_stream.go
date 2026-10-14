@@ -74,10 +74,15 @@ func HandleAIStream(c *gin.Context) {
 		assistant = AIAssistant{
 			Base:            Base{ID: uuid.New()},
 			Name:            "Sarah - Virtual Assistant",
+			Extension:       "890",
+			ExtensionNumber: "890",
+			Greeting:        "Hello, thank you for calling MSIP PBX. How may I direct your call or assist you today?",
 			GreetingMessage: "Hello, thank you for calling MSIP PBX. How may I direct your call or assist you today?",
 			LLMProvider:     "openai",
 			LLMModel:        "gpt-4o",
+			VoiceProvider:   "openai",
 			TTSProvider:     "openai",
+			VoiceName:       "alloy",
 			VoiceID:         "alloy",
 			EnableBooking:   true,
 			EnableTransfer:  true,
@@ -104,10 +109,7 @@ func HandleAIStream(c *gin.Context) {
 
 	// In-memory conversation turns
 	conversation := []AIMessage{}
-	greeting := assistant.GreetingMessage
-	if greeting == "" {
-		greeting = "Hello, how can I help you today?"
-	}
+	greeting := assistant.EffectiveGreeting()
 
 	conversation = append(conversation, AIMessage{
 		Role:    "assistant",
@@ -119,8 +121,8 @@ func HandleAIStream(c *gin.Context) {
 	welcomePayload := AIStreamOutgoingMsg{
 		Event:    "tts_playback",
 		Text:     greeting,
-		Voice:    assistant.VoiceID,
-		Provider: assistant.TTSProvider,
+		Voice:    assistant.EffectiveVoice(),
+		Provider: assistant.EffectiveVoiceProvider(),
 	}
 	welcomeBytes, _ := json.Marshal(welcomePayload)
 	_ = ws.SetWriteDeadline(time.Now().Add(5 * time.Second))
@@ -203,8 +205,8 @@ func HandleAIStream(c *gin.Context) {
 			outMsg := AIStreamOutgoingMsg{
 				Event:     "tts_playback",
 				Text:      reply,
-				Voice:     assistant.VoiceID,
-				Provider:  assistant.TTSProvider,
+				Voice:     assistant.EffectiveVoice(),
+				Provider:  assistant.EffectiveVoiceProvider(),
 				ToolCalls: tools,
 			}
 			outBytes, _ := json.Marshal(outMsg)

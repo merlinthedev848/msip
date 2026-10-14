@@ -324,7 +324,8 @@ func handleDialplan(c *gin.Context) {
 
 		// Dynamic AI Assistants (e.g. extension 890 or custom numbers)
 		for _, asst := range aiAssistants {
-			if asst.ExtensionNumber != "" {
+			ext := asst.EffectiveExtension()
+			if ext != "" {
 				sb.WriteString(fmt.Sprintf(`
       <!-- Dynamic AI Assistant: %s (%s) -->
       <extension name="ai_assistant_%s">
@@ -335,7 +336,7 @@ func handleDialplan(c *gin.Context) {
           <action application="park"/>
         </condition>
       </extension>
-`, xmlEscape(asst.Name), xmlEscape(asst.ExtensionNumber), xmlEscape(asst.ID.String()[:8]), xmlEscape(asst.ExtensionNumber), xmlEscape(asst.ID.String()), xmlEscape(asst.ID.String())))
+`, xmlEscape(asst.Name), xmlEscape(ext), xmlEscape(asst.ID.String()[:8]), xmlEscape(ext), xmlEscape(asst.ID.String()), xmlEscape(asst.ID.String())))
 			}
 		}
 

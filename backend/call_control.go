@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 // RegisterCallControlRoutes registers enterprise PBX call control and voice feature APIs

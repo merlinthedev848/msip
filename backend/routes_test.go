@@ -805,7 +805,7 @@ func TestAIAssistantsCRUD(t *testing.T) {
 	if err := json.Unmarshal(wCreate.Body.Bytes(), &created); err != nil {
 		t.Fatalf("failed to decode created assistant: %v", err)
 	}
-	if created.ID == uuid.Nil || created.ExtensionNumber != "891" {
+	if created.ID == uuid.Nil || (created.ExtensionNumber != "891" && created.Extension != "891") {
 		t.Fatalf("unexpected created assistant data: %+v", created)
 	}
 
@@ -895,6 +895,7 @@ func TestAISimulatorAndTools(t *testing.T) {
 		Base:            Base{ID: uuid.New()},
 		TenantRef:       TenantRef{TenantID: tenantA},
 		Name:            "Sarah Receptionist",
+		Extension:       "890",
 		ExtensionNumber: "890",
 		EnableBooking:   true,
 		EnableTransfer:  true,
@@ -1019,6 +1020,7 @@ func TestFreeSWITCHAIDialplan(t *testing.T) {
 		Base:            Base{ID: uuid.New()},
 		TenantRef:       TenantRef{TenantID: tenantA},
 		Name:            "Sarah AI",
+		Extension:       "890",
 		ExtensionNumber: "890",
 		IsActive:        true,
 	}
