@@ -166,7 +166,7 @@ func TestHealthEndpoint(t *testing.T) {
 func TestAuthLogin(t *testing.T) {
 	setupTestEnvironment(t)
 
-	// Valid login
+	// Valid login via /api/auth/login
 	loginBody := `{"email": "admin@alpha.local", "password": "admin123"}`
 	w := performRequest(testRouter, "POST", "/api/auth/login", []byte(loginBody), "")
 	if w.Code != http.StatusOK {
@@ -176,6 +176,18 @@ func TestAuthLogin(t *testing.T) {
 	json.Unmarshal(w.Body.Bytes(), &res)
 	if res["token"] == nil || res["token"] == "" {
 		t.Fatalf("expected token in response")
+	}
+
+	// Valid login via /api/v1/auth/login (direct frontend / nginx path)
+	wV1 := performRequest(testRouter, "POST", "/api/v1/auth/login", []byte(loginBody), "")
+	if wV1.Code != http.StatusOK {
+		t.Fatalf("expected 200 for /api/v1/auth/login, got %d: %s", wV1.Code, wV1.Body.String())
+	}
+
+	// Valid login via /auth/login
+	wShort := performRequest(testRouter, "POST", "/auth/login", []byte(loginBody), "")
+	if wShort.Code != http.StatusOK {
+		t.Fatalf("expected 200 for /auth/login, got %d: %s", wShort.Code, wShort.Body.String())
 	}
 
 	// Invalid password

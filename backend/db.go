@@ -209,4 +209,31 @@ func SeedDefaults() {
 			log.Printf("Seeded default AI assistant: %s (Ext %s)", defaultAssistant.Name, defaultAssistant.Extension)
 		}
 	}
+
+	// Always guarantee at least one superadmin account exists
+	var userCount int64
+	DB.Model(&User{}).Count(&userCount)
+	if userCount == 0 {
+		var tenant Tenant
+		if err := DB.First(&tenant).Error; err != nil {
+			tenant = Tenant{
+				Name:   "Default Organization",
+				Domain: "pbx.local",
+			}
+			_ = DB.Create(&tenant)
+		}
+		hash, _ := bcrypt.GenerateFromPassword([]byte("admin123"), bcrypt.DefaultCost)
+		defaultUser := User{
+			Base:         Base{ID: uuid.New()},
+			TenantID:     tenant.ID,
+			Email:        "admin@pbx.local",
+			PasswordHash: string(hash),
+			Role:         "superadmin",
+		}
+		if err := DB.Create(&defaultUser).Error; err != nil {
+			log.Printf("Error creating default admin user: %v", err)
+		} else {
+			log.Printf("Seeded guaranteed admin user: %s (password: admin123)", defaultUser.Email)
+		}
+	}
 }

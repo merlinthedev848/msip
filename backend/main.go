@@ -146,12 +146,15 @@ func SetupRouter() *gin.Engine {
 	r := gin.Default()
 	r.Use(CORSMiddleware())
 
-	// Normalize /api/v1/ prefix to /api/ so direct backend calls succeed
-	r.Use(func(c *gin.Context) {
-		if strings.HasPrefix(c.Request.URL.Path, "/api/v1/") {
-			c.Request.URL.Path = "/api/" + strings.TrimPrefix(c.Request.URL.Path, "/api/v1/")
+	// Route handler fallback for /api/v1/ prefix rewriting so direct backend calls succeed
+	r.NoRoute(func(c *gin.Context) {
+		path := c.Request.URL.Path
+		if strings.HasPrefix(path, "/api/v1/") {
+			c.Request.URL.Path = "/api/" + strings.TrimPrefix(path, "/api/v1/")
+			r.HandleContext(c)
+			return
 		}
-		c.Next()
+		c.JSON(http.StatusNotFound, gin.H{"error": "Endpoint not found: " + path})
 	})
 
 	r.GET("/health", func(c *gin.Context) {
@@ -297,59 +300,63 @@ func SetupRouter() *gin.Engine {
 			})
 		})
 
-		// Authentication
-		auth := api.Group("/auth")
-		{
-			auth.POST("/login", func(c *gin.Context) {
-				var req struct {
-					Email    string `json:"email"`
-					Password string `json:"password"`
-				}
-				if err := c.ShouldBindJSON(&req); err != nil {
-					c.JSON(http.StatusBadRequest, gin.H{"error": "Email and password are required"})
-					return
-				}
+		// Authentication Handler
+		loginHandler := func(c *gin.Context) {
+			var req struct {
+				Email    string `json:"email"`
+				Password string `json:"password"`
+			}
+			if err := c.ShouldBindJSON(&req); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Email and password are required"})
+				return
+			}
 
-				req.Email = strings.TrimSpace(strings.ToLower(req.Email))
-				if req.Email == "" || req.Password == "" {
-					c.JSON(http.StatusBadRequest, gin.H{"error": "Email and password cannot be empty"})
-					return
-				}
+			req.Email = strings.TrimSpace(strings.ToLower(req.Email))
+			if req.Email == "" || req.Password == "" {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Email and password cannot be empty"})
+				return
+			}
 
-				var user User
-				if err := DB.Where("LOWER(email) = ?", req.Email).First(&user).Error; err != nil {
-					c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
-					return
-				}
+			var user User
+			if err := DB.Where("LOWER(email) = ?", req.Email).First(&user).Error; err != nil {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+				return
+			}
 
-				if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
-					c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
-					return
-				}
+			if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
+				return
+			}
 
-				token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-					"sub":       user.ID.String(),
-					"tenant_id": user.TenantID.String(),
-					"role":      user.Role,
-					"exp":       time.Now().Add(time.Hour * 24).Unix(),
-				})
-				tokenString, err := token.SignedString(jwtSecret)
-				if err != nil {
-					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
-					return
-				}
+			token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+				"sub":       user.ID.String(),
+				"tenant_id": user.TenantID.String(),
+				"role":      user.Role,
+				"exp":       time.Now().Add(time.Hour * 24).Unix(),
+			})
+			tokenString, err := token.SignedString(jwtSecret)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+				return
+			}
 
-				c.JSON(http.StatusOK, gin.H{
-					"token": tokenString,
-					"user": gin.H{
-						"id":       user.ID,
-						"email":    user.Email,
-						"role":     user.Role,
-						"tenantId": user.TenantID,
-					},
-				})
+			c.JSON(http.StatusOK, gin.H{
+				"token": tokenString,
+				"user": gin.H{
+					"id":       user.ID,
+					"email":    user.Email,
+					"role":     user.Role,
+					"tenantId": user.TenantID,
+				},
 			})
 		}
+
+		auth := api.Group("/auth")
+		{
+			auth.POST("/login", loginHandler)
+		}
+		r.POST("/api/v1/auth/login", loginHandler)
+		r.POST("/auth/login", loginHandler)
 
 		// Protected Routes
 		v1 := api.Group("")

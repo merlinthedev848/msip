@@ -123,7 +123,7 @@ const backendOnlyMissingInKrakenD = [];
 for (const [key, file] of backendRoutes.entries()) {
   if (file.endsWith('_test.go')) continue;
   const [method, path] = key.split(' ');
-  if (['/health', '/api/health', '/fs', '/fs/curl', '/cdr'].includes(path)) continue;
+  if (['/health', '/api/health', '/fs', '/fs/curl', '/cdr', '/api/v1/auth/login', '/auth/login'].includes(path)) continue;
   if (path.startsWith('/ai/stream') || path.startsWith('/wallboard/stream')) continue; // ws handled in nginx
 
   let kPath = '/api/v1' + path.replace(/:([a-zA-Z0-9_]+)/g, '{$1}');
