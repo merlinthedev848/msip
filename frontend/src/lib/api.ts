@@ -81,6 +81,7 @@ export const api = {
   post: <T = any>(path: string, body?: unknown) => request<T>('POST', path, body ?? {}),
   put: <T = any>(path: string, body?: unknown) => request<T>('PUT', path, body ?? {}),
   del: <T = any>(path: string) => request<T>('DELETE', path),
+  delete: <T = any>(path: string) => request<T>('DELETE', path),
 };
 
 /** Builds an absolute ws:// or wss:// URL for a same-origin API path. */

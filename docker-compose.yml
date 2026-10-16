@@ -27,6 +27,7 @@ services:
     container_name: pbx_backend
     environment:
       - DATABASE_URL=postgres://${DB_USER:-pbxuser}:${DB_PASS:-pbxpass}@postgres:5432/${DB_NAME:-pbx}?sslmode=disable
+      - JWT_SECRET=${JWT_SECRET:-supersecretjwtkeythatshouldbechangedinprod}
     volumes:
       - pbx_recordings:/var/lib/pbx/recordings
     ports:
@@ -90,6 +91,7 @@ services:
     container_name: pbx_freeswitch
     volumes:
       - ./telephony-core/freeswitch.xml:/usr/local/freeswitch/conf/freeswitch.xml:ro
+      - ./telephony-core/xml_curl.conf.xml:/usr/local/freeswitch/conf/autoload_configs/xml_curl.conf.xml:ro
       - ./telephony-core/certs:/usr/local/freeswitch/certs:ro
       - pbx_recordings:/usr/local/freeswitch/recordings
     ports:
@@ -123,6 +125,8 @@ services:
       - POSTGRES_USER=homer
       - POSTGRES_PASSWORD=homer
       - POSTGRES_DB=homer_data
+    volumes:
+      - homer_pgdata:/var/lib/postgresql/data
     networks:
       - internal
     restart: unless-stopped

@@ -2,7 +2,10 @@
   export let title = '';
   export let subtitle = '';
   export let padded = true;
+  export let padding: 'default' | 'none' | undefined = undefined;
   export let className = '';
+
+  $: isPadded = padding === 'none' ? false : padded;
 </script>
 
 <section class="bg-white border border-slate-200 rounded-lg shadow-sm {className}">
@@ -15,7 +18,7 @@
       <div class="flex items-center gap-2"><slot name="actions" /></div>
     </header>
   {/if}
-  <div class={padded ? 'p-5' : ''}>
+  <div class={isPadded ? 'p-5' : ''}>
     <slot />
   </div>
 </section>

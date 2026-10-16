@@ -28,6 +28,7 @@
   let search = '';
   let transcribing: Record<string, boolean> = {};
   let playingAudioId: string | null = null;
+  let expandedVoicemail: string | null = null;
 
   // Voicemail Server & AI Settings Modal
   let settingsModalOpen = false;

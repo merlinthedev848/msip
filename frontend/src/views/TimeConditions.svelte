@@ -102,37 +102,37 @@
         api.get<{ assistants: any[] }>('/ai/assistants').catch(() => ({ assistants: [] }))
       ]);
 
-      conditions = tcRes.time_conditions || [];
+      conditions = tcRes.time_conditions || (tcRes as any).conditions || [];
       holidays = holRes.holidays || [];
 
       availableExts = (extRes.extensions || []).map((e: any) => ({
-        id: e.ID,
-        number: e.ExtensionNumber,
-        label: `Ext ${e.ExtensionNumber} (${e.DisplayName || 'User'})`
+        id: e.ID || e.id,
+        number: e.ExtensionNumber || e.InternalNumber,
+        label: `Ext ${e.ExtensionNumber || e.InternalNumber} (${e.DisplayName || 'User'})`
       }));
 
       availableIvrs = (ivrRes.ivrs || []).map((i: any) => ({
-        id: i.ID,
+        id: i.ID || i.id,
         number: i.Extension || i.Name,
         label: `IVR: ${i.Name} (${i.Extension || 'No Ext'})`
       }));
 
       availableRingGroups = (rgRes.ring_groups || []).map((rg: any) => ({
-        id: rg.ID,
-        number: rg.ExtensionNumber || rg.Name,
-        label: `Ring Group: ${rg.Name} (${rg.ExtensionNumber})`
+        id: rg.ID || rg.id,
+        number: rg.InternalNumber || rg.ExtensionNumber || rg.Name,
+        label: `Ring Group: ${rg.Name} (${rg.InternalNumber || rg.ExtensionNumber || ''})`
       }));
 
       availableQueues = (qRes.queues || []).map((q: any) => ({
-        id: q.ID,
-        number: q.Extension || q.Name,
-        label: `Queue: ${q.Name} (${q.Extension || ''})`
+        id: q.ID || q.id,
+        number: q.InternalNumber || q.Extension || q.Name,
+        label: `Queue: ${q.Name} (${q.InternalNumber || q.Extension || ''})`
       }));
 
       availableAi = (aiRes.assistants || []).map((a: any) => ({
-        id: a.ID,
-        number: a.Extension || a.Name,
-        label: `🤖 AI: ${a.Name} (${a.Extension || ''})`
+        id: a.ID || a.id,
+        number: a.ExtensionNumber || a.extension_number || a.Extension || a.Name,
+        label: `🤖 AI: ${a.Name || a.name} (${a.ExtensionNumber || a.extension_number || a.Extension || ''})`
       }));
     } catch (e: any) {
       loadError = e.message;

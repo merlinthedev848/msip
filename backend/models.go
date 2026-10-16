@@ -1,6 +1,9 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -454,6 +457,10 @@ type AutoCLIP struct {
 	ExpiresAt         time.Time `json:"expires_at"`
 }
 
+func (AutoCLIP) TableName() string {
+	return "auto_clips"
+}
+
 // PagingGroup defines intercom/paging broadcast groups
 type PagingGroup struct {
 	Base
@@ -462,6 +469,55 @@ type PagingGroup struct {
 	Number     string `gorm:"size:50;not null;uniqueIndex:idx_tenant_paging_num" json:"number"`
 	DuplexMode string `gorm:"size:20;default:'one-way'" json:"duplex_mode"` // "one-way" or "two-way"
 	Members    string `gorm:"type:text;not null" json:"members"`
+}
+
+func (p *PagingGroup) UnmarshalJSON(data []byte) error {
+	type Alias PagingGroup
+	aux := struct {
+		*Alias
+		RawMembers interface{} `json:"members"`
+	}{
+		Alias: (*Alias)(p),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	switch v := aux.RawMembers.(type) {
+	case string:
+		p.Members = v
+	case []interface{}:
+		var parts []string
+		for _, item := range v {
+			parts = append(parts, fmt.Sprint(item))
+		}
+		p.Members = strings.Join(parts, ",")
+	}
+	return nil
+}
+
+func (p PagingGroup) MarshalJSON() ([]byte, error) {
+	type Alias PagingGroup
+	var list []string
+	if p.Members != "" {
+		for _, s := range strings.Split(p.Members, ",") {
+			s = strings.TrimSpace(s)
+			if s != "" {
+				list = append(list, s)
+			}
+		}
+	}
+	if list == nil {
+		list = []string{}
+	}
+	return json.Marshal(&struct {
+		Alias
+		ID      uuid.UUID `json:"id"`
+		Members []string  `json:"members"`
+	}{
+		Alias:   Alias(p),
+		ID:      p.ID,
+		Members: list,
+	})
 }
 
 // PickupGroup allows users to grab ringing calls with *8
@@ -473,6 +529,55 @@ type PickupGroup struct {
 	Members string `gorm:"type:text;not null" json:"members"`
 }
 
+func (p *PickupGroup) UnmarshalJSON(data []byte) error {
+	type Alias PickupGroup
+	aux := struct {
+		*Alias
+		RawMembers interface{} `json:"members"`
+	}{
+		Alias: (*Alias)(p),
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	switch v := aux.RawMembers.(type) {
+	case string:
+		p.Members = v
+	case []interface{}:
+		var parts []string
+		for _, item := range v {
+			parts = append(parts, fmt.Sprint(item))
+		}
+		p.Members = strings.Join(parts, ",")
+	}
+	return nil
+}
+
+func (p PickupGroup) MarshalJSON() ([]byte, error) {
+	type Alias PickupGroup
+	var list []string
+	if p.Members != "" {
+		for _, s := range strings.Split(p.Members, ",") {
+			s = strings.TrimSpace(s)
+			if s != "" {
+				list = append(list, s)
+			}
+		}
+	}
+	if list == nil {
+		list = []string{}
+	}
+	return json.Marshal(&struct {
+		Alias
+		ID      uuid.UUID `json:"id"`
+		Members []string  `json:"members"`
+	}{
+		Alias:   Alias(p),
+		ID:      p.ID,
+		Members: list,
+	})
+}
+
 // AudioPrompt manages MoH playlists, system prompts, and custom audio files
 type AudioPrompt struct {
 	Base
@@ -482,6 +587,25 @@ type AudioPrompt struct {
 	Description string `gorm:"size:255" json:"description"`
 	FilePath    string `gorm:"size:255;not null" json:"file_path"`
 	IsDefault   bool   `gorm:"default:false" json:"is_default"`
+}
+
+func (a AudioPrompt) MarshalJSON() ([]byte, error) {
+	type Alias AudioPrompt
+	return json.Marshal(&struct {
+		Alias
+		IDUpper   uuid.UUID `json:"ID"`
+		IDLower   uuid.UUID `json:"id"`
+		NameUpper string    `json:"Name"`
+		CreatedUp time.Time `json:"CreatedAt"`
+		CreatedLo time.Time `json:"created_at"`
+	}{
+		Alias:     Alias(a),
+		IDUpper:   a.ID,
+		IDLower:   a.ID,
+		NameUpper: a.Name,
+		CreatedUp: a.CreatedAt,
+		CreatedLo: a.CreatedAt,
+	})
 }
 
 // FeatureCode lists and configures dialed feature codes
@@ -852,4 +976,101 @@ func DefaultAITranscriptionSettings(tenantID uuid.UUID) AITranscriptionSettings 
 		EmailTranscripts:         false,
 		NotificationEmail:        "",
 	}
+}
+
+func (a AIAssistant) MarshalJSON() ([]byte, error) {
+	type Alias AIAssistant
+	return json.Marshal(&struct {
+		Alias
+		IDUpper       uuid.UUID `json:"ID"`
+		IDLower       uuid.UUID `json:"id"`
+		NameUpper     string    `json:"Name"`
+		ExtensionUp   string    `json:"Extension"`
+		ExtNumUp      string    `json:"ExtensionNumber"`
+		RoleDescUp    string    `json:"RoleDescription"`
+		GreetingMsgUp string    `json:"GreetingMessage"`
+		LLMProvUp     string    `json:"LLMProvider"`
+		LLMModelUp    string    `json:"LLMModel"`
+		TTSProvUp     string    `json:"TTSProvider"`
+		VoiceIDUp     string    `json:"VoiceID"`
+		IsActiveUp    bool      `json:"IsActive"`
+	}{
+		Alias:         Alias(a),
+		IDUpper:       a.ID,
+		IDLower:       a.ID,
+		NameUpper:     a.Name,
+		ExtensionUp:   a.EffectiveExtension(),
+		ExtNumUp:       a.EffectiveExtension(),
+		RoleDescUp:    a.RoleDescription,
+		GreetingMsgUp: a.EffectiveGreeting(),
+		LLMProvUp:     a.LLMProvider,
+		LLMModelUp:    a.LLMModel,
+		TTSProvUp:     a.EffectiveVoiceProvider(),
+		VoiceIDUp:     a.EffectiveVoice(),
+		IsActiveUp:    a.IsActive,
+	})
+}
+
+func (b AIBooking) MarshalJSON() ([]byte, error) {
+	type Alias AIBooking
+	return json.Marshal(&struct {
+		Alias
+		IDUpper         uuid.UUID `json:"ID"`
+		IDLower         uuid.UUID `json:"id"`
+		AssistantNameUp string    `json:"AssistantName"`
+		CallerNumberUp  string    `json:"CallerNumber"`
+		CallerNameUp    string    `json:"CallerName"`
+		ServiceTypeUp   string    `json:"ServiceType"`
+		BookingDateUp   string    `json:"BookingDate"`
+		BookingTimeUp   string    `json:"BookingTime"`
+		DurationMinUp   int       `json:"DurationMinutes"`
+		StatusUp        string    `json:"Status"`
+		CallUUIDUp      string    `json:"CallUUID"`
+		CreatedAtUp     time.Time `json:"CreatedAt"`
+	}{
+		Alias:           Alias(b),
+		IDUpper:         b.ID,
+		IDLower:         b.ID,
+		AssistantNameUp: b.AssistantName,
+		CallerNumberUp:  b.CallerNumber,
+		CallerNameUp:    b.CallerName,
+		ServiceTypeUp:   b.ServiceType,
+		BookingDateUp:   b.BookingDate,
+		BookingTimeUp:   b.BookingTime,
+		DurationMinUp:   b.DurationMinutes,
+		StatusUp:        b.Status,
+		CallUUIDUp:      b.CallUUID,
+		CreatedAtUp:     b.CreatedAt,
+	})
+}
+
+func (s AICallSession) MarshalJSON() ([]byte, error) {
+	type Alias AICallSession
+	return json.Marshal(&struct {
+		Alias
+		IDUpper         uuid.UUID `json:"ID"`
+		IDLower         uuid.UUID `json:"id"`
+		AssistantNameUp string    `json:"AssistantName"`
+		CallUUIDUp      string    `json:"CallUUID"`
+		CallerNumberUp  string    `json:"CallerNumber"`
+		SummaryUp       string    `json:"Summary"`
+		SentimentUp     string    `json:"Sentiment"`
+		ActionTakenUp   string    `json:"ActionTaken"`
+		MessagesJSONUp  string    `json:"MessagesJSON"`
+		DurationSecUp   int       `json:"DurationSec"`
+		CreatedAtUp     time.Time `json:"CreatedAt"`
+	}{
+		Alias:           Alias(s),
+		IDUpper:         s.ID,
+		IDLower:         s.ID,
+		AssistantNameUp: s.AssistantName,
+		CallUUIDUp:      s.CallUUID,
+		CallerNumberUp:  s.CallerNumber,
+		SummaryUp:       s.Summary,
+		SentimentUp:     s.Sentiment,
+		ActionTakenUp:   s.ActionTaken,
+		MessagesJSONUp:  s.MessagesJSON,
+		DurationSecUp:   s.DurationSec,
+		CreatedAtUp:     s.CreatedAt,
+	})
 }

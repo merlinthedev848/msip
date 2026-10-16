@@ -26,7 +26,7 @@
     try {
       const [statsData, cdrData] = await Promise.all([
         api.get('/dashboard/stats').catch(() => null),
-        api.get('/cdr').catch(() => ({ cdr: [] }))
+        api.get('/cdr').catch(() => ({ cdrs: [], cdr: [] }))
       ]);
 
       if (statsData) {
@@ -43,7 +43,8 @@
         isApiOnline = true;
       }
 
-      recentCalls = (cdrData?.cdr || []).slice(0, 5);
+      const list = cdrData?.cdrs || cdrData?.cdr || [];
+      recentCalls = list.slice(0, 5);
     } catch (e) {
       isApiOnline = false;
     } finally {
@@ -256,12 +257,12 @@
               <tbody>
                 {#each recentCalls as call}
                   <tr>
-                    <td class="font-bold text-slate-800 mono">{call.CallerID || 'Unknown'}</td>
-                    <td class="mono text-slate-700">{call.CalleeID || '—'}</td>
+                    <td class="font-bold text-slate-800 mono">{call.CallerIDNumber || call.CallerID || 'Unknown'}</td>
+                    <td class="mono text-slate-700">{call.Destination || call.CalleeID || '—'}</td>
                     <td class="text-slate-600">{call.Duration || 0}s</td>
                     <td>
-                      <Badge tone={call.Disposition === 'ANSWERED' ? 'success' : (call.Disposition === 'BUSY' ? 'warning' : 'neutral')}>
-                        {call.Disposition || 'COMPLETED'}
+                      <Badge tone={(call.HangupCause === 'NORMAL_CLEARING' || call.Disposition === 'ANSWERED') ? 'success' : ((call.HangupCause === 'USER_BUSY' || call.Disposition === 'BUSY') ? 'warning' : 'neutral')}>
+                        {call.HangupCause || call.Disposition || 'COMPLETED'}
                       </Badge>
                     </td>
                     <td class="text-xs text-slate-500">{formatDateTime(call.CreatedAt)}</td>

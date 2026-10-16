@@ -189,15 +189,15 @@
             {#each aiAssistants as asst}
               <button
                 type="button"
-                on:click={() => choose(`AI: ${asst.Name} (Ext ${asst.ExtensionNumber || asst.Extension || '890'})`)}
+                on:click={() => choose(`AI: ${asst.Name || asst.name} (Ext ${asst.ExtensionNumber || asst.extension_number || asst.Extension || '890'})`)}
                 class="p-2.5 text-left border rounded-lg hover:border-indigo-500 hover:bg-indigo-50 transition-colors flex items-center justify-between group"
               >
                 <div>
                   <div class="font-bold text-xs text-indigo-900 group-hover:text-indigo-600 flex items-center space-x-1">
                     <span>🤖</span>
-                    <span>{asst.Name}</span>
+                    <span>{asst.Name || asst.name}</span>
                   </div>
-                  <div class="text-[11px] text-slate-500">Ext {asst.ExtensionNumber || asst.Extension || '890'} • {asst.RoleDescription || asst.RoleType || 'Virtual Receptionist'}</div>
+                  <div class="text-[11px] text-slate-500">Ext {asst.ExtensionNumber || asst.extension_number || asst.Extension || '890'} • {asst.RoleDescription || asst.role_description || asst.RoleType || 'Virtual Receptionist'}</div>
                 </div>
                 <span class="text-xs text-indigo-400 group-hover:text-indigo-600">→</span>
               </button>

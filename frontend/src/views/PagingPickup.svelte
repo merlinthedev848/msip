@@ -76,8 +76,16 @@
         api.get<{ groups: PickupGroup[] }>('/pickup-groups'),
         api.get<{ extensions: ExtensionOption[] }>('/extensions')
       ]);
-      pagingGroups = pRes.groups || [];
-      pickupGroups = pickRes.groups || [];
+      pagingGroups = (pRes.groups || []).map((p: any) => ({
+        ...p,
+        id: p.id || p.ID,
+        members: Array.isArray(p.members) ? p.members : (typeof p.members === 'string' ? p.members.split(',').map((s: string) => s.trim()).filter(Boolean) : [])
+      }));
+      pickupGroups = (pickRes.groups || []).map((p: any) => ({
+        ...p,
+        id: p.id || p.ID,
+        members: Array.isArray(p.members) ? p.members : (typeof p.members === 'string' ? p.members.split(',').map((s: string) => s.trim()).filter(Boolean) : [])
+      }));
       availableExts = extRes.extensions || [];
     } catch (e: any) {
       loadError = e.message;

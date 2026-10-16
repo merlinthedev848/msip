@@ -826,6 +826,20 @@ func handleCallCenterConfig(c *gin.Context) {
 		}
 	}
 
+	if len(queues) == 0 {
+		sb.WriteString(`        <queue name="support_tier_1@default">
+          <param name="strategy" value="longest-idle-agent"/>
+          <param name="moh-sound" value="local_stream://default"/>
+          <param name="time-base-score" value="system"/>
+          <param name="max-wait-time" value="300"/>
+          <param name="max-wait-time-with-no-agent" value="20"/>
+          <param name="agent-no-answer-status" value="Logged Out"/>
+          <param name="tier-rules-apply" value="false"/>
+          <param name="ring-delay" value="10"/>
+        </queue>
+`)
+	}
+
 	sb.WriteString(`      </queues>
       <agents>
 `)

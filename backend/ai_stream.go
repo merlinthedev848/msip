@@ -195,6 +195,8 @@ func HandleAIStream(c *gin.Context) {
 					session.ActionTaken = "transferred"
 					if tgt, ok := tool.Arguments["target_extension"].(string); ok && tgt != "" {
 						transferTarget = tgt
+					} else if tgt, ok := tool.Arguments["destination_extension"].(string); ok && tgt != "" {
+						transferTarget = tgt
 					} else {
 						transferTarget = assistant.TransferTarget
 					}

@@ -15,4 +15,5 @@ export function navigate(path: string) {
     window.history.pushState({}, '', target);
   }
   currentPath.set(target);
+  window.dispatchEvent(new CustomEvent('app-navigate', { detail: { path: target } }));
 }

@@ -2,25 +2,34 @@
   import { createEventDispatcher } from 'svelte';
 
   export let isOpen = false;
+  export let open: boolean | undefined = undefined;
   export let title = '';
   export let description = '';
   export let width: 'md' | 'lg' = 'md';
+  export let maxWidth: string = '';
+  export let onClose: (() => void) | undefined = undefined;
 
-  const dispatch = createEventDispatcher();
+  const dispatch = createEventDispatcher<{ close: void }>();
+
+  $: active = open !== undefined ? open : isOpen;
 
   function close() {
     isOpen = false;
+    if (open !== undefined) {
+      open = false;
+    }
     dispatch('close');
+    onClose?.();
   }
 
   function onKey(e: KeyboardEvent) {
-    if (isOpen && e.key === 'Escape') close();
+    if (active && e.key === 'Escape') close();
   }
 </script>
 
 <svelte:window on:keydown={onKey} />
 
-{#if isOpen}
+{#if active}
   <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -29,7 +38,7 @@
       role="dialog"
       aria-modal="true"
       aria-label={title}
-      class="relative w-full {width === 'lg' ? 'max-w-2xl' : 'max-w-lg'} bg-white border border-slate-200 rounded-lg shadow-xl max-h-[90vh] flex flex-col"
+      class="relative w-full {maxWidth || (width === 'lg' ? 'max-w-2xl' : 'max-w-lg')} bg-white border border-slate-200 rounded-lg shadow-xl max-h-[90vh] flex flex-col"
     >
       <div class="px-5 py-4 border-b border-slate-200 flex justify-between items-start">
         <div>

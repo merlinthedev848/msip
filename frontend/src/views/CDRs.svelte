@@ -62,7 +62,7 @@
   // Filter bar states
   let lookIn = 'All';
   let lookFor = '';
-  let dateRange = 'Today';
+  let dateRange = 'All';
   let direction = 'Both';
 
   // Table controls
@@ -81,7 +81,7 @@
     loadError = '';
     try {
       const res = await api.get<{ cdrs: CDRItem[] }>('/cdr');
-      cdrs = res.cdrs || [];
+      cdrs = res.cdrs || (res as any).cdr || [];
     } catch (e: any) {
       loadError = e.message;
     } finally {
@@ -131,7 +131,27 @@
     if (direction === 'Incoming' && c.Context === 'outbound') return false;
     if (direction === 'Outgoing' && c.Context !== 'outbound') return false;
 
-    // 4. Table search
+    // 4. Date Range
+    if (dateRange !== 'All' && c.CreatedAt) {
+      const callTime = new Date(c.CreatedAt).getTime();
+      const now = Date.now();
+      if (dateRange === 'Today') {
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        if (callTime < startOfDay.getTime()) return false;
+      } else if (dateRange === 'Yesterday') {
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        const startOfYesterday = new Date(startOfToday.getTime() - 24 * 60 * 60 * 1000);
+        if (callTime < startOfYesterday.getTime() || callTime >= startOfToday.getTime()) return false;
+      } else if (dateRange === '7d') {
+        if (callTime < now - 7 * 24 * 60 * 60 * 1000) return false;
+      } else if (dateRange === '30d') {
+        if (callTime < now - 30 * 24 * 60 * 60 * 1000) return false;
+      }
+    }
+
+    // 5. Table search
     if (tableSearch.trim()) {
       const q = tableSearch.toLowerCase();
       const match = (c.CallerIDNumber || '').toLowerCase().includes(q) ||

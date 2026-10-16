@@ -110,11 +110,12 @@
     }
   }
 
-  function openCreatePrompt(type: 'moh' | 'custom' | 'system') {
+  function openCreatePrompt(type: 'moh' | 'custom' | 'system' | 'recording') {
     editingPromptId = null;
+    const resolvedType = type === 'recording' ? 'custom' : type;
     promptForm = {
       name: '',
-      type,
+      type: resolvedType,
       description: '',
       file_path: '',
       is_default: false

@@ -57,6 +57,25 @@ func setupTestEnvironment(t *testing.T) {
 	DB.Exec("DELETE FROM ai_bookings")
 	DB.Exec("DELETE FROM ai_call_sessions")
 	DB.Exec("DELETE FROM ai_transcription_settings")
+	DB.Exec("DELETE FROM call_queues")
+	DB.Exec("DELETE FROM queue_members")
+	DB.Exec("DELETE FROM call_distribution_groups")
+	DB.Exec("DELETE FROM group_members")
+	DB.Exec("DELETE FROM call_diverts")
+	DB.Exec("DELETE FROM devices")
+	DB.Exec("DELETE FROM telephone_numbers")
+	DB.Exec("DELETE FROM sites")
+	DB.Exec("DELETE FROM contacts")
+	DB.Exec("DELETE FROM button_profiles")
+	DB.Exec("DELETE FROM recording_rules")
+	DB.Exec("DELETE FROM audio_prompts")
+	DB.Exec("DELETE FROM feature_codes")
+	DB.Exec("DELETE FROM paging_groups")
+	DB.Exec("DELETE FROM pickup_groups")
+	DB.Exec("DELETE FROM auto_clips")
+	DB.Exec("DELETE FROM outbound_restrictions")
+	DB.Exec("DELETE FROM holidays")
+	DB.Exec("DELETE FROM time_conditions")
 
 	// Seed Tenant A
 	tA := Tenant{ID: uuid.New(), Name: "Tenant Alpha", Domain: "alpha.pbx.local"}
@@ -133,8 +152,22 @@ func setupTestEnvironment(t *testing.T) {
 	testRouter = SetupRouter()
 }
 
-func performRequest(r *gin.Engine, method, path string, body []byte, token string) *httptest.ResponseRecorder {
-	req, _ := http.NewRequest(method, path, bytes.NewBuffer(body))
+func performRequest(r *gin.Engine, method, path string, body interface{}, token string) *httptest.ResponseRecorder {
+	var buf *bytes.Buffer
+	if body != nil {
+		switch b := body.(type) {
+		case []byte:
+			buf = bytes.NewBuffer(b)
+		case string:
+			buf = bytes.NewBufferString(b)
+		default:
+			data, _ := json.Marshal(b)
+			buf = bytes.NewBuffer(data)
+		}
+	} else {
+		buf = bytes.NewBuffer(nil)
+	}
+	req, _ := http.NewRequest(method, path, buf)
 	req.Header.Set("Content-Type", "application/json")
 	if token != "" {
 		req.Header.Set("Authorization", "Bearer "+token)
@@ -998,7 +1031,7 @@ func TestAIVoicemailAndCDRTranscription(t *testing.T) {
 	// 2. CDR Transcription
 	cdr := CDR{
 		Base:           Base{ID: uuid.New()},
-		TenantRef:      TenantRef{TenantID: tenantA},
+		TenantID:       tenantA,
 		UUID:           "test-call-uuid-987",
 		CallerIDNumber: "+15552221111",
 		CallerIDName:   "Test Caller",

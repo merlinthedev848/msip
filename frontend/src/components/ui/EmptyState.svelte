@@ -1,6 +1,7 @@
 <script lang="ts">
   export let title = 'Nothing here yet';
   export let message = '';
+  export let description = '';
   export let loading = false;
   export let error = '';
 </script>
@@ -15,7 +16,7 @@
     <div class="mt-4"><slot name="retry" /></div>
   {:else}
     <p class="text-sm font-medium text-slate-700">{title}</p>
-    {#if message}<p class="text-xs text-slate-500 mt-1">{message}</p>{/if}
+    {#if message || description}<p class="text-xs text-slate-500 mt-1">{message || description}</p>{/if}
     <div class="mt-4"><slot /></div>
   {/if}
 </div>

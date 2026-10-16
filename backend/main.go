@@ -274,7 +274,7 @@ func SetupRouter() *gin.Engine {
 		api.GET("/wallboard/stream", HandleWallboardStream)
 
 		// Auto-Provisioning Endpoint (Unauthenticated for SIP endpoints)
-		api.GET("/provisioning/:code", func(c *gin.Context) {
+		provisionHandler := func(c *gin.Context) {
 			code := strings.TrimSpace(c.Param("code"))
 			if code == "" || len(code) > 20 {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid provisioning code format"})
@@ -298,7 +298,9 @@ func SetupRouter() *gin.Engine {
 				"sip_password": ext.PasswordHash,
 				"sip_domain":   tenant.Domain,
 			})
-		})
+		}
+		api.GET("/provisioning/:code", provisionHandler)
+		api.GET("/provision/:code", provisionHandler)
 
 		// Authentication Handler
 		loginHandler := func(c *gin.Context) {
@@ -357,6 +359,10 @@ func SetupRouter() *gin.Engine {
 		}
 		r.POST("/api/v1/auth/login", loginHandler)
 		r.POST("/auth/login", loginHandler)
+		r.GET("/api/v1/provisioning/:code", provisionHandler)
+		r.GET("/api/v1/provision/:code", provisionHandler)
+		r.GET("/provisioning/:code", provisionHandler)
+		r.GET("/provision/:code", provisionHandler)
 
 		// Protected Routes
 		v1 := api.Group("")

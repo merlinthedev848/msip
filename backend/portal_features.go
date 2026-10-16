@@ -55,11 +55,12 @@ func RegisterPortalRoutes(v1 *gin.RouterGroup) {
 		}
 		input.TenantID = record.TenantID
 		input.ID = record.ID
-		if err := DB.Model(&record).Updates(input).Error; err != nil {
+		input.CreatedAt = record.CreatedAt
+		if err := DB.Save(&input).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, record)
+		c.JSON(http.StatusOK, input)
 	})
 
 	v1.DELETE("/button-profiles/:id", func(c *gin.Context) {
@@ -114,11 +115,12 @@ func RegisterPortalRoutes(v1 *gin.RouterGroup) {
 		}
 		input.TenantID = record.TenantID
 		input.ID = record.ID
-		if err := DB.Model(&record).Updates(input).Error; err != nil {
+		input.CreatedAt = record.CreatedAt
+		if err := DB.Save(&input).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, record)
+		c.JSON(http.StatusOK, input)
 	})
 
 	v1.DELETE("/contacts/:id", func(c *gin.Context) {
@@ -189,11 +191,12 @@ func RegisterPortalRoutes(v1 *gin.RouterGroup) {
 		}
 		input.TenantID = record.TenantID
 		input.ID = record.ID
-		if err := DB.Model(&record).Updates(input).Error; err != nil {
+		input.CreatedAt = record.CreatedAt
+		if err := DB.Save(&input).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, record)
+		c.JSON(http.StatusOK, input)
 	})
 
 	v1.DELETE("/sites/:id", func(c *gin.Context) {
@@ -247,11 +250,12 @@ func RegisterPortalRoutes(v1 *gin.RouterGroup) {
 		}
 		input.TenantID = record.TenantID
 		input.ID = record.ID
-		if err := DB.Model(&record).Updates(input).Error; err != nil {
+		input.CreatedAt = record.CreatedAt
+		if err := DB.Save(&input).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, record)
+		c.JSON(http.StatusOK, input)
 	})
 
 	v1.DELETE("/telephone-numbers/:id", func(c *gin.Context) {
@@ -305,11 +309,12 @@ func RegisterPortalRoutes(v1 *gin.RouterGroup) {
 		}
 		input.TenantID = record.TenantID
 		input.ID = record.ID
-		if err := DB.Model(&record).Updates(input).Error; err != nil {
+		input.CreatedAt = record.CreatedAt
+		if err := DB.Save(&input).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, record)
+		c.JSON(http.StatusOK, input)
 	})
 
 	v1.DELETE("/diverts/:id", func(c *gin.Context) {
@@ -364,11 +369,12 @@ func RegisterPortalRoutes(v1 *gin.RouterGroup) {
 		}
 		input.TenantID = record.TenantID
 		input.ID = record.ID
-		if err := DB.Model(&record).Updates(input).Error; err != nil {
+		input.CreatedAt = record.CreatedAt
+		if err := DB.Save(&input).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, record)
+		c.JSON(http.StatusOK, input)
 	})
 
 	v1.DELETE("/devices/:id", func(c *gin.Context) {
